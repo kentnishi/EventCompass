@@ -1,0 +1,29 @@
+:root{
+  --bar:#a2c2f4;
+  --ink:#28356a;
+}
+.nav{
+  background:var(--bar);
+  height:var(--navbar-height);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.wrap{
+  width:100%;
+  max-width:1200px;
+  padding:0 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.brand{display:flex;align-items:center;gap:14px;color:var(--ink)}
+.mark{width:54px;height:34px}
+.product{display:flex;flex-direction:column;line-height:1;letter-spacing:2px;font-weight:800;font-size:14px;text-transform:uppercase}
+.actions{display:flex;align-items:center;gap:46px}
+.menu{display:flex;align-items:center;gap:30px;letter-spacing:4px;text-transform:uppercase;font-weight:800}
+.menu a{color:var(--ink);text-decoration:none;opacity:.95}
+.avatar{width:36px;height:36px;border-radius:999px;background:#e6ecf7;display:grid;place-items:center;overflow:hidden}
+.avatar::before{content:""; width:14px;height:14px;border-radius:50%;background:#525a6b; display:block; margin-top:4px;box-shadow: 0 14px 0 0 #7b8291}
+@media (max-width:840px){.menu{gap:22px;letter-spacing:3px}}
