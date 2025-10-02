@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root{
+  --bar:#a2c2f4;
+  --ink:#28356a;
+  --bg:#f4f6fb;
+  --ink:#2b2f3a;
+  --muted:#6e7485;
+  --brand:#3b4a6b;
+  --brand-2:#505c7a;
+  --accent:#8aa0ff;
+  --assistant:#dde6fb;
+  --card:#ffffff;
+  --ring:#d6d9e6;
+  --btn:#5f6fa3;
+  --btn-text:#fff;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;
+  background: var(--bg);
+}
+
+.card {
+  background: var(--card);
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px var(--muted);
+  width: 300px;
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+.input {
+  padding: 10px;
+  margin: 0.5rem 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.button {
+  padding: 10px;
+  margin-top: 1rem;
+  border: none;
+  border-radius: 5px;
+  background: var(--btn);
+  color: var(--btn-text);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--ink);
+}

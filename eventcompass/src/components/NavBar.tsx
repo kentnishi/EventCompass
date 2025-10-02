@@ -1,5 +1,5 @@
 import Link from "next/link";
-import styles from "./NavBar.module.css";
+import styles from "../css/NavBar.module.css";
 
 export default function NavBar() {
   return (
@@ -21,7 +21,9 @@ export default function NavBar() {
             <Link href="/chat">Chat</Link>
           </div>
 
-          <div className={styles.avatar} title="Profile" />
+          <div className={styles.avatar} title="Profile">
+            <Link href="/auth"></Link>
+          </div>
         </div>
       </div>
     </nav>

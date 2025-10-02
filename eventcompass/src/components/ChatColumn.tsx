@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import styles from "./CompassChat.module.css";
+import styles from "../css/CompassChat.module.css";
 import ReactMarkdown from "react-markdown";
 
 import { IconButton, CircularProgress } from "@mui/material";

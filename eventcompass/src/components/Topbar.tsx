@@ -1,5 +1,5 @@
 import React from "react";
-import styles from "./CompassChat.module.css";
+import styles from "../css/CompassChat.module.css";
 
 export default function TopBar({ onCreate }: { onCreate?: () => void }) {
   return (
