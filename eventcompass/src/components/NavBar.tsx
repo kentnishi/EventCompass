@@ -15,7 +15,7 @@ export default function NavBar() {
 
         <div className={styles.actions}>
           <div className={styles.menu}>
-            <Link href="/">Home</Link>
+            <Link href="/home">Home</Link>
             <Link href="/tasks">Tasks</Link>
             <Link href="/event-manager">Event<br/>Manager</Link>
             <Link href="/chat">Chat</Link>
