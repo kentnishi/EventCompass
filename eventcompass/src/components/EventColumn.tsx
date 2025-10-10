@@ -8,7 +8,7 @@ import PersonIcon from "@mui/icons-material/Person";
 //temp data
 const eventData = {
     description: {
-        audience: 150,
+        attendees: 150,
         text: "Describing things is my passion. A passion for descriptions. That is something that I enjoy. Try including goals and things you want out of your event (like target audience...)",
     },
     dateTime: {
@@ -134,7 +134,7 @@ function EventListItem({ title, price }: { title: string; price: string }) {
             className={styles.eventListItem}
             style={{
                 display: "flex",
-                flexDirection: "column",      // ⬅️ Stack vertically
+                flexDirection: "column",      
                 justifyContent: "center",
                 alignItems: "center",
                 backgroundColor: "#F7F7F7",
@@ -147,8 +147,8 @@ function EventListItem({ title, price }: { title: string; price: string }) {
                 flex: "1 1 120px",
                 minWidth: "120px",
                 maxWidth: "120px",
-                height: "60px",               // ⬅️ Slightly taller for spacing
-                textAlign: "center",          // ⬅️ Center text nicely
+                height: "60px",               
+                textAlign: "center",          
             }}
         >
             <span style={{ fontSize: "1rem", fontWeight: 700, color: "#4a5676" }}>
@@ -159,7 +159,7 @@ function EventListItem({ title, price }: { title: string; price: string }) {
                     fontSize: "0.95rem",
                     fontWeight: 700,
                     color: "#4caf50",
-                    marginTop: "4px",          // ⬅️ Gap between title & price
+                    marginTop: "4px",         
                 }}
             >
                 {price}
@@ -217,7 +217,7 @@ export default function EventColumn() {
                         }}
                     >
                         <PersonIcon style={{ fontSize: "1rem", marginRight: "4px" }} />
-                        <span>{description.audience}</span>
+                        <span>{description.attendees}</span>
                     </div>
                 </div>
                 <EventInput
@@ -229,8 +229,7 @@ export default function EventColumn() {
             </div>
 
             {/* Date & Time */}
-            {/* Date & Time */}
-            <div className={styles.section} style={{ marginBottom: "18px" }}>   {/* ⬅️ smaller gap */}
+            <div className={styles.section} style={{ marginBottom: "18px" }}>  
                 <EventInputPair
                     label1="Start Date"
                     value1={dateTime.startDate}
@@ -246,7 +245,7 @@ export default function EventColumn() {
             </div>
 
             {/* Budget & Location */}
-            <div className={styles.section} style={{ marginBottom: "15px" }}>   {/* ⬅️ tighter gap */}
+            <div className={styles.section} style={{ marginBottom: "15px" }}>  
                 <EventInputPair
                     label1="Budget"
                     value1={budgetLocation.budget}
@@ -261,7 +260,7 @@ export default function EventColumn() {
             {sections.map((section, i) => {
                 // convert { vendors: [...] } into ["vendors", [...]]
                 const [key, items] = Object.entries(section)[0];
-                const title = key.charAt(0).toUpperCase() + key.slice(1); // Capitalize
+                const title = key.charAt(0).toUpperCase() + key.slice(1); 
                 return (
                     <div
                         key={title}
