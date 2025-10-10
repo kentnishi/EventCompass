@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../css/globals.css";
 import NavBar from "../components/NavBar";
+import { createBrowserClient } from "@supabase/ssr";
+import { useState } from "react";
+// import { SessionContextProvider } from "@supabase/auth-helpers-react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,6 +26,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // const [supabase] = useState(() =>
+  //   createBrowserClient(
+  //     process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  //     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  //   )
+  // );
+
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>

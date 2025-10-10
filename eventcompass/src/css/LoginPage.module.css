@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -17,6 +18,8 @@
   --btn:#5f6fa3;
   --btn-text:#fff;
 }
+=======
+>>>>>>> bab3af6 (protected auth)
 
 .container {
   display: flex;
