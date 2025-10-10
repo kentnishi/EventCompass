@@ -1,5 +1,24 @@
 /* Scoped styles ported from ref.html. Keep variables in globals.css. */
-.topbar{display:flex;align-items:center;gap:18px;padding:18px 22px; height: 78px;}
+.topbar {
+  display: flex;
+  justify-content: space-between; 
+  align-items: center;            
+  width: 100%;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;    
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;      
+  gap: 12px;                     
+}
+
 .title{font-size:40px;letter-spacing:.5px;font-weight:600}
 .select{appearance:none;border:1.5px solid var(--ring);background:var(--card);padding:10px 38px 10px 14px;border-radius:10px;font-weight:600;position:relative}
 .selectWrap{position:relative;display:inline-block}
@@ -9,9 +28,10 @@
 .shell{padding:0 22px 28px}
 .panel{background:var(--card);border-radius:10px;border:1px solid var(--ring);display:grid;grid-template-columns:280px 1fr;min-height:560px;height: calc(100vh - 222px);}
 
-.rail{background:#3e4864;color:#dfe5ff;border-top-left-radius:10px;border-bottom-left-radius:10px;padding:14px;display:flex;flex-direction:column}
+.rail{background:#3e4864;color:#dfe5ff;border-top-left-radius:10px;border-bottom-left-radius:10px;padding:14px;display:flex;flex-direction:column;width:100%;min-width:56px;position: relative;}
 .hamburger{width:30px;height:24px;border-radius:6px;display:inline-grid;place-items:center;color:#cfd6ff;margin:8px 0 10px 4px}
 .rail h4{margin:6px 0 8px 8px;font-weight:700;letter-spacing:.2px}
+.rail.collapsed {  width: 56px;}
 .list{overflow:auto;padding-right:4px}
 .chip{background:#586185;color:#e8ecff;border-radius:10px;padding:10px 12px;margin:8px 4px;font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; display: flex; align-items: center; justify-content: space-between;}
 .chip:hover .chipIcon { opacity: 1; }
@@ -44,8 +64,6 @@
 
 @media (max-width: 960px){
   .panel{grid-template-columns:1fr}
-  .rail{display:none}
-  .title{font-size:30px}
 }
 
 .errorBanner {
