@@ -16,6 +16,9 @@
   --ring:#d6d9e6;
   --btn:#5f6fa3;
   --btn-text:#fff;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Inter", sans-serif;
+  --bar:#a2c2f4;
+  --ink:#28356a;
 }
 
 *{box-sizing:border-box}

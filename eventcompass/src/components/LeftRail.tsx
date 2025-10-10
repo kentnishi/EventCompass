@@ -1,5 +1,5 @@
 import React from "react";
-import styles from "./CompassChat.module.css";
+import styles from "../css/CompassChat.module.css";
 import MenuIcon from "@mui/icons-material/Menu";
 import DeleteIcon from "@mui/icons-material/Delete";
 

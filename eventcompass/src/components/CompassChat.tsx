@@ -4,7 +4,7 @@ import React from "react";
 import TopBar from "./Topbar";
 import LeftRail from "./LeftRail";
 import ChatColumn from "./ChatColumn";
-import styles from "./CompassChat.module.css";
+import styles from "../css/CompassChat.module.css";
 
 type Message = { id: string; role: "USER" | "ASSISTANT"; text: string, streaming?: boolean };
 // The main Chat type no longer needs to hold all messages
