@@ -15,7 +15,7 @@ export const createClient = () => {
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(async ({ name, value, options }) =>
-              (await cookieStore).set(name, value, options as CookieOptions)
+              (await cookieStore).set(name, value, options)
             );
           } catch (err) {
             // Fallback for edge environments
