@@ -1,5 +1,9 @@
+// src/components/NavBar.tsx
+"use client";
+
 import Link from "next/link";
 import styles from "../css/NavBar.module.css";
+import ProfileCard from "./ProfileCard";
 
 export default function NavBar() {
   return (
@@ -19,10 +23,7 @@ export default function NavBar() {
             <Link href="/tasks">Tasks</Link>
             <Link href="/event-manager">Event<br/>Manager</Link>
             <Link href="/chat">Chat</Link>
-          </div>
-
-          <div className={styles.avatar} title="Profile">
-            <Link href="/auth"></Link>
+            <ProfileCard />
           </div>
         </div>
       </div>

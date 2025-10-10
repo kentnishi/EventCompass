@@ -1,0 +1,64 @@
+/* src/css/ProfileCard.module.css */
+.container {
+  position: relative;
+  display: inline-block;
+}
+
+.avatar {
+  cursor: pointer;
+  width:36px;height:36px;border-radius:999px;background:#e6ecf7;display:grid;place-items:center;overflow:hidden
+}
+
+.avatar::before{content:""; width:14px;height:14px;border-radius:50%;background:#525a6b; display:block; margin-top:4px;box-shadow: 0 14px 0 0 #7b8291}
+
+.card {
+  position: absolute;
+  right: 0;
+  top: 2.5rem;
+  background: #fff;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  min-width: 180px;
+  z-index: 50;
+}
+
+.card p {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+  text-transform: none;
+  align-items: left;
+  letter-spacing: 0px;
+  color: var(--muted);
+}
+
+.loginButton {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+  text-transform: none;
+  border: none;
+  font-size: 1rem;
+  align-items: left;
+  letter-spacing: 0px;
+  cursor: pointer;
+}
+
+.loginButton:hover {
+  color: var(--muted);
+  text-decoration: underline;
+}
+
+
+.logoutButton {
+  width: 100%;
+  padding: 0.5rem;
+  background-color: #e53935;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.logoutButton:hover {
+  background-color: #d32f2f;
+}
