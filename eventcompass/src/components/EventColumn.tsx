@@ -3,40 +3,44 @@
 import React from "react";
 import styles from "../css/CompassChat.module.css";
 import PersonIcon from "@mui/icons-material/Person";
-
+import { supabase } from "../../lib/supabase";
 
 //temp data
-const eventData = {
-    description: {
-        attendees: 150,
-        text: "Describing things is my passion. A passion for descriptions. That is something that I enjoy. Try including goals and things you want out of your event (like target audience...)",
-    },
-    dateTime: {
-        startDate: "09/18/2025",
-        endDate: "09/18/2025",
-        startTime: "5:00 PM",
-        endTime: "7:00 PM",
-    },
-    budgetLocation: {
-        budget: "$3000",
-        spending: "$2000",
-        location: "Your Mom's Room",
-    },
-    sections: [
-        {
-            vendors: [
-                { title: "Ice or Rice", price: "$1500" },
-                { title: "Costco", price: "$150" },
-            ],
-        },
-        {   //in actual api call, include desc for additional info, for ref and is not shown on the chat
-            activities: [{ title: "Craft", price: "$40" }, { title: "Craft", price: "$40" }, { title: "Craft", price: "$40" }, { title: "Craft", price: "$40" }],
-        },
-        {
-            giveaways: [{ title: "Plushie", price: "$15" }],
-        },
-    ],
-};
+// const eventData = {
+//     description: {
+//         attendees: 150,
+//         text: "Describing things is my passion. A passion for descriptions. That is something that I enjoy. Try including goals and things you want out of your event (like target audience...)",
+//     },
+//     dateTime: {
+//         startDate: "09/18/2025",
+//         endDate: "09/18/2025",
+//         startTime: "5:00 PM",
+//         endTime: "7:00 PM",
+//     },
+//     budgetLocation: {
+//         budget: "$3000",
+//         spending: "$2000",
+//         location: "Your Mom's Room",
+//     },
+//     sections: [
+//         {
+//             vendors: [
+//                 { title: "Ice or Rice", price: "$1500" },
+//                 { title: "Costco", price: "$150" },
+//             ],
+//         },
+//         {   //in actual api call, include desc for additional info, for ref and is not shown on the chat
+//             logistics: [{ title: "Craft", price: "$40" }, { title: "Craft", price: "$40" }, { title: "Craft", price: "$40" }, { title: "Craft", price: "$40" }],
+//         },
+//         {
+//             giveaways: [{ title: "Plushie", price: "$15" }],
+//         },
+//     ],
+// };
+
+
+
+
 
 function EventInput({
     label,
@@ -173,7 +177,89 @@ function EventListItem({ title, price }: { title: string; price: string }) {
 
 
 export default function EventColumn() {
+    const [eventData, setEventData] = React.useState<any>(null);
+    const [loading, setLoading] = React.useState(true);
+    const [error, setError] = React.useState<string | null>(null);
+    const eventId = "e6c1118f-facf-4ca8-beea-bb965c433bda";
+    type EventItem = { title: string; price: string };
+    type Section = Record<string, EventItem[]>; // e.g. { vendors: EventItem[] }
+
+
+    React.useEffect(() => {
+        async function fetchEvent() {
+            try {
+                console.log("Event ID:", eventId);
+                setLoading(true);
+                // Fetch the first event (you can change this to filter or pass an ID later)
+                
+                const { data: event, error: eventError } = await supabase
+                    .from("events")
+                    .select("*")
+                    .eq("id", eventId)
+                    .single();
+
+                if (eventError) throw eventError;
+                if (!event) throw new Error(`No event found with ID ${eventId}`);
+                console.log("Fetched event:", event);
+
+
+                // Fetch all items related to that event
+                const { data: items, error: itemsError } = await supabase
+                    .from("event_items")
+                    .select("*")
+                    .eq("event_id", event.id);
+
+                if (itemsError) throw itemsError;
+
+                // Transform data into the same structure your component expects
+                const grouped = items.reduce((acc: any, item: any) => {
+                    const sectionName = item.item_type + "s"; // vendor → vendors
+                    acc[sectionName] = acc[sectionName] || [];
+                    acc[sectionName].push({
+                        title: item.name,
+                        price: `$${item.price}`,
+                    });
+                    return acc;
+                }, {});
+
+                const formattedData = {
+                    description: {
+                        attendees: event.attendees || 0,
+                        text: event.description || "No description yet.",
+                    },
+                    dateTime: {
+                        startDate: event.start_date,
+                        endDate: event.end_date,
+                        startTime: event.start_time,
+                        endTime: event.end_time,
+                    },
+                    budgetLocation: {
+                        budget: `$${event.budget || 0}`,
+                        spending: `$${event.spending || 0}`,
+                        location: event.location || "TBD",
+                    },
+                    sections: Object.entries(grouped).map(([key, value]) => ({
+                        [key]: value,
+                    })),
+                };
+
+                setEventData(formattedData);
+            } catch (err: any) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchEvent();
+    }, []);
+
+    if (loading) return <div>Loading event data...</div>;
+    if (error) return <div style={{ color: "red" }}>Error: {error}</div>;
+    if (!eventData) return <div>No event found.</div>;
+
     const { description, dateTime, budgetLocation, sections } = eventData;
+
 
     return (
         <section
@@ -257,16 +343,12 @@ export default function EventColumn() {
 
 
             {/* Dynamic Sections (Vendors, Activities, etc.) */}
-            {sections.map((section, i) => {
-                // convert { vendors: [...] } into ["vendors", [...]]
+            {sections.map((section: Section, i: number) => {
                 const [key, items] = Object.entries(section)[0];
-                const title = key.charAt(0).toUpperCase() + key.slice(1); 
+                const title = key.charAt(0).toUpperCase() + key.slice(1);
+
                 return (
-                    <div
-                        key={title}
-                        className={styles.section}
-                        style={{ marginBottom: i === sections.length - 1 ? "0px" : "15px" }}
-                    >
+                    <div key={title} className={styles.section} style={{ marginBottom: i === sections.length - 1 ? "0px" : "15px" }}>
                         <h3
                             style={{
                                 fontSize: "1rem",
@@ -278,16 +360,9 @@ export default function EventColumn() {
                             {title}
                         </h3>
 
-                        <div
-                            className={styles.inputRow}
-                            style={{ display: "flex", gap: "10px", flexWrap: "wrap"}}
-                        >
-                            {items.map((item: { title: string; price: string; }, index: React.Key | null | undefined) => (
-                                <EventListItem
-                                    key={index}
-                                    title={item.title}
-                                    price={item.price}
-                                />
+                        <div className={styles.inputRow} style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                            {items.map((item: EventItem, index: number) => (
+                                <EventListItem key={index} title={item.title} price={item.price} />
                             ))}
 
                             <button
@@ -312,6 +387,7 @@ export default function EventColumn() {
                     </div>
                 );
             })}
+
         </section>
     );
 }
