@@ -28,7 +28,7 @@ export default function ProfileCard() {
 
     // Logout handler
     const handleLogout = async () => {
-        const res = await fetch("/api/auth", {
+        const res = await fetch("/api/auth/login", {
             method: "DELETE"
         });
 

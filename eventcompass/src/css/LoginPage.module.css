@@ -11,7 +11,7 @@
   padding: 30px;
   border-radius: 10px;
   box-shadow: 0 4px 8px var(--muted);
-  width: 300px;
+  width: 400px;
 }
 
 .title {
@@ -45,3 +45,19 @@
 .button:hover {
   background: var(--ink);
 }
+
+.toggleText {
+  color: var(--text);
+  align-items: right;
+}
+
+.toggleButton {
+  border: none;
+  background: none;
+  color: var(--link);
+  cursor: pointer;
+  text-decoration: underline;
+  font: var(--buttontext);
+}
+
+
