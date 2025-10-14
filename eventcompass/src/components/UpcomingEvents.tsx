@@ -6,34 +6,84 @@ type UpcomingApiRow = {
   id: string;
   title: string;
   location?: string | null;
-  startDate: string;     // "YYYY-MM-DD"
-  startTime?: string | null; // "HH:MM:SS" or null
+  startDate: string;          // "YYYY-MM-DD"
+  startTime?: string | null;  // "HH:MM:SS" or null
   committee?: string | null;
 };
 
 type Props = {
-  /** optional committee filter; if omitted the toggle shows ALL/COMMITTEE */
+  /** Optional starting filter. */
   defaultCommittee?: string;
-  /** how many cards to request */
+  /** Optional list of committee options for the popover. */
+  committees?: string[];
+  /** Max cards to fetch. */
   limit?: number;
 };
 
-export default function UpcomingEvents({ defaultCommittee, limit = 12 }: Props) {
+const DEFAULT_COMMITTEES = [
+  "Campus Engagement",
+  "Thwing Tuesday",
+  "Co-Programming",
+  "Bootcamp",
+  "Trips",
+  "On Campus",
+  "Off Campus",
+  "Concerts",
+  "ID",
+  "Information",
+  "Promo",
+  "Finance"
+];
+
+export default function UpcomingEvents({
+  defaultCommittee,
+  committees = DEFAULT_COMMITTEES,
+  limit = 12,
+}: Props) {
   const [committee, setCommittee] = useState<string | undefined>(defaultCommittee);
   const [rows, setRows] = useState<UpcomingApiRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // popover
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const popRef = useRef<HTMLDivElement>(null);
+
+  // rail & progress
   const railRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
 
-  // fetch data
+  // close popover on outside click / Esc
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e: MouseEvent) => {
+      if (!popRef.current || !btnRef.current) return;
+      if (
+        !popRef.current.contains(e.target as Node) &&
+        !btnRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("mousedown", onClick);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("mousedown", onClick);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  // fetch data on committee/limit change
   useEffect(() => {
     const params = new URLSearchParams();
     params.set("limit", String(limit));
     if (committee) params.set("committee", committee);
 
-    setError(null);
     setRows(null);
-    fetch(`/api/events/upcoming?${params.toString()}`)
+    setError(null);
+
+    fetch(`/api/events/upcoming?${params.toString()}`, { cache: "no-store" })
       .then(async (r) => {
         if (!r.ok) throw new Error((await r.json()).error ?? r.statusText);
         return r.json();
@@ -42,28 +92,7 @@ export default function UpcomingEvents({ defaultCommittee, limit = 12 }: Props) 
       .catch((e) => setError(e.message || "Failed to load upcoming events"));
   }, [committee, limit]);
 
-  // local helpers
-  function combineToLocal(startDate: string, startTime?: string | null) {
-    // If you stored DATE + TIME (UTC-less), treat as local wall time.
-    // Construct "YYYY-MM-DDTHH:MM:SS" without timezone and let the browser parse as local.
-    const iso = `${startDate}T${startTime ?? "00:00:00"}`;
-    return new Date(iso);
-  }
-
-  const items = useMemo(() => {
-    if (!rows) return null;
-    return rows.map((r) => {
-      const dt = combineToLocal(r.startDate, r.startTime);
-      return {
-        id: r.id,
-        title: r.title,
-        when: dt,
-        where: r.location ?? "",
-      };
-    });
-  }, [rows]);
-
-  // progress bar
+  // progress bar calculation
   useEffect(() => {
     const el = railRef.current;
     if (!el) return;
@@ -83,43 +112,116 @@ export default function UpcomingEvents({ defaultCommittee, limit = 12 }: Props) 
     el.scrollBy({ left: dir * (card + 16) * 2, behavior: "smooth" });
   };
 
+  // helpers
+  const combineToLocal = (d: string, t?: string | null) =>
+    new Date(`${d}T${t ?? "00:00:00"}`);
+
+  const items = useMemo(() => {
+    if (!rows) return null;
+    return rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      when: combineToLocal(r.startDate, r.startTime),
+      where: r.location ?? "",
+    }));
+  }, [rows]);
+
   const isLoading = rows === null && !error;
 
   return (
-    <section className="rounded-2xl border border-[#d6d9e7] bg-[white] rounded-[10px] p-4 relative">
+    <section className="relative rounded-[10px] border border-[#d6d9e7] bg-[white] p-4">
       {/* Header */}
-      <div className="scale-98 flex items-center gap-4 mb-3">
-        <span className="text-xs font-semibold tracking-widest text-[#2b3a55]">
+      <div className="flex items-center gap-3 mb-3">
+        <span className="scale-98 text-xs font-semibold tracking-widest text-[#2b3a55]">
           UPCOMING EVENTS
         </span>
 
-        {!defaultCommittee && (
-          <div className="flex items-center gap-2 ml-2">
-            <button
-              className={`text-xs px-2 py-0.5 rounded-full border ${
-                !committee
-                  ? "bg-[#cfe0ff] border-[#b8c9f2] text-[#1f2b4a]"
-                  : "bg-[#eaf0fe] border-[#d6e1fb] text-[#536084] hover:bg-[#e1e9fd]"
-              }`}
-              onClick={() => setCommittee(undefined)}
+        {/* All pill */}
+        <button
+          className={[
+            "text-xs px-2 py-0.5 rounded-full border",
+            !committee
+              ? "bg-[#cfe0ff] border-[#b8c9f2] text-[#1f2b4a]"
+              : "bg-[#eaf0fe] border-[#d6e1fb] text-[#536084] hover:bg-[#e1e9fd]",
+          ].join(" ")}
+          onClick={() => setCommittee(undefined)}
+          aria-pressed={!committee}
+        >
+          All
+        </button>
+
+        {/* Committee pill → opens popover */}
+        <div className="relative">
+          <button
+            ref={btnRef}
+            className={[
+              "text-xs px-2 py-0.5 rounded-full border",
+              committee
+                ? "bg-[#cfe0ff] border-[#b8c9f2] text-[#1f2b4a]"
+                : "bg-[#eaf0fe] border-[#d6e1fb] text-[#536084] hover:bg-[#e1e9fd]",
+            ].join(" ")}
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-haspopup="menu"
+            title={committee ? `Committee: ${committee}` : "Pick committee"}
+          >
+            Committee
+          </button>
+
+          {open && (
+            <div
+              ref={popRef}
+              role="menu"
+              className="absolute z-20 mt-2 w-56 rounded-xl border border-[#d6d9e7] bg-white shadow-lg p-2"
             >
-              ALL
-            </button>
-            <button
-              className={`text-xs px-2 py-0.5 rounded-full border ${
-                committee
-                  ? "bg-[#cfe0ff] border-[#b8c9f2] text-[#1f2b4a]"
-                  : "bg-[#eaf0fe] border-[#d6e1fb] text-[#536084] hover:bg-[#e1e9fd]"
-              }`}
-              onClick={() => setCommittee("On-Campus")}
-            >
-              COMMITTEE
-            </button>
-          </div>
-        )}
+              <div className="max-h-64 overflow-auto pr-1">
+                {committees.map((c) => {
+                  const active = committee === c;
+                  return (
+                    <button
+                      key={c}
+                      role="menuitemradio"
+                      aria-checked={active}
+                      onClick={() => {
+                        setCommittee(c);
+                        setOpen(false);
+                      }}
+                      className={[
+                        "w-full text-left px-3 py-2 rounded-lg text-sm",
+                        active
+                          ? "bg-[#e8f0ff] text-[#1f2b4a] font-medium"
+                          : "hover:bg-[#f5f7ff] text-[#2b3a55]",
+                      ].join(" ")}
+                    >
+                      {c}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-2 flex gap-2 justify-end">
+                <button
+                  onClick={() => {
+                    setCommittee(undefined);
+                    setOpen(false);
+                  }}
+                  className="text-xs px-2 py-1 rounded-md border border-[#d6d9e7] text-[#2b3a55] hover:bg-[#f6f8ff]"
+                >
+                  Clear
+                </button>
+                <button
+                  onClick={() => setOpen(false)}
+                  className="text-xs px-2 py-1 rounded-md bg-[#cfe0ff] text-[#1f2b4a] border border-[#b8c9f2]"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Edge fades */}
+      {/* Edge fades for the rail */}
       <div className="pointer-events-none absolute left-0 top-12 bottom-6 w-6 bg-gradient-to-r from-white to-transparent rounded-l-2xl" />
       <div className="pointer-events-none absolute right-0 top-12 bottom-6 w-6 bg-gradient-to-l from-white to-transparent rounded-r-2xl" />
 
@@ -139,13 +241,12 @@ export default function UpcomingEvents({ defaultCommittee, limit = 12 }: Props) 
         ›
       </button>
 
-      {/* Content */}
-      {error && (
-        <div className="text-sm text-red-600 px-1 py-2">{error}</div>
-      )}
+      {/* Error */}
+      {error && <div className="text-sm text-red-600 px-1 py-2">{error}</div>}
 
-      <div ref={railRef} className="no-scrollbar overflow-x-auto scroll-smooth">
-        <h1 className="scale-98 flex gap-4 pr-2 snap-x snap-mandatory">
+      {/* Cards rail */}
+      <div ref={railRef} className="overflow-x-auto scroll-smooth py-2">
+        <ul className="flex gap-4 p-2 items-stretch snap-x snap-mandatory ">
           {isLoading &&
             Array.from({ length: 6 }).map((_, i) => (
               <li
@@ -158,10 +259,12 @@ export default function UpcomingEvents({ defaultCommittee, limit = 12 }: Props) 
             items?.map((e) => (
               <li
                 key={e.id}
-                className="rounded-[10px] snap-start shrink-0 w-72 h-32 rounded-2xl border border-[#d6d9e7] bg-[#e3e9f8] flex items-center justify-center"
+                className="snap-start rounded-[10px] shrink-0 w-72 h-32 rounded-2xl border border-[#d6d9e7] bg-[#e3e9f8] flex items-center justify-center"
               >
-                <div className="text-[17px] text-center">
-                  <div className="font-medium text-[#2b3a55]">{e.title}</div>
+                <div className="text-[18px] text-center">
+                  <div className="font-medium text-[#2b3a55] truncate">
+                    {e.title}
+                  </div>
                   <div className="text-xs text-[#5d6a8a]">
                     {e.when.toLocaleString(undefined, {
                       weekday: "short",
@@ -172,7 +275,7 @@ export default function UpcomingEvents({ defaultCommittee, limit = 12 }: Props) 
                     })}
                   </div>
                   {e.where && (
-                    <div className="text-[12px] text-[#7a86a8] mt-0.5">
+                    <div className="text-[15px] text-[#7a86a8] mt-0.5 truncate">
                       {e.where}
                     </div>
                   )}
@@ -180,12 +283,12 @@ export default function UpcomingEvents({ defaultCommittee, limit = 12 }: Props) 
               </li>
             ))}
 
-          {!isLoading && items && items.length === 0 && (
+          {!isLoading && (!items || items.length === 0) && (
             <li className="shrink-0 w-full h-24 flex items-center justify-center text-sm text-[#637099]">
               No upcoming events.
             </li>
           )}
-        </h1>
+        </ul>
       </div>
 
       {/* Progress bar */}
@@ -196,7 +299,16 @@ export default function UpcomingEvents({ defaultCommittee, limit = 12 }: Props) 
         />
       </div>
 
-      
+      {/* scoped scrollbar hide */}
+      <style jsx>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </section>
   );
 }
