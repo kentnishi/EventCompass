@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { supabase } from "../lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
 import styles from "../css/ProfileCard.module.css"; 

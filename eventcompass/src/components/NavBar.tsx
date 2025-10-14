@@ -24,10 +24,7 @@ export default function NavBar() {
             <Link href="/event-manager">Event<br/>Manager</Link>
             <Link href="/chat">Chat</Link>
             <Link href="/events">Events</Link>
-          </div>
-
-          <div className={styles.avatar} title="Profile">
-            <Link href="/auth"></Link>
+            <ProfileCard />
           </div>
         </div>
       </div>

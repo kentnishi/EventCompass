@@ -1,6 +1,6 @@
 //src/app/api/auth/route.ts
 import { NextResponse } from "next/server";
-import { createServer } from "../../../../lib/supabase/server";
+import { createServer } from "@/lib/supabase/server";
 
 
 export async function POST(req: Request) {

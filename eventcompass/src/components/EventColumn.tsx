@@ -3,7 +3,7 @@
 import React from "react";
 import styles from "../css/CompassChat.module.css";
 import PersonIcon from "@mui/icons-material/Person";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 
 //temp data
 // const eventData = {

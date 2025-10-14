@@ -1,15 +1,6 @@
 "use client";
 
 import React from "react";
-<<<<<<< HEAD
-import TopBar from "./Topbar";
-import LeftRail from "./LeftRail";
-import ChatColumn from "./ChatColumn";
-import styles from "./CompassChat.module.css";
-
-type Message = { id: string; role: "USER" | "ASSISTANT"; text: string, streaming?: boolean };
-// The main Chat type no longer needs to hold all messages
-=======
 // Assuming these components exist and function correctly
 import TopBar from "./Topbar";
 import LeftRail from "./LeftRail";
@@ -20,7 +11,6 @@ import EditIcon from "@mui/icons-material/Edit"; // Importing an icon for the "N
 import useMediaQuery from "@mui/material/useMediaQuery";
 
 type Message = { id: string; role: "USER" | "ASSISTANT"; text: string, streaming?: boolean };
->>>>>>> 62ca3781628dc17fcb6ef5593ce6091f851ea686
 type Chat = { id: string; name: string };
 
 function makeId() {
@@ -32,10 +22,6 @@ export default function CompassChat() {
   const [activeChatId, setActiveChatId] = React.useState<string>("");
   const [activeChatMessages, setActiveChatMessages] = React.useState<Message[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
-<<<<<<< HEAD
-  const [error, setError] = React.useState<string | null>(null); // For UI error reporting
-  const [isRailVisible, setIsRailVisible] = React.useState(true);
-=======
   const [error, setError] = React.useState<string | null>(null);
   const isSmall = useMediaQuery("(max-width: 900px)"); 
   const [isRailVisible, setIsRailVisible] = React.useState(true);
@@ -45,16 +31,12 @@ export default function CompassChat() {
 
 
   // --- Utility Functions (handleCreateNew, useEffects, etc. - unchanged logic) ---
->>>>>>> 62ca3781628dc17fcb6ef5593ce6091f851ea686
 
   const handleCreateNew = React.useCallback(() => {
     (async () => {
       try {
         setError(null);
-<<<<<<< HEAD
-=======
         // Using dynamic route segment in fetch calls (replace /api/chats with actual path)
->>>>>>> 62ca3781628dc17fcb6ef5593ce6091f851ea686
         const res = await fetch(`/api/chats`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -75,8 +57,6 @@ export default function CompassChat() {
     })();
   }, []);
 
-<<<<<<< HEAD
-=======
   React.useEffect(() => {
     if (isSmall) {
       setIsRailVisible(false); // always collapse when small
@@ -95,7 +75,6 @@ export default function CompassChat() {
   }, []);
 
 
->>>>>>> 62ca3781628dc17fcb6ef5593ce6091f851ea686
   // Load chats from the API on mount
   React.useEffect(() => {
     let mounted = true;

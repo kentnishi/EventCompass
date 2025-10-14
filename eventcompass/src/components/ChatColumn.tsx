@@ -1,11 +1,7 @@
 "use client";
 
 import React from "react";
-<<<<<<< HEAD
-import styles from "./CompassChat.module.css";
-=======
 import styles from "../css/CompassChat.module.css";
->>>>>>> 62ca3781628dc17fcb6ef5593ce6091f851ea686
 import ReactMarkdown from "react-markdown";
 
 import { IconButton, CircularProgress } from "@mui/material";
@@ -26,10 +22,7 @@ function Bubble({ children, kind = "assistant" }: { children: React.ReactNode; k
     // This is expected for normal text. Do nothing.
   }
 
-<<<<<<< HEAD
-=======
   // NOTE: The crucial CSS fix is applied to the .bubble class definition in CompassChat.module.css
->>>>>>> 62ca3781628dc17fcb6ef5593ce6091f851ea686
   if (kind === 'assistant') {
     return <div className={cls}><ReactMarkdown>{content}</ReactMarkdown></div>;
   }

@@ -1,6 +1,6 @@
 // src/app/api/signup.ts
 import { NextResponse } from "next/server";
-import { createServer } from "../../../../lib/supabase/server";
+import { createServer } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
   const { email, password } = await req.json();

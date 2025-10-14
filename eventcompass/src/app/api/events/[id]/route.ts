@@ -1,7 +1,8 @@
-import { supabase } from "../../../../../lib/supabase";
+import { createServer } from "@/lib/supabase/server";
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
     const eventId = params.id;
+    const supabase = createServer();
 
     const { data: event, error: eventError } = await supabase
         .from("events")
@@ -26,6 +27,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     
     console.log("API route hit");
     try {
+        const supabase = createServer();
         const eventId = params.id;
         const body = await request.json();
         

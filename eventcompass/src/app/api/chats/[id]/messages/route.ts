@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { createServer } from "../../../../../../lib/supabase/server";
+import { createServer } from "@/lib/supabase/server";
 
 // Integrate the centralized OpenAI functions
-import { getChatCompletion, ChatCompletionMessage } from "../../../../../../lib/openai";
+import { getChatCompletion, ChatCompletionMessage } from "@/lib/openai";
 
 const CONVERSATION_WINDOW_SIZE = 10; // Keep the last 10 messages for context
 

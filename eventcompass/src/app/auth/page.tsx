@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import "../../css/globals.css";
 import styles from "../../css/LoginPage.module.css";
-import { supabase } from "../../lib/supabase/client";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
