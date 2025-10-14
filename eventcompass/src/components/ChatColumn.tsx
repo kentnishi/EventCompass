@@ -22,6 +22,7 @@ function Bubble({ children, kind = "assistant" }: { children: React.ReactNode; k
     // This is expected for normal text. Do nothing.
   }
 
+  // NOTE: The crucial CSS fix is applied to the .bubble class definition in CompassChat.module.css
   if (kind === 'assistant') {
     return <div className={cls}><ReactMarkdown>{content}</ReactMarkdown></div>;
   }
@@ -44,7 +45,8 @@ export default function ChatColumn({
     // Auto-scroll to bottom when messages change
     const el = scrollRef.current;
     if (el) {
-      el.scrollTop = el.scrollHeight;
+      // Ensure smooth scroll is used for better UX
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
     }
   }, [messages]);
 
@@ -56,13 +58,15 @@ export default function ChatColumn({
 
   function onKey(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter") {
+      e.preventDefault(); // Prevent form submission if input is wrapped in a form
       handleSend();
     }
   }
 
   return (
-    <section className={styles.chatCol}>
+    <section className={styles.chatCol} style={{minWidth: '520px'}}>
       <div className={styles.chatHeader}>COMPASS CHAT</div>
+      {/* chatScroll takes up remaining vertical space */}
       <div className={styles.chatScroll} ref={scrollRef}>
         {messages.map((m) => (
           <div key={m.id} className={m.role === "USER" ? styles.rowRight : styles.row}>
@@ -81,7 +85,7 @@ export default function ChatColumn({
             placeholder="Typing prompt...."
             disabled={isLoading}
           />
-          <IconButton title="Options" disabled={isLoading}>
+          <IconButton title="Options" disabled={isLoading} style={{ color: '#666' }}>
             <MoreVertIcon />
           </IconButton>
         </div>

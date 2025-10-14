@@ -1,14 +1,42 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../../lib/prisma";
-
-const HARDCODED_USER_ID = process.env.HARDCODED_USER_ID!;
+import { createServer } from "@/lib/supabase/server";
 
 export async function GET() {
   try {
-    const chats = await prisma.chat.findMany({ where: { userId: HARDCODED_USER_ID }, include: { messages: true } });
-    if (!chats) {
-      return NextResponse.json([]);
+    const supabase = createServer();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError) {
+      console.error("Failed to resolve authenticated user:", userError);
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { data, error } = await supabase
+      .from("chats")
+      .select("id, name, messages, created_at")
+      .eq("user", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Failed to fetch chats from Supabase:", error);
+      return NextResponse.json({ error: "Failed to fetch chats" }, { status: 500 });
+    }
+
+    const chats =
+      data?.map((chat) => ({
+        id: chat.id?.toString(),
+        name: chat.name ?? "Untitled Chat",
+        messages: Array.isArray(chat.messages) ? chat.messages : [],
+        createdAt: chat.created_at,
+      })) ?? [];
+
     return NextResponse.json(chats);
   } catch (e) {
     console.error(e);
@@ -18,15 +46,45 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const supabase = createServer();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError) {
+      console.error("Failed to resolve authenticated user:", userError);
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const { name } = body;
 
-    const newChat = await prisma.chat.create({
-      data: {
+    const { data, error } = await supabase
+      .from("chats")
+      .insert({
         name: name || "New Chat",
-        userId: HARDCODED_USER_ID,
-      },
-    });
+        user: user.id,
+        messages: [],
+      })
+      .select("id, name, messages, created_at")
+      .single();
+
+    if (error) {
+      console.error("Failed to create chat in Supabase:", error);
+      return NextResponse.json({ error: "Failed to create chat" }, { status: 500 });
+    }
+
+    const newChat = {
+      id: data.id?.toString(),
+      name: data.name ?? "New Chat",
+      messages: Array.isArray(data.messages) ? data.messages : [],
+      createdAt: data.created_at,
+    };
 
     return NextResponse.json(newChat);
   } catch (e) {

@@ -1,4 +1,7 @@
-
+/* :root{
+  --bar:#a2c2f4;
+  --ink:#28356a;
+} */
 .nav{
   background:var(--bar);
   height:var(--navbar-height);

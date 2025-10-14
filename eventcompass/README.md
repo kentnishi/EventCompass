@@ -48,16 +48,18 @@ The UI is in `src/components/CompassChat.tsx` and child components.
 
 ## Files added / important locations
 
-- `prisma/schema.prisma` â€” Prisma schema defining `Chat` and `Message` models (SQLite datasource). Run `prisma generate` and `prisma migrate` after edits.
-- `lib/prisma.ts` â€” Lightweight Prisma client wrapper to avoid multiple client instances in development.
-- `src/app/api/chats/route.ts` â€” API handler (GET/POST) for listing and creating chats using Prisma.
-- `src/app/api/chats/[id]/messages/route.ts` â€” API handler (GET/POST) for retrieving a chat and appending messages using Prisma.
-- `src/components` â€” React UI components that render the mock chat UI (`CompassChat.tsx`, `Topbar.tsx`, `LeftRail.tsx`, `ChatColumn.tsx`, and `CompassChat.module.css`).
+- `prisma/schema.prisma` – Legacy Prisma schema from the original SQLite prototype (kept for reference).
+- `src/lib/supabase/client.ts` – Browser Supabase client built from the public URL + anon key.
+- `src/lib/supabase/server.ts` – Helper that hydrates a request-scoped Supabase client using the active cookies/session.
+- `src/app/api/chats/route.ts` – API handler (GET/POST) for listing and creating chats against Supabase.
+- `src/app/api/chats/[id]/messages/route.ts` – API handler (GET/POST) for retrieving a chat and appending messages against Supabase.
+- `src/components` – React UI components that render the mock chat UI (`CompassChat.tsx`, `Topbar.tsx`, `LeftRail.tsx`, `ChatColumn.tsx`, and `CompassChat.module.css`).
 
-## How the SQLite store works
+## How the data store works
 
-- The API routes use the Prisma client (`lib/prisma.ts`). The database file is `prisma/dev.db` created by Prisma migrations.
-- Chat creation (`POST /api/chats`) creates a `Chat` row and optional `Message` rows (nested create).
+- Chat APIs now read/write the Supabase `chats` table (JSONB `messages` column) via the helpers in `src/lib/supabase`.
+- Events APIs also use the Supabase client to query/update data in the `events` and `event_items` tables.
+
 - Appending messages (`POST /api/chats/:id/messages`) creates `Message` rows associated with a chat inside a transaction and returns the updated chat with messages.
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
@@ -96,3 +98,5 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
