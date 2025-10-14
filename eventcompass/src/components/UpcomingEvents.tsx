@@ -1,18 +1,69 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import type { EventSummary } from "../types";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
-export default function UpcomingEvents() {
-  const [events, setEvents] = useState<EventSummary[]>([]);
+type UpcomingApiRow = {
+  id: string;
+  title: string;
+  location?: string | null;
+  startDate: string;     // "YYYY-MM-DD"
+  startTime?: string | null; // "HH:MM:SS" or null
+  committee?: string | null;
+};
+
+type Props = {
+  /** optional committee filter; if omitted the toggle shows ALL/COMMITTEE */
+  defaultCommittee?: string;
+  /** how many cards to request */
+  limit?: number;
+};
+
+export default function UpcomingEvents({ defaultCommittee, limit = 12 }: Props) {
+  const [committee, setCommittee] = useState<string | undefined>(defaultCommittee);
+  const [rows, setRows] = useState<UpcomingApiRow[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const railRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
 
+  // fetch data
   useEffect(() => {
-    fetch("/api/events/upcoming").then(async (r) => setEvents(await r.json()));
-  }, []);
+    const params = new URLSearchParams();
+    params.set("limit", String(limit));
+    if (committee) params.set("committee", committee);
 
-  // progress bar like your SavedMeals scrollbar feedback
+    setError(null);
+    setRows(null);
+    fetch(`/api/events/upcoming?${params.toString()}`)
+      .then(async (r) => {
+        if (!r.ok) throw new Error((await r.json()).error ?? r.statusText);
+        return r.json();
+      })
+      .then((data: UpcomingApiRow[]) => setRows(data))
+      .catch((e) => setError(e.message || "Failed to load upcoming events"));
+  }, [committee, limit]);
+
+  // local helpers
+  function combineToLocal(startDate: string, startTime?: string | null) {
+    // If you stored DATE + TIME (UTC-less), treat as local wall time.
+    // Construct "YYYY-MM-DDTHH:MM:SS" without timezone and let the browser parse as local.
+    const iso = `${startDate}T${startTime ?? "00:00:00"}`;
+    return new Date(iso);
+  }
+
+  const items = useMemo(() => {
+    if (!rows) return null;
+    return rows.map((r) => {
+      const dt = combineToLocal(r.startDate, r.startTime);
+      return {
+        id: r.id,
+        title: r.title,
+        when: dt,
+        where: r.location ?? "",
+      };
+    });
+  }, [rows]);
+
+  // progress bar
   useEffect(() => {
     const el = railRef.current;
     if (!el) return;
@@ -32,31 +83,45 @@ export default function UpcomingEvents() {
     el.scrollBy({ left: dir * (card + 16) * 2, behavior: "smooth" });
   };
 
-  const items =
-    events.length > 0
-      ? events
-      : Array.from({ length: 8 }).map((_, i) => ({
-          id: i + 1,
-          title: `Event ${i + 1}`,
-          startTime: new Date().toISOString(),
-        })) as EventSummary[];
+  const isLoading = rows === null && !error;
 
   return (
-    <div className="rounded-2xl border border-[#d6d9e7] bg-white p-4 relative">
+    <section className="rounded-2xl border border-[#d6d9e7] bg-[white] rounded-[10px] p-4 relative">
       {/* Header */}
-      <div className="flex items-center gap-5 mb-3">
-        <span className="text-xs font-semibold tracking-widest text-[#2b3a55] mr-4">
+      <div className="scale-98 flex items-center gap-4 mb-3">
+        <span className="text-xs font-semibold tracking-widest text-[#2b3a55]">
           UPCOMING EVENTS
         </span>
-        <span className="text-xs bg-[#dfe7f7] px-2 py-0.5 rounded-full text-[#2b3a55] border border-[#cdd7ee] mr-4 gap-3">ALL</span>
-        <span className="text-xs bg-[#dfe7f7] px-2 py-0.5 rounded-full text-[#2b3a55] border border-[#cdd7ee] mr-4">
-          COMMITTEE
-        </span>
+
+        {!defaultCommittee && (
+          <div className="flex items-center gap-2 ml-2">
+            <button
+              className={`text-xs px-2 py-0.5 rounded-full border ${
+                !committee
+                  ? "bg-[#cfe0ff] border-[#b8c9f2] text-[#1f2b4a]"
+                  : "bg-[#eaf0fe] border-[#d6e1fb] text-[#536084] hover:bg-[#e1e9fd]"
+              }`}
+              onClick={() => setCommittee(undefined)}
+            >
+              ALL
+            </button>
+            <button
+              className={`text-xs px-2 py-0.5 rounded-full border ${
+                committee
+                  ? "bg-[#cfe0ff] border-[#b8c9f2] text-[#1f2b4a]"
+                  : "bg-[#eaf0fe] border-[#d6e1fb] text-[#536084] hover:bg-[#e1e9fd]"
+              }`}
+              onClick={() => setCommittee("On-Campus")}
+            >
+              COMMITTEE
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Edge fades */}
       <div className="pointer-events-none absolute left-0 top-12 bottom-6 w-6 bg-gradient-to-r from-white to-transparent rounded-l-2xl" />
-      <div className="pointer-events-none absolute right-0 top-12 bottom-6 w-6 bg-gradient-to-l from-white to-transparent rounded-full" />
+      <div className="pointer-events-none absolute right-0 top-12 bottom-6 w-6 bg-gradient-to-l from-white to-transparent rounded-r-2xl" />
 
       {/* Arrows */}
       <button
@@ -74,23 +139,53 @@ export default function UpcomingEvents() {
         ›
       </button>
 
-      {/* Scroll rail */}
+      {/* Content */}
+      {error && (
+        <div className="text-sm text-red-600 px-1 py-2">{error}</div>
+      )}
+
       <div ref={railRef} className="no-scrollbar overflow-x-auto scroll-smooth">
-        <ul className="flex gap-4 pr-2 snap-x snap-mandatory">
-          {items.map((e) => (
-            <li
-              key={e.id}
-              className="snap-start shrink-0 w-72 h-32 rounded-2xl border border-[#d6d9e7] bg-[#e3e9f8] flex items-center justify-center"
-            >
-              <div className="opacity-70 text-center">
-                <div className="font-medium">{e.title}</div>
-                <div className="text-xs">
-                  {new Date(e.startTime).toLocaleString()}
+        <h1 className="scale-98 flex gap-4 pr-2 snap-x snap-mandatory">
+          {isLoading &&
+            Array.from({ length: 6 }).map((_, i) => (
+              <li
+                key={`s-${i}`}
+                className="snap-start shrink-0 w-72 h-32 rounded-2xl border border-[#d6d9e7] bg-[#e3e9f8] animate-pulse"
+              />
+            ))}
+
+          {!isLoading &&
+            items?.map((e) => (
+              <li
+                key={e.id}
+                className="rounded-[10px] snap-start shrink-0 w-72 h-32 rounded-2xl border border-[#d6d9e7] bg-[#e3e9f8] flex items-center justify-center"
+              >
+                <div className="text-[17px] text-center">
+                  <div className="font-medium text-[#2b3a55]">{e.title}</div>
+                  <div className="text-xs text-[#5d6a8a]">
+                    {e.when.toLocaleString(undefined, {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </div>
+                  {e.where && (
+                    <div className="text-[12px] text-[#7a86a8] mt-0.5">
+                      {e.where}
+                    </div>
+                  )}
                 </div>
-              </div>
+              </li>
+            ))}
+
+          {!isLoading && items && items.length === 0 && (
+            <li className="shrink-0 w-full h-24 flex items-center justify-center text-sm text-[#637099]">
+              No upcoming events.
             </li>
-          ))}
-        </ul>
+          )}
+        </h1>
       </div>
 
       {/* Progress bar */}
@@ -101,16 +196,7 @@ export default function UpcomingEvents() {
         />
       </div>
 
-      {/* hide scrollbar (component-scoped) */}
-      <style jsx>{`
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
-    </div>
+      
+    </section>
   );
 }
