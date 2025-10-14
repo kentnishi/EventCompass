@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../../../lib/prisma";
-
-const HARDCODED_USER_ID = process.env.HARDCODED_USER_ID!;
+import { createServer } from "../../../../../lib/supabase/server";
 
 type Context = {
   params: Promise<{
@@ -11,29 +9,72 @@ type Context = {
 
 export async function PATCH(req: Request, context: Context) {
   try {
+    const supabase = createServer();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError) {
+      console.error("Failed to resolve authenticated user:", userError);
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await context.params;
+    const chatId = Number(id);
+
+    if (Number.isNaN(chatId)) {
+      return NextResponse.json({ error: "Invalid chat id" }, { status: 400 });
+    }
+
     const { name } = await req.json();
 
     if (!name) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
-    // First, verify the chat belongs to the user before updating
-    const chat = await prisma.chat.findUnique({
-      where: { id, userId: HARDCODED_USER_ID },
-    });
+    const { data: existingChat, error: fetchError } = await supabase
+      .from("chats")
+      .select("id")
+      .eq("id", chatId)
+      .eq("user", user.id)
+      .single();
 
-    if (!chat) {
+    if (fetchError) {
+      console.error("Failed to fetch chat for rename:", fetchError);
+      if (fetchError.code === "PGRST116" || fetchError.code === "PGRST301") {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
+      return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    }
+
+    if (!existingChat) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // Now, update the chat
-    const updatedChat = await prisma.chat.update({
-      where: { id },
-      data: { name },
-    });
+    const { data: updatedChat, error: updateError } = await supabase
+      .from("chats")
+      .update({ name })
+      .eq("id", chatId)
+      .eq("user", user.id)
+      .select("id, name, messages, created_at")
+      .single();
 
-    return NextResponse.json(updatedChat);
+    if (updateError) {
+      console.error("Failed to update chat name:", updateError);
+      return NextResponse.json({ error: "Failed to rename chat" }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      id: updatedChat.id?.toString(),
+      name: updatedChat.name ?? name,
+      messages: Array.isArray(updatedChat.messages) ? updatedChat.messages : [],
+      createdAt: updatedChat.created_at,
+    });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
@@ -42,22 +83,41 @@ export async function PATCH(req: Request, context: Context) {
 
 export async function DELETE(_: Request, context: Context) {
   try {
-    const { id } = await context.params;
+    const supabase = createServer();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    // Verify the chat belongs to the user before deleting
-    const chat = await prisma.chat.findUnique({
-      where: { id, userId: HARDCODED_USER_ID },
-    });
-
-    if (!chat) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (userError) {
+      console.error("Failed to resolve authenticated user:", userError);
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Use a transaction to ensure both messages and the chat are deleted
-    await prisma.$transaction([
-      prisma.message.deleteMany({ where: { chatId: id } }),
-      prisma.chat.delete({ where: { id } }),
-    ]);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await context.params;
+    const chatId = Number(id);
+
+    if (Number.isNaN(chatId)) {
+      return NextResponse.json({ error: "Invalid chat id" }, { status: 400 });
+    }
+
+    const { error: deleteError } = await supabase
+      .from("chats")
+      .delete()
+      .eq("id", chatId)
+      .eq("user", user.id);
+
+    if (deleteError) {
+      if (deleteError.code === "PGRST116" || deleteError.code === "PGRST301") {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
+      console.error("Failed to delete chat:", deleteError);
+      return NextResponse.json({ error: "Failed to delete chat" }, { status: 500 });
+    }
 
     return new Response(null, { status: 204 }); // Success, no content
 
