@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+<<<<<<< HEAD
 import TopBar from "./Topbar";
 import LeftRail from "./LeftRail";
 import ChatColumn from "./ChatColumn";
@@ -8,6 +9,18 @@ import styles from "./CompassChat.module.css";
 
 type Message = { id: string; role: "USER" | "ASSISTANT"; text: string, streaming?: boolean };
 // The main Chat type no longer needs to hold all messages
+=======
+// Assuming these components exist and function correctly
+import TopBar from "./Topbar";
+import LeftRail from "./LeftRail";
+import ChatColumn from "./ChatColumn";
+import EventColumn from "./EventColumn";
+import styles from "../css/CompassChat.module.css";
+import EditIcon from "@mui/icons-material/Edit"; // Importing an icon for the "New Event" title
+import useMediaQuery from "@mui/material/useMediaQuery";
+
+type Message = { id: string; role: "USER" | "ASSISTANT"; text: string, streaming?: boolean };
+>>>>>>> 62ca3781628dc17fcb6ef5593ce6091f851ea686
 type Chat = { id: string; name: string };
 
 function makeId() {
@@ -19,13 +32,29 @@ export default function CompassChat() {
   const [activeChatId, setActiveChatId] = React.useState<string>("");
   const [activeChatMessages, setActiveChatMessages] = React.useState<Message[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
+<<<<<<< HEAD
   const [error, setError] = React.useState<string | null>(null); // For UI error reporting
   const [isRailVisible, setIsRailVisible] = React.useState(true);
+=======
+  const [error, setError] = React.useState<string | null>(null);
+  const isSmall = useMediaQuery("(max-width: 900px)"); 
+  const [isRailVisible, setIsRailVisible] = React.useState(true);
+  const railExpanded = isRailVisible;
+  const [selectedEventType, setSelectedEventType] = React.useState<string>("New Event"); // State for the dropdown
+  const [hasInteracted, setHasInteracted] = React.useState(false);
+
+
+  // --- Utility Functions (handleCreateNew, useEffects, etc. - unchanged logic) ---
+>>>>>>> 62ca3781628dc17fcb6ef5593ce6091f851ea686
 
   const handleCreateNew = React.useCallback(() => {
     (async () => {
       try {
         setError(null);
+<<<<<<< HEAD
+=======
+        // Using dynamic route segment in fetch calls (replace /api/chats with actual path)
+>>>>>>> 62ca3781628dc17fcb6ef5593ce6091f851ea686
         const res = await fetch(`/api/chats`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -46,6 +75,27 @@ export default function CompassChat() {
     })();
   }, []);
 
+<<<<<<< HEAD
+=======
+  React.useEffect(() => {
+    if (isSmall) {
+      setIsRailVisible(false); // always collapse when small
+    }
+  }, [isSmall]);
+
+  React.useEffect(() => {
+    if (!hasInteracted) {
+      setIsRailVisible(!isSmall);   // small => false, large => true
+    }
+  }, [isSmall, hasInteracted]);
+
+  const toggleRail = React.useCallback(() => {
+    setIsRailVisible(v => !v);
+    setHasInteracted(true);
+  }, []);
+
+
+>>>>>>> 62ca3781628dc17fcb6ef5593ce6091f851ea686
   // Load chats from the API on mount
   React.useEffect(() => {
     let mounted = true;
@@ -85,6 +135,7 @@ export default function CompassChat() {
     async function loadMessages() {
       try {
         setError(null);
+        // Using dynamic route segment in fetch calls
         const res = await fetch(`/api/chats/${activeChatId}/messages`);
         if (!res.ok) {
           if (mounted) setError("Failed to load messages for this chat.");
@@ -114,6 +165,7 @@ export default function CompassChat() {
     setSavedChats((prev) => prev.map((c) => (c.id === chatId ? { ...c, name: newName } : c)));
 
     try {
+      // Using dynamic route segment in fetch calls
       const res = await fetch(`/api/chats/${chatId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -133,7 +185,6 @@ export default function CompassChat() {
 
   async function handleDeleteChat(chatId: string) {
     const originalChats = savedChats;
-    
     // Optimistically remove the chat
     setSavedChats((prev) => prev.filter((c) => c.id !== chatId));
 
@@ -148,6 +199,7 @@ export default function CompassChat() {
     }
 
     try {
+      // Using dynamic route segment in fetch calls
       const res = await fetch(`/api/chats/${chatId}`, { method: "DELETE" });
       if (!res.ok) {
         setError("Failed to delete chat.");
@@ -172,6 +224,7 @@ export default function CompassChat() {
     setIsLoading(true);
 
     try {
+      // Using dynamic route segment in fetch calls
       const res = await fetch(`/api/chats/${activeChatId}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -200,20 +253,70 @@ export default function CompassChat() {
 
   return (
     <main>
-      <TopBar onCreate={handleCreateNew} />
-      <div className={styles.shell}>
-        <div className={styles.panel} style={{ gridTemplateColumns: isRailVisible ? '280px 1fr' : 'auto 1fr' }}>
-          <LeftRail 
-            savedChats={savedChats} 
-            activeId={activeChatId} 
-            onSelect={handleSelectChat} 
-            onRename={handleRenameChat} 
-            onDelete={handleDeleteChat} 
-            isRailVisible={isRailVisible}
-            onToggleVisibility={() => setIsRailVisible(!isRailVisible)}
-          />
-          <ChatColumn messages={activeChatMessages} onSend={handleSendMessage} isLoading={isLoading} />
+      <div className={styles.shell} style={{ minWidth: '1035px', marginBottom: '80px' }}>
+
+        {/* Header Row for Controls (Begin Planning / New Event) */}
+        <div className={styles.headerRow} style={{
+          display: 'grid',
+          gridTemplateColumns: '60% 40%', // Split columns to match the visual ratio
+          padding: '0 20px',
+          marginBottom: '10px'
+        }}>
+          {/* Left Side: Planning Controls */}
+          <div className={styles.planningControls} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <TopBar onCreate={handleCreateNew} />
+          </div>
+
+          {/* Right Side: Event Column Header */}
+          <div className={styles.eventColumnHeader} style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            paddingLeft: '30px'
+          }}>
+            <h2 className={styles.title}>
+              New Event
+              {/* Pencil icon for editing title, using EditIcon from MUI */}
+              <EditIcon style={{ fontSize: '1.2rem', marginLeft: '8px', color: '#666' }} />
+            </h2>
+          </div>
         </div>
+
+        {/* Main Two-Column Split Content */}
+        <div className={styles.twoColumnContainer} style={{
+          display: 'grid',
+          gridTemplateColumns: '60% 40%',
+          gap: '20px',
+          padding: '0 20px',
+          height: 'calc(100vh - 120px)', // Account for topbar and headerRow height
+          marginBottom: '80px'
+        }}>
+
+          <div className={styles.chatSection} style={{
+            display: 'grid',
+            gridTemplateColumns: railExpanded ? '280px 1fr' : '56px 1fr',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            borderRadius: '8px',
+            overflow: 'hidden' // Ensures the rail and chat fit within the rounded container
+          }}>
+            <LeftRail
+              savedChats={savedChats}
+              activeId={activeChatId}
+              onSelect={handleSelectChat}
+              onRename={handleRenameChat}
+              onDelete={handleDeleteChat}
+              isRailVisible={railExpanded}
+              onToggleVisibility={toggleRail} 
+            />
+            <ChatColumn messages={activeChatMessages} onSend={handleSendMessage} isLoading={isLoading} />
+          </div>
+
+          {/* Right Side: Event Column (The form) */}
+          <div className={styles.eventSection}>
+            <EventColumn />
+          </div>
+        </div>
+
         {error && <div className={styles.errorBanner}>{error} <button onClick={() => setError(null)}>X</button></div>}
       </div>
     </main>

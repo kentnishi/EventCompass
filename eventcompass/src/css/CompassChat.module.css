@@ -1,0 +1,95 @@
+/* Scoped styles ported from ref.html. Keep variables in globals.css. */
+.topbar {
+  display: flex;
+  justify-content: space-between; 
+  align-items: center;            
+  width: 100%;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;    
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;      
+  gap: 12px;                     
+}
+
+.title{font-size:40px;letter-spacing:.5px;font-weight:600}
+.select{appearance:none;border:1.5px solid var(--ring);background:var(--card);padding:10px 38px 10px 14px;border-radius:10px;font-weight:600;position:relative}
+.selectWrap{position:relative;display:inline-block}
+.selectWrap::after{content:"\25BE";position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.btn{background:var(--btn);color:var(--btn-text);border:0;border-radius:12px;padding:12px 18px;font-weight:700;box-shadow:0 2px 0 rgba(0,0,0,.05); cursor: pointer;}
+
+.shell{padding:0 22px 28px}
+.panel{background:var(--card);border-radius:10px;border:1px solid var(--ring);display:grid;grid-template-columns:280px 1fr;min-height:560px;height: calc(100vh - 222px);}
+
+.rail{background:#3e4864;color:#dfe5ff;border-top-left-radius:10px;border-bottom-left-radius:10px;padding:14px;display:flex;flex-direction:column;width:100%;min-width:56px;position: relative;}
+.hamburger{width:30px;height:24px;border-radius:6px;display:inline-grid;place-items:center;color:#cfd6ff;margin:8px 0 10px 4px}
+.rail h4{margin:6px 0 8px 8px;font-weight:700;letter-spacing:.2px}
+.rail.collapsed {  width: 56px;}
+.list{overflow:auto;padding-right:4px}
+.chip{background:#586185;color:#e8ecff;border-radius:10px;padding:10px 12px;margin:8px 4px;font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; display: flex; align-items: center; justify-content: space-between;}
+.chip:hover .chipIcon { opacity: 1; }
+.chipIcon { opacity: 0; cursor: pointer; transition: opacity 0.2s; }
+.chipInput { background: #42507a; color: white; border: 1px solid #6e7485; border-radius: 5px; padding: 2px 5px; font-size: 14px; font-weight: 600; width: 100%; }
+
+.chatCol{position:relative;border-left:1px solid var(--ring);display:grid;grid-template-rows:auto 1fr auto;min-height:100%;overflow:hidden}
+.chatHeader{background:var(--brand-2);color:#e8ecff;text-align:center;padding:16px;font-weight:800;letter-spacing:3px;font-size:26px;border-top-right-radius:10px}
+.chatScroll{overflow:auto;padding:22px;position:relative}
+
+.bubble{display:inline-block;max-width:580px;padding:8px 18px;border-radius:14px;font-weight:600;line-height:1.35;box-shadow:0 1px 0 rgba(0,0,0,.05)}
+.user{background:var(--accent);color:#fff;align-self:flex-end}
+.assistant{background:var(--assistant);color:#23304c}
+
+.row{display:flex;margin:14px 0}
+.rowRight{display:flex;margin:14px 0;justify-content:flex-end}
+
+.typing{border:2px solid var(--ring);border-radius:12px;padding:14px 16px;color:#99a0b6;background:#f9faff}
+
+.footer{display:flex;align-items:center;gap:12px;padding:12px 16px;position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--ring)}
+.save{margin-left:auto;background:#42507a}
+
+.inputWrap{display:flex;align-items:center;gap:10px;flex:1}
+.input{flex:1;border:2px solid var(--ring);border-radius:12px;padding:12px 14px;background:#f9faff;font-weight:600;color:var(--ink)}
+.input::placeholder{color:#99a0b6}
+.square{width:28px;height:28px;border:2px solid #c9d0ff;border-radius:8px;background:#e5ebff;display:inline-grid;place-items:center}
+
+.avatar{width:34px;height:34px;border-radius:999px;background:#e36a6a;display:grid;place-items:center;color:#fff;font-weight:800;border:3px solid #fff;position:relative}
+.badge{position:absolute;right:-2px;top:-2px;width:10px;height:10px;background:#e74a4a;border:2px solid #fff;border-radius:999px}
+
+@media (max-width: 960px){
+  .panel{grid-template-columns:1fr}
+}
+
+.errorBanner {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #e74c3c;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 600px;
+  z-index: 1000;
+  font-weight: 600;
+}
+
+.errorBanner button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 16px;
+  margin-left: 15px;
+  cursor: pointer;
+  font-weight: 800;
+}

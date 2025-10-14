@@ -1,0 +1,60 @@
+original_column,short_name,question_label,import_id
+4,qid1,Which UPB events from last year did you attend or hear about? (Select all that apply),QID1
+5,qid2,Which types of events would you most like to see again or see more of? (Select up to 3) - Selected Choice,QID2
+5_13_TEXT,qid2_13_text,Which types of events would you most like to see again or see more of? (Select up to 3) - Other - Text,QID2_13_TEXT
+6,qid8_text,What’s one specific event (from last year or a new idea) you wish we would host?,QID8_TEXT
+7,qid9_text,Is there a past event you want to see again?,QID9_TEXT
+8,qid5,What features matter most to you in campus events? (Select up to 3) - Selected Choice,QID5
+8_9_TEXT,qid5_9_text,What features matter most to you in campus events? (Select up to 3) - Other: - Text,QID5_9_TEXT
+9,qid50,What kind of food do you want to see at events? - Selected Choice,QID50
+9_11_TEXT,qid50_11_text,What kind of food do you want to see at events? - Other: - Text,QID50_11_TEXT
+10,qid53_text,"Which Cleveland restaurants, cafés, or food spots would you love to see UPB bring to campus?",QID53_TEXT
+11_1,qid10_1,How much are you willing to pay (if anything) for: (Enter $0 if you only attend free events) - On-campus event:,QID10_1
+11_2,qid10_2,How much are you willing to pay (if anything) for: (Enter $0 if you only attend free events) - Off-campus event:,QID10_2
+11_3,qid10_3,How much are you willing to pay (if anything) for: (Enter $0 if you only attend free events) - Spring Break Trip:,QID10_3
+11_4,qid10_4,How much are you willing to pay (if anything) for: (Enter $0 if you only attend free events) - Fall Break Trip:,QID10_4
+11_5,qid10_5,How much are you willing to pay (if anything) for: (Enter $0 if you only attend free events) - General Event:,QID10_5
+12,qid13,"For Trips, would you be willing to pay a higher fee for a unique location and experiences?",QID13
+13,qid15_text,If so how much?,QID15_TEXT
+14,qid3,When are you most likely to attend campus events? (Select all that apply),QID3
+15,qid4,What event size do you prefer? Select all that apply,QID4
+16,qid6,Would you prefer events to…,QID6
+17,qid7,What stops you from attending more events? (Select all that apply) - Selected Choice,QID7
+17_9_TEXT,qid7_9_text,What stops you from attending more events? (Select all that apply) - Other: - Text,QID7_9_TEXT
+18,qid16,What days are you generally free for events? (Select all that apply),QID16
+19,qid17,What times work best for you? (Select all that apply),QID17
+20,qid18,Does your availability change during midterms or finals?,QID18
+21,qid19_text,"If yes, how? and would you still be willing to go to events?",QID19_TEXT
+22,qid20,How far in advance do you want to know about events?,QID20
+23,qid21,How do you usually hear about campus events? (Select all that apply) - Selected Choice,QID21
+23_6_TEXT,qid21_6_text,How do you usually hear about campus events? (Select all that apply) - Other: - Text,QID21_6_TEXT
+24,qid22_text,What's the BEST way to reach you about events?,QID22_TEXT
+25,qid39,What year are you?,QID39
+26,qid40_text,Major/Area of study,QID40_TEXT
+27,qid41_text,"Where are you from? (City, State/Country/Region)",QID41_TEXT
+28,qid42_text,Is there a part of your culture or background you’d like to see reflected in campus events?,QID42_TEXT
+29,qid54_text,"Are there specific interests, hobbies, or communities you’d like UPB to highlight through events?",QID54_TEXT
+30,qid55_text,"Are there traditions, holidays, or celebrations that matter to you and you’d like to see represented on campus?",QID55_TEXT
+31,qid56,Which types of off-campus locations would you most like UPB to plan trips to? - Selected Choice,QID56
+31_9_TEXT,qid56_9_text,Which types of off-campus locations would you most like UPB to plan trips to? - Other: - Text,QID56_9_TEXT
+32,qid23,Do you feel campus events are welcoming to all students?,QID23
+33,qid24_text,"If not, what can be improved?",QID24_TEXT
+34,qid26,Do you have any accessibility needs for event participation?,QID26
+35,qid25_text,Please specify so we can try to be more accommodating,QID25_TEXT
+36,qid27_text,What helps you feel more connected to the campus community?,QID27_TEXT
+37,qid52,Any dietary restrictions? - Selected Choice,QID52
+37_3_TEXT,qid52_3_text,Any dietary restrictions? - Other: - Text,QID52_3_TEXT
+38_1,qid28_1,Giveaway/Swag Sizes - Shirt Size,QID28_1
+38_2,qid28_2,Giveaway/Swag Sizes - Hoodie Size,QID28_2
+39,qid49_text,Shoe size? (in US measurements),QID49_TEXT
+40,qid38_text,"What would be your ideal event giveaway or UPB swag? (List out whatever you want, crazy ideas, simple ideas, etc.)",QID38_TEXT
+41_NPS_GROUP,qid43_nps_group,How satisfied are you with UPB events? (If applicable) - Group,QID43_NPS_GROUP
+41,qid43,How satisfied are you with UPB events? (If applicable),QID43
+42,qid44_text,What is one thing we could do to make events better for you or more students?,QID44_TEXT
+43,qid58,Which prize would you like to enter for?,QID58
+44,qid59_text,Any suggestions to improve future UPB surveys?,QID59_TEXT
+Q_StraightliningCount,q_straightliningcount,Q_StraightliningCount,Q_StraightliningCount
+Q_StraightliningPercentage,q_straightliningpercentage,Q_StraightliningPercentage,Q_StraightliningPercentage
+Q_StraightliningQuestions,q_straightliningquestions,Q_StraightliningQuestions,Q_StraightliningQuestions
+Q_UnansweredPercentage,q_unansweredpercentage,Q_UnansweredPercentage,Q_UnansweredPercentage
+Q_UnansweredQuestions,q_unansweredquestions,Q_UnansweredQuestions,Q_UnansweredQuestions
