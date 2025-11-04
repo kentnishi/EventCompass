@@ -29,9 +29,10 @@ interface EventInfo {
   status: "planning" | "reservations" | "promo" | "purchases"; // Enum for status
 }
 
-export default function EventPlanningPage({ id }: { id: { id: string } }) {
+export default function EventPlanningPage({ id }: { id: string }) {
+  const eventID = id;
+
   const [eventInfo, setEventInfo] = useState<EventInfo | null>(null);
-  const [eventID, setEventID] = useState(id);
   // const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +42,7 @@ export default function EventPlanningPage({ id }: { id: { id: string } }) {
 
   useEffect(() => {
     // Fetch event data using the event ID from params
-    if (!id) {
+    if (!eventID) {
       console.error("Event ID is missing");
       return;
     }
@@ -67,7 +68,7 @@ export default function EventPlanningPage({ id }: { id: { id: string } }) {
     if (eventID) {
       fetchEvent();
     }
-  }, [id]);
+  }, [eventID]);
 
     // Update event function
   async function updateEvent() {
@@ -445,7 +446,7 @@ export default function EventPlanningPage({ id }: { id: { id: string } }) {
                       color: '#4a5676',
                       fontWeight: 600,
                     }}>
-                        {eventInfo?.budget !== undefined ? `$${eventInfo.budget.toLocaleString()}` : "Budget not available"}
+                        {eventInfo.budget === -1 ? 'N/A' : `$${eventInfo.budget}`}
                     </div>
                   </div>
 
@@ -657,8 +658,8 @@ export default function EventPlanningPage({ id }: { id: { id: string } }) {
                     </label>
                     <input
                       type="number"
-                      value={eventInfo.budget}
-                      onChange={(e) => setEventInfo({...eventInfo, budget: parseFloat(e.target.value)})}
+                      value={eventInfo.budget !== null && eventInfo.budget !== undefined ? eventInfo.budget : 0}
+                      onChange={(e) => setEventInfo({ ...eventInfo, budget: parseFloat(e.target.value) || 0 })}
                       style={{
                         width: '100%',
                         padding: '12px',
@@ -668,7 +669,8 @@ export default function EventPlanningPage({ id }: { id: { id: string } }) {
                         color: '#4a5676',
                         fontWeight: 600,
                       }}
-                    />
+                    >
+                    </input>
                   </div>
 
                   {/* Attendees */}

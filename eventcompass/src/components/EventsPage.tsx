@@ -168,7 +168,8 @@ function EventCard({ event, onClick }: { event: Event; onClick: () => void }) {
               BUDGET
             </div>
             <div style={{ fontSize: '0.9rem', color: '#4a5676', fontWeight: 600 }}>
-              ${event.spending || 0} / ${event.budget || 0}
+
+              {event.spending === -1 ? 0: event.spending} / {event.budget === -1 ? 0 : event.budget}
             </div>
           </div>
         </div>
