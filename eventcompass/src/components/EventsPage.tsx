@@ -231,6 +231,11 @@ export default function EventsPage() {
     }
   }
 
+  async function createEvent() {
+    console.log("Created new event");
+    router.push(`/events/new`)
+  }
+
   // Filter and sort events
   const filteredEvents = events
     .filter(event => {
@@ -333,7 +338,7 @@ export default function EventsPage() {
           </p>
         </div>
         <button
-          onClick={() => window.location.href = '/events/new'}
+          onClick={() => createEvent()}
           style={{
             display: 'flex',
             alignItems: 'center',
