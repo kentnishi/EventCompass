@@ -20,10 +20,10 @@ const StartScreen = ({ onSelectPath }) => {
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <h1 style={{ fontSize: '2.5rem', fontWeight: 700, color: '#333', marginBottom: '12px' }}>
-            Event Compass
+            Event Builder
           </h1>
           <p style={{ fontSize: '1.1rem', color: '#666', margin: 0 }}>
-            Plan your perfect campus event with AI assistance
+            Plan your campus event with AI assistance
           </p>
         </div>
 

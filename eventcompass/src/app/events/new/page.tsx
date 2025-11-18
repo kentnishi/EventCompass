@@ -1,8 +1,8 @@
-import EventPlanPage from "@/components/EventPlanPage";
+import EventPlanningPage from "@/components/EventPlanningPage";
 
 export default function Events() {
     
 
-    return <EventPlanPage />;
+    return <EventPlanningPage />;
   }
   
