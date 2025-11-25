@@ -20,7 +20,7 @@ interface Event {
   location?: string;
   spending?: number;
   budget?: number;
-  status: 'planning' | 'reservations' | 'promo' | 'purchases' | 'complete';
+  status: 'planning' | 'reservations' | 'promo' | 'purchases' | 'completed';
   committee?: string;
 }
 
@@ -169,7 +169,8 @@ function EventCard({ event, onClick }: { event: Event; onClick: () => void }) {
               BUDGET
             </div>
             <div style={{ fontSize: '0.9rem', color: '#4a5676', fontWeight: 600 }}>
-              ${event.spending || 0} / ${event.budget || 0}
+
+              {event.spending === -1 ? 0: event.spending} / {event.budget === -1 ? 0 : event.budget}
             </div>
           </div>
         </div>
@@ -198,13 +199,13 @@ function EventCard({ event, onClick }: { event: Event; onClick: () => void }) {
   );
 }
 
-export default function EventsPage() {
+export default function EventsPage({ filterByStatus }: { filterByStatus?: string }) {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCommittee, setFilterCommittee] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterStatus, setFilterStatus] = useState(filterByStatus || 'all');
   const [sortBy, setSortBy] = useState('date');
 
   const router = useRouter();
@@ -229,6 +230,11 @@ export default function EventsPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function createEvent() {
+    console.log("Created new event");
+    router.push(`/events/new`)
   }
 
   // Filter and sort events
@@ -333,7 +339,7 @@ export default function EventsPage() {
           </p>
         </div>
         <button
-          onClick={() => window.location.href = '/events/new'}
+          onClick={() => createEvent()}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -505,7 +511,10 @@ export default function EventsPage() {
             <EventCard
               key={event.id}
               event={event}
-              onClick={() => router.push(`/events/${event.id}`)}
+              onClick={() => {
+                const route = event.status === "planning" ? `/event-plans/${event.id}` : `/events/${event.id}`;
+                router.push(route);
+              }}
               
             />
           ))}
