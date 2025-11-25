@@ -20,7 +20,7 @@ interface Event {
   location?: string;
   spending?: number;
   budget?: number;
-  status: 'planning' | 'reservations' | 'promo' | 'purchases' | 'completed';
+  status: 'planning' | 'reservations' | 'promo' | 'purchases';
   committee?: string;
 }
 
@@ -198,13 +198,13 @@ function EventCard({ event, onClick }: { event: Event; onClick: () => void }) {
   );
 }
 
-export default function EventsPage({ filterByStatus }: { filterByStatus?: string }) {
+export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCommittee, setFilterCommittee] = useState('all');
-  const [filterStatus, setFilterStatus] = useState(filterByStatus || 'all');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [sortBy, setSortBy] = useState('date');
 
   const router = useRouter();
@@ -327,7 +327,7 @@ export default function EventsPage({ filterByStatus }: { filterByStatus?: string
             margin: 0,
             marginBottom: '8px',
           }}>
-            All Events
+            All Event Plans
           </h1>
           <p style={{
             fontSize: '1rem',
@@ -510,10 +510,7 @@ export default function EventsPage({ filterByStatus }: { filterByStatus?: string
             <EventCard
               key={event.id}
               event={event}
-              onClick={() => {
-                const route = event.status === "planning" ? `/event-plans/${event.id}` : `/events/${event.id}`;
-                router.push(route);
-              }}
+              onClick={() => router.push(`/events/${event.id}`)}
               
             />
           ))}

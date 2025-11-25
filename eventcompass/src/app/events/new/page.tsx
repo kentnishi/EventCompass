@@ -1,4 +1,4 @@
-import EventPlanningPage from "@/components/EventPlanningPage";
+import EventPlanningPage from "@/components/EventQuestionaire";
 
 export default function Events() {
     

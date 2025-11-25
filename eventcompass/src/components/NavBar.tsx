@@ -21,8 +21,8 @@ export default function NavBar() {
           <div className={styles.menu}>
             <Link href="/home">Home</Link>
             <Link href="/tasks">Tasks</Link>
-            <Link href="/event-manager">Event<br/>Manager</Link>
             <Link href="/chat">Chat</Link>
+            <Link href="/event-plans">Event Plans</Link>
             <Link href="/events">Events</Link>
             <ProfileCard />
           </div>
