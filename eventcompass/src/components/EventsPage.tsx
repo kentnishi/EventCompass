@@ -20,7 +20,7 @@ interface Event {
   location?: string;
   spending?: number;
   budget?: number;
-  status: 'planning' | 'reservations' | 'promo' | 'purchases';
+  status: 'planning' | 'reservations' | 'promo' | 'purchases' | 'complete';
   committee?: string;
 }
 
@@ -31,6 +31,7 @@ function EventCard({ event, onClick }: { event: Event; onClick: () => void }) {
     reservations: { bg: '#fff3e0', color: '#f57c00', label: 'Reservations' },
     promo: { bg: '#e8f5e9', color: '#388e3c', label: 'Promo' },
     purchases: { bg: '#f3e5f5', color: '#7b1fa2', label: 'Purchases' },
+    complete: { bg: '#119113ff', color: '#e7eeeaff', label: 'Complete' },
   };
 
   const getStatusStyle = (status: keyof typeof styles) => {
@@ -216,7 +217,7 @@ export default function EventsPage() {
     try {
       setLoading(true);
       const { data, error: fetchError } = await supabase
-        .from('events')
+        .from('past_events')
         .select('*')
         .order('start_date', { ascending: true, nullsFirst: false });
 

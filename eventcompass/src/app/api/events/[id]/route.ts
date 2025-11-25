@@ -5,7 +5,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     const supabase = createServer();
 
     const { data: event, error: eventError } = await supabase
-        .from("events")
+        .from("past_events")
         .select("*")
         .eq("id", eventId)
         .single();
@@ -55,7 +55,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
         // First check if event exists
         const { data: existingEvent, error: checkError } = await supabase
-            .from("events")
+            .from("past_events")
             .select("*")
             .eq("id", eventId)
             .select();
@@ -82,9 +82,9 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
         // Update event in database
         const { data: updatedEvent, error: updateError } = await supabase
-            .from("events")
+            .from("past_events")
             .update(updateData)
-            .eq("id", eventId)
+            .eq("eid", eventId)
             .select()
             .maybeSingle(); // Use maybeSingle() to avoid the "cannot coerce" error
 
