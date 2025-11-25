@@ -1,6 +1,10 @@
-import EventPlanningPage from "@/components/EventPlanningPage";
-
 export default function EventDetails({ params }: { params: { id: string } }) {
-    console.log("Event ID:", params.id); // Log the event ID to verify it's being received correctly
-    return <EventPlanningPage id={params.id} />;
+    return (
+        <div style={{ textAlign: "center", padding: "50px" }}>
+            <h1 style={{ fontSize: "2rem", color: "#333" }}>Event Not Found</h1>
+            <p style={{ fontSize: "1.2rem", color: "#666" }}>
+                The event you are looking for does not exist or the ID is missing.
+            </p>
+        </div>
+    );
 }
