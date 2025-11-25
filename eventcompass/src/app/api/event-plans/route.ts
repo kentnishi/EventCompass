@@ -3,34 +3,44 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const supabase = createServer();
+    const supabase = await createServer();
     const body = await request.json();
 
     // Validate the incoming request body
-    if (!body.name || !body.start_date || !body.end_date || !body.location) {
+    if (!body.name) {
       return NextResponse.json(
-        { error: "Missing required fields: name, start_date, end_date, or location" },
+        { error: "Missing required field: name" },
         { status: 400 }
       );
     }
 
+    // Get the current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     // Insert the new event into the database
-    const { data, error } = await supabase
+    const { data: eventData, error: eventError } = await supabase
       .from("events")
       .insert([
         {
           name: body.name,
           description: body.description || null,
           attendees: body.attendees || 0,
-          start_date: body.start_date,
-          end_date: body.end_date,
+          start_date: body.start_date || null,
+          end_date: body.end_date || null,
           start_time: body.start_time || null,
           end_time: body.end_time || null,
-          budget: body.budget || 0,
-          spending: body.spending || 0,
-          location: body.location,
+          budget: 0, // Will be calculated from budget_items
+          spending: 0, // Will be calculated from budget_items
+          location: body.location || null,
           committee: body.committee || null,
-          status: body.status || "draft",
+          status: body.status || "planning",
           food_provided: body.food_provided || false,
           giveaways: body.giveaways || false,
           registration_required: body.registration_required || false,
@@ -40,15 +50,113 @@ export async function POST(request: Request) {
       .select("*")
       .single();
 
-    if (error) {
-      console.error("Error inserting event:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (eventError) {
+      console.error("Error inserting event:", eventError);
+      return NextResponse.json({ error: eventError.message }, { status: 500 });
+    }
+
+    const eventId = eventData.id;
+
+    // Insert activities
+    if (body.activities && body.activities.length > 0) {
+      const activitiesData = body.activities.map((activity: any, index: number) => ({
+        event_id: eventId,
+        name: activity.name,
+        description: activity.description || "",
+      }));
+
+      const { error: activitiesError } = await supabase
+        .from("activities")
+        .insert(activitiesData);
+
+      if (activitiesError) {
+        console.error("Error inserting activities:", activitiesError);
+        // Don't fail the entire request, just log the error
+      }
+    }
+
+    // Insert schedule items
+    if (body.schedule && body.schedule.length > 0) {
+      const scheduleData = body.schedule.map((item: any, index: number) => ({
+        event_id: eventId,
+        activity_id: item.activityId || null,
+        schedule_order: index,
+        time: item.time || "",
+        duration: item.duration || "",
+        notes: item.notes || "",
+      }));
+
+      const { error: scheduleError } = await supabase
+        .from("schedule_items")
+        .insert(scheduleData);
+
+      if (scheduleError) {
+        console.error("Error inserting schedule items:", scheduleError);
+      }
+    }
+
+    // Insert shopping items
+    if (body.shopping && body.shopping.length > 0) {
+      const shoppingData = body.shopping.map((item: any) => ({
+        event_id: eventId,
+        item: item.item,
+        quantity: item.quantity || "",
+        group: item.group || "Other",
+        url: null,
+      }));
+
+      const { error: shoppingError } = await supabase
+        .from("shopping_items")
+        .insert(shoppingData);
+
+      if (shoppingError) {
+        console.error("Error inserting shopping items:", shoppingError);
+      }
+    }
+
+    // Insert tasks
+    if (body.tasks && body.tasks.length > 0) {
+      const tasksData = body.tasks.map((task: any) => ({
+        event_id: eventId,
+        task: task.task,
+        assigned_to: task.assignedTo || "",
+        deadline: task.deadline || "",
+        status: task.status || "pending",
+        linked_to: task.linkedTo || null,
+      }));
+
+      const { error: tasksError } = await supabase
+        .from("tasks")
+        .insert(tasksData);
+
+      if (tasksError) {
+        console.error("Error inserting tasks:", tasksError);
+      }
+    }
+
+    // Insert budget items
+    if (body.budget && body.budget.length > 0) {
+      const budgetData = body.budget.map((item: any, index: number) => ({
+        event_id: eventId,
+        category: item.category,
+        estimated: item.estimated || 0,
+        actual: item.actual || 0,
+        
+      }));
+
+      const { error: budgetError } = await supabase
+        .from("budget_items")
+        .insert(budgetData);
+
+      if (budgetError) {
+        console.error("Error inserting budget items:", budgetError);
+      }
     }
 
     // Return the created event
-    return NextResponse.json({ event: data }, { status: 201 });
+    return NextResponse.json({ event: eventData }, { status: 201 });
   } catch (error: any) {
-    console.error("Error in POST /api/events:", error);
+    console.error("Error in POST /api/event-plans:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

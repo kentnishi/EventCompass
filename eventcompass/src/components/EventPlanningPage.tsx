@@ -38,11 +38,11 @@ const PLACEHOLDER_EVENT_PLAN = {
     }
   ],
   schedule: [
-    { time: "6:00 PM", duration: "15 min", activityId: 1, notes: "" },
-    { time: "6:15 PM", duration: "20 min", activityId: 2, notes: "" },
-    { time: "6:35 PM", duration: "45 min", activityId: 3, notes: "" },
-    { time: "7:20 PM", duration: "20 min", activityId: 4, notes: "" },
-    { time: "7:40 PM", duration: "20 min", activityId: 5, notes: "" }
+    { time: "6:00 PM", duration: 15, activityId: 1, notes: "" },
+    { time: "6:15 PM", duration: 15, activityId: 2, notes: "" },
+    { time: "6:35 PM", duration: 15, activityId: 3, notes: "" },
+    { time: "7:20 PM", duration: 20, activityId: 4, notes: "" },
+    { time: "7:40 PM", duration: 20, activityId: 5, notes: "" }
   ],
   shopping: [
     { 
@@ -107,7 +107,7 @@ const PLACEHOLDER_EVENT_PLAN = {
       id: 1, 
       task: "Book guest speaker", 
       assignedTo: "", 
-      deadline: "2 weeks before", 
+      deadline: "2025-11-25",
       status: "pending", 
       linkedTo: "activity-2" 
     },
@@ -115,7 +115,7 @@ const PLACEHOLDER_EVENT_PLAN = {
       id: 2, 
       task: "Order stationery supplies", 
       assignedTo: "", 
-      deadline: "1 week before", 
+      deadline: "2025-11-25", 
       status: "pending", 
       linkedTo: "activity-3" 
     },
@@ -123,7 +123,7 @@ const PLACEHOLDER_EVENT_PLAN = {
       id: 3, 
       task: "Create letter writing prompts", 
       assignedTo: "", 
-      deadline: "1 week before", 
+      deadline: "2025-11-25", 
       status: "pending", 
       linkedTo: "activity-3" 
     },
@@ -139,7 +139,7 @@ const PLACEHOLDER_EVENT_PLAN = {
       id: 5, 
       task: "Coordinate with nursing home", 
       assignedTo: "", 
-      deadline: "3 weeks before", 
+      deadline: "2025-11-25", 
       status: "pending", 
       linkedTo: null 
     },
@@ -147,7 +147,7 @@ const PLACEHOLDER_EVENT_PLAN = {
       id: 6, 
       task: "Reserve venue", 
       assignedTo: "", 
-      deadline: "3 weeks before", 
+      deadline: "2025-11-25", 
       status: "pending", 
       linkedTo: null 
     },
@@ -155,7 +155,7 @@ const PLACEHOLDER_EVENT_PLAN = {
       id: 7, 
       task: "Purchase refreshments", 
       assignedTo: "", 
-      deadline: "2 days before", 
+      deadline: "2025-11-25", 
       status: "pending", 
       linkedTo: "activity-4" 
     }
@@ -180,7 +180,7 @@ const EventPlanningPage = () => {
   
   const [eventPlan, setEventPlan] = useState(initialEventPlan);
   const [activeTab, setActiveTab] = useState("overview");
-  const [status, setStatus] = useState("draft");
+  const [status, setStatus] = useState("planning");
 
   const updatePlan = (field, value) => {
     setEventPlan((prev) => ({ ...prev, [field]: value }));
@@ -272,7 +272,7 @@ const EventPlanningPage = () => {
   };
 
   const totalBudget = eventPlan?.budget.reduce((sum, item) => sum + item.estimated, 0) || 0;
-  const isReadOnly = status !== "draft";
+  const isReadOnly = status !== "planning";
 
   return (
     <EditorScreen

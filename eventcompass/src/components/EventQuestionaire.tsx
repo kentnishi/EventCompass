@@ -28,7 +28,7 @@ const EventQuestionaire = () => {
     shopping: true,
     tasks: true
   });
-  const [status, setStatus] = useState('draft');
+  const [status, setStatus] = useState('planning');
 
   const router = useRouter();
 
@@ -89,24 +89,24 @@ const EventQuestionaire = () => {
           { id: 5, name: "Wrap-up & Clean-up", description: "Collect letters, thank attendees" }
         ],
         schedule: [
-          { time: "6:00 PM", duration: "15 min", activityId: 1, notes: "" },
-          { time: "6:15 PM", duration: "20 min", activityId: 2, notes: "" },
-          { time: "6:35 PM", duration: "45 min", activityId: 3, notes: "" },
-          { time: "7:20 PM", duration: "20 min", activityId: 4, notes: "" },
-          { time: "7:40 PM", duration: "20 min", activityId: 5, notes: "" }
+          { time: "6:00 PM", duration: 15, activityId: 1, notes: "" },
+          { time: "6:15 PM", duration: 20, activityId: 2, notes: "" },
+          { time: "6:35 PM", duration: 45, activityId: 3, notes: "" },
+          { time: "7:20 PM", duration: 20, activityId: 4, notes: "" },
+          { time: "7:40 PM", duration: 20, activityId: 5, notes: "" }
         ],
         shopping: [
-          { id: 1, item: "Stationery sets", quantity: 60, category: "Materials", linkedTo: "activity-3", purchased: false },
-          { id: 2, item: "Writing prompts cards", quantity: 60, category: "Materials", linkedTo: "activity-3", purchased: false },
-          { id: 3, item: "Tea & Coffee", quantity: "For 60", category: "Food", linkedTo: "activity-4", purchased: false },
-          { id: 4, item: "Cookies", quantity: "5 boxes", category: "Food", linkedTo: "activity-4", purchased: false },
-          { id: 5, item: "Display boards", quantity: 2, category: "Equipment", linkedTo: "activity-4", purchased: false }
+          { item: "Stationery sets", quantity: 60, category: "Materials", linkedTo: null, purchased: false },
+          { item: "Writing prompts cards", quantity: 60, category: "Materials", linkedTo: null, purchased: false },
+          { item: "Tea & Coffee", quantity: 60, category: "Food", linkedTo: null, purchased: false },
+          { item: "Cookies", quantity: 5, category: "Food", linkedTo: null, purchased: false },
+          { item: "Display boards", quantity: 2, category: "Equipment", linkedTo: null, purchased: false }
         ],
         tasks: [
-          { id: 1, task: "Book guest speaker", assignedTo: "", deadline: "2 weeks before", status: "pending", linkedTo: "activity-2" },
-          { id: 2, task: "Order stationery supplies", assignedTo: "", deadline: "1 week before", status: "pending", linkedTo: "activity-3" },
-          { id: 3, task: "Create letter writing prompts", assignedTo: "", deadline: "1 week before", status: "pending", linkedTo: "activity-3" },
-          { id: 4, task: "Set up reflection board", assignedTo: "", deadline: "Day of event", status: "pending", linkedTo: "activity-4" },
+          { id: 1, task: "Book guest speaker", assignedTo: "", deadline: "2 weeks before", status: "pending", linkedTo: null },
+          { id: 2, task: "Order stationery supplies", assignedTo: "", deadline: "1 week before", status: "pending", linkedTo: null },
+          { id: 3, task: "Create letter writing prompts", assignedTo: "", deadline: "1 week before", status: "pending", linkedTo: null },
+          { id: 4, task: "Set up reflection board", assignedTo: "", deadline: "Day of event", status: "pending", linkedTo: null },
           { id: 5, task: "Coordinate with nursing home", assignedTo: "", deadline: "3 weeks before", status: "pending", linkedTo: null }
         ],
         budget: [
@@ -133,23 +133,23 @@ const EventQuestionaire = () => {
           { id: 4, name: "Wrap-up & Clean-up", description: "Thank attendees, collect feedback" }
         ],
         schedule: [
-          { time: "7:00 PM", duration: "15 min", activityId: 1, notes: "" },
-          { time: "7:15 PM", duration: "60 min", activityId: 2, notes: "" },
-          { time: "8:15 PM", duration: "30 min", activityId: 3, notes: "" },
-          { time: "8:45 PM", duration: "15 min", activityId: 4, notes: "" }
+          { time: "7:00 PM", duration: 15, activityId: 1, notes: "" },
+          { time: "7:15 PM", duration: 60, activityId: 2, notes: "" },
+          { time: "8:15 PM", duration: 30, activityId: 3, notes: "" },
+          { time: "8:45 PM", duration: 15, activityId: 4, notes: "" }
         ],
         shopping: [
-          { id: 1, item: "Ramyeon varieties", quantity: 80, category: "Food", linkedTo: "activity-2", purchased: false },
-          { id: 2, item: "Kimbap ingredients", quantity: "For 80", category: "Food", linkedTo: "activity-2", purchased: false },
-          { id: 3, item: "Korean snacks", quantity: "10 boxes", category: "Food", linkedTo: "activity-2", purchased: false },
-          { id: 4, item: "Decorative bags", quantity: 80, category: "Materials", linkedTo: "activity-2", purchased: false },
-          { id: 5, item: "Photo props", quantity: "1 set", category: "Materials", linkedTo: "activity-3", purchased: false }
+          { id: 1, item: "Ramyeon varieties", quantity: 80, category: "Food", linkedTo: null, purchased: false },
+          { id: 2, item: "Kimbap ingredients", quantity: "For 80", category: "Food", linkedTo: null, purchased: false },
+          { id: 3, item: "Korean snacks", quantity: "10 boxes", category: "Food", linkedTo: null, purchased: false },
+          { id: 4, item: "Decorative bags", quantity: 80, category: "Materials", linkedTo: null, purchased: false },
+          { id: 5, item: "Photo props", quantity: "1 set", category: "Materials", linkedTo: null, purchased: false }
         ],
         tasks: [
           { id: 1, task: "Reserve venue with kitchen", assignedTo: "", deadline: "3 weeks before", status: "pending", linkedTo: null },
-          { id: 2, task: "Order Korean ingredients", assignedTo: "", deadline: "1 week before", status: "pending", linkedTo: "activity-2" },
-          { id: 3, task: "Recruit station leaders", assignedTo: "", deadline: "2 weeks before", status: "pending", linkedTo: "activity-2" },
-          { id: 4, task: "Create contest rules", assignedTo: "", deadline: "1 week before", status: "pending", linkedTo: "activity-3" }
+          { id: 2, task: "Order Korean ingredients", assignedTo: "", deadline: "1 week before", status: "pending", linkedTo: null },
+          { id: 3, task: "Recruit station leaders", assignedTo: "", deadline: "2 weeks before", status: "pending", linkedTo: null },
+          { id: 4, task: "Create contest rules", assignedTo: "", deadline: "1 week before", status: "pending", linkedTo: null }
         ],
         budget: [
           { category: "Food & Ingredients", estimated: 600, actual: 0 },
@@ -161,6 +161,156 @@ const EventQuestionaire = () => {
         ]
       };
     }
+  };
+
+  const placeholder_name = `TEST EVENT ${new Date().toISOString()}`;
+
+  const PLACEHOLDER_EVENT_PLAN = {
+    name: placeholder_name,
+    org: "Alzheimer's Awareness Group",
+    description: "An intimate evening where students write heartfelt letters to nursing home residents while learning about Alzheimer's disease and memory care.",
+    goals: ["Awareness/education", "Community bonding"],
+    attendance: 60,
+    date: null,
+    activities: [
+      { 
+        name: "Check-in & Welcome", 
+        description: "Greet attendees, distribute writing materials and name tags" 
+      },
+      { 
+        name: "Educational Introduction", 
+        description: "Guest speaker shares about Alzheimer's disease and the impact of letters on residents" 
+      },
+      { 
+        name: "Letter Writing Session", 
+        description: "Guided letter writing with prompts and examples provided at each table" 
+      },
+      { 
+        name: "Reflection & Sharing", 
+        description: "Optional sharing at reflection board with light refreshments" 
+      },
+      { 
+        name: "Wrap-up & Clean-up", 
+        description: "Collect letters, thank attendees, and coordinate cleanup" 
+      }
+    ],
+    schedule: [
+      { time: "6:00 PM", duration: 15, activityId: null, notes: "" },
+      { time: "6:15 PM", duration: 20, activityId: null, notes: "" },
+      { time: "6:35 PM", duration: 45, activityId: null, notes: "" },
+      { time: "7:20 PM", duration: 20, activityId: null, notes: "" },
+      { time: "7:40 PM", duration: 20, activityId: null, notes: "" }
+    ],
+    shopping: [
+      { 
+        item: "Stationery sets", 
+        quantity: 60, 
+        group: "Materials", 
+        linkedTo: null, 
+        purchased: false 
+      },
+      { 
+        item: "Writing prompts cards", 
+        quantity: 60, 
+        group: "Materials", 
+        linkedTo: null, 
+        purchased: false 
+      },
+      { 
+        item: "Tea & Coffee", 
+        quantity: 60, 
+        group: "Food", 
+        linkedTo: null,
+        purchased: false 
+      },
+      { 
+        item: "Cookies", 
+        quantity: 5, 
+        group: "Food", 
+        linkedTo: null, 
+        purchased: false 
+      },
+      { 
+        item: "Display boards", 
+        quantity: 2, 
+        group: "Equipment", 
+        linkedTo: null, 
+        purchased: false 
+      },
+      { 
+        item: "Name tags", 
+        quantity: 60, 
+        group: "Materials", 
+        linkedTo: null, 
+        purchased: false 
+      },
+      { 
+        item: "Envelopes", 
+        quantity: 60, 
+        group: "Materials", 
+        linkedTo: null, 
+        purchased: false 
+      }
+    ],
+    tasks: [
+      { 
+        task: "Book guest speaker", 
+        assignedTo: "", 
+        deadline: "2025-10-03", 
+        status: "pending", 
+        linkedTo: null
+      },
+      { 
+        task: "Order stationery supplies", 
+        assignedTo: "", 
+        deadline: "2025-10-03", 
+        status: "pending", 
+        linkedTo: null
+      },
+      { 
+        task: "Create letter writing prompts", 
+        assignedTo: "", 
+        deadline: "2025-10-03", 
+        status: "pending", 
+        linkedTo: "activity-3" 
+      },
+      { 
+        task: "Set up reflection board", 
+        assignedTo: "", 
+        deadline: "2025-10-03", 
+        status: "pending", 
+        linkedTo: "activity-4" 
+      },
+      { 
+        task: "Coordinate with nursing home", 
+        assignedTo: "", 
+        deadline: "2025-10-03", 
+        status: "pending", 
+        linkedTo: null 
+      },
+      { 
+        task: "Reserve venue", 
+        assignedTo: "", 
+        deadline: "2025-10-03", 
+        status: "pending", 
+        linkedTo: null 
+      },
+      { 
+        task: "Purchase refreshments", 
+        assignedTo: "", 
+        deadline: "2025-10-03", 
+        status: "pending", 
+        linkedTo: "activity-4" 
+      }
+    ],
+    budget: [
+      { category: "Food & Beverages", estimated: 200, actual: 0 },
+      { category: "Stationery & Materials", estimated: 150, actual: 0 },
+      { category: "Guest Speaker", estimated: 0, actual: 0 },
+      { category: "Decorations", estimated: 75, actual: 0 },
+      { category: "Printing & Signage", estimated: 50, actual: 0 },
+      { category: "Miscellaneous", estimated: 25, actual: 0 }
+    ]
   };
 
   const handleStartPath = (path) => {
@@ -186,43 +336,112 @@ const EventQuestionaire = () => {
     setKeepSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const proceedToEditor = async () => {
+  // const proceedToEditor = async () => {
 
-    const customizedPlan = { ...eventPlan };
+  //   const customizedPlan = { ...eventPlan };
+  //   if (!keepSections.activities) customizedPlan.activities = [];
+  //   if (!keepSections.schedule) customizedPlan.schedule = [];
+  //   if (!keepSections.shopping) customizedPlan.shopping = [];
+  //   if (!keepSections.tasks) customizedPlan.tasks = [];
+  //   if (!keepSections.budget)
+  //     customizedPlan.budget = [
+  //       { category: "Food & Beverages", estimated: 0, actual: 0 },
+  //       { category: "Miscellaneous", estimated: 0, actual: 0 },
+  //     ];
+  
+  //   try {
+  //     // Create the event in the database
+  //     const response = await fetch("/api/event-plans", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         name: customizedPlan.name,
+  //         description: customizedPlan.description,
+  //         attendees: customizedPlan.attendance || 0,
+  //         start_date: "2023-11-15", // Replace with actual start_date
+  //         end_date: "2023-11-16", // Replace with actual end_date
+  //         start_time: "18:00:00", // Replace with actual start_time
+  //         end_time: "20:00:00", // Replace with actual end_time
+  //         budget: 200,
+  //         spending: 0,
+  //         location: "Main Quad",
+  //         committee: null,
+  //         status: "planning",
+  //         food_provided: true,
+  //         giveaways: false,
+  //         registration_required: true,
+  //         event_type: "Social",
+  //       }),
+  //     });
+  
+  //     if (!response.ok) {
+  //       const errorText = await response.text();
+  //       console.error("Failed to create event:", errorText);
+  //       throw new Error(`Failed to create event: ${errorText}`);
+  //     }
+  
+  //     const result = await response.json();
+  
+  //     // Navigate to the event page
+  //     router.push(`/event-plans/${result.event.id}?eventPlan=${encodeURIComponent(JSON.stringify(customizedPlan))}`);
+
+  //   } catch (error) {
+  //     console.error("Error creating event:", error);
+  //     alert("An error occurred while creating the event. Please try again.");
+  //   }
+  
+  //   setEventPlan(customizedPlan);
+  //   setStep("editor");
+  // };
+
+  const proceedToEditor = async () => {
+    const customizedPlan = PLACEHOLDER_EVENT_PLAN;
+    
     if (!keepSections.activities) customizedPlan.activities = [];
     if (!keepSections.schedule) customizedPlan.schedule = [];
     if (!keepSections.shopping) customizedPlan.shopping = [];
     if (!keepSections.tasks) customizedPlan.tasks = [];
-    if (!keepSections.budget)
+    if (!keepSections.budget) {
       customizedPlan.budget = [
         { category: "Food & Beverages", estimated: 0, actual: 0 },
         { category: "Miscellaneous", estimated: 0, actual: 0 },
       ];
+    }
   
     try {
-      // Create the event in the database
+      // Create the event in the database with all related data
       const response = await fetch("/api/event-plans", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: customizedPlan.name,
-          description: customizedPlan.description,
+          // Main event data
+          name: customizedPlan.name || "Untitled Event",
+          description: customizedPlan.description || "",
+          organization: customizedPlan.org || "",
+          goals: customizedPlan.goals || [],
           attendees: customizedPlan.attendance || 0,
-          start_date: "2023-11-15", // Replace with actual start_date
-          end_date: "2023-11-16", // Replace with actual end_date
-          start_time: "18:00:00", // Replace with actual start_time
-          end_time: "20:00:00", // Replace with actual end_time
-          budget: 200,
-          spending: 0,
-          location: "Main Quad",
+          start_date: customizedPlan.date !== "TBD" ? customizedPlan.date : null,
+          end_date: customizedPlan.date !== "TBD" ? customizedPlan.date : null,
+          start_time: null,
+          end_time: null,
+          location: "TBD",
           committee: null,
           status: "planning",
-          food_provided: true,
+          food_provided: false,
           giveaways: false,
-          registration_required: true,
-          event_type: "Social",
+          registration_required: false,
+          event_type: null,
+          
+          // Related data
+          activities: customizedPlan.activities,
+          schedule: customizedPlan.schedule,
+          shopping: customizedPlan.shopping,
+          tasks: customizedPlan.tasks,
+          budget: customizedPlan.budget,
         }),
       });
   
@@ -233,17 +452,13 @@ const EventQuestionaire = () => {
       }
   
       const result = await response.json();
-  
-      // Navigate to the event page
-      router.push(`/event-plans/${result.event.id}?eventPlan=${encodeURIComponent(JSON.stringify(customizedPlan))}`);
-
+      
+      // Navigate to the event editor page
+      router.push(`/event-plans/${result.event.id}`);
     } catch (error) {
       console.error("Error creating event:", error);
       alert("An error occurred while creating the event. Please try again.");
     }
-  
-    setEventPlan(customizedPlan);
-    setStep("editor");
   };
 
   const updatePlan = (field, value) => {
@@ -367,35 +582,6 @@ const EventQuestionaire = () => {
     );
   }
 
-  // if (step === 'editor' && eventPlan) {
-  //   const isReadOnly = status !== 'draft';
-
-  //   return (
-  //     <EditorScreen
-  //       eventPlan={eventPlan}
-  //       activeTab={activeTab}
-  //       setActiveTab={setActiveTab}
-  //       updatePlan={updatePlan}
-  //       updateActivity={updateActivity}
-  //       addActivity={addActivity}
-  //       deleteActivity={deleteActivity}
-  //       updateSchedule={updateSchedule}
-  //       addScheduleItem={addScheduleItem}
-  //       deleteScheduleItem={deleteScheduleItem}
-  //       updateShoppingItem={updateShoppingItem}
-  //       addShoppingItem={addShoppingItem}
-  //       deleteShoppingItem={deleteShoppingItem}
-  //       updateTask={updateTask}
-  //       addTask={addTask}
-  //       deleteTask={deleteTask}
-  //       updateBudgetItem={updateBudgetItem}
-  //       totalBudget={totalBudget}
-  //       status={status}
-  //       onStatusChange={setStatus}
-  //       isReadOnly={isReadOnly}
-  //     />
-  //   );
-  // }
 
   return null;
 };

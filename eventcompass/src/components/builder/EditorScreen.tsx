@@ -14,6 +14,8 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
+import OverviewTab from './tabs/OverviewTab';
+
 // Editor Screen Component
 const EditorScreen = ({ eventPlan, activeTab, setActiveTab, updatePlan, updateActivity, addActivity, deleteActivity, updateSchedule, addScheduleItem, deleteScheduleItem, updateShoppingItem, addShoppingItem, deleteShoppingItem, updateTask, addTask, deleteTask, updateBudgetItem, totalBudget, status, onStatusChange, isReadOnly }) => {
   const tabs = [
@@ -26,9 +28,9 @@ const EditorScreen = ({ eventPlan, activeTab, setActiveTab, updatePlan, updateAc
   ];
 
   const statusOptions = [
-    { value: 'draft', label: 'Draft', color: '#9e9e9e' },
-    { value: 'in-progress', label: 'In Progress', color: '#2196f3' },
-    { value: 'ready', label: 'Ready', color: '#ff9800' },
+    { value: 'planning', label: 'Planning', color: '#9e9e9e' },
+    { value: 'promo', label: 'In Progress', color: '#2196f3' },
+    { value: 'reservations', label: 'Ready', color: '#ff9800' },
     { value: 'completed', label: 'Completed', color: '#4caf50' }
   ];
 
@@ -106,7 +108,7 @@ const EditorScreen = ({ eventPlan, activeTab, setActiveTab, updatePlan, updateAc
           }}>
             <CheckCircleIcon style={{ width: '20px', height: '20px' }} />
             <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>
-              This event is marked as <strong>{currentStatus.label}</strong> and is in read-only mode. Change status to Draft to edit.
+              This event is marked as <strong>{currentStatus.label}</strong> and is in read-only mode. Change status to Planning to edit.
             </span>
           </div>
         </div>
@@ -114,74 +116,12 @@ const EditorScreen = ({ eventPlan, activeTab, setActiveTab, updatePlan, updateAc
 
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '30px' }}>
         {activeTab === 'overview' && (
-          <div style={{ backgroundColor: '#FFF', borderRadius: '12px', padding: '32px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '8px' }}>
-                  Event Name
-                </label>
-                <input
-                  type="text"
-                  value={eventPlan.name}
-                  onChange={(e) => updatePlan('name', e.target.value)}
-                  disabled={isReadOnly}
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    fontSize: '1rem',
-                    border: '1px solid #ddd',
-                    borderRadius: '8px',
-                    color: '#4a5676',
-                    fontWeight: 500,
-                    backgroundColor: isReadOnly ? '#f5f5f5' : '#fff',
-                    cursor: isReadOnly ? 'not-allowed' : 'text'
-                  }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '8px' }}>
-                  Description
-                </label>
-                <textarea
-                  value={eventPlan.description}
-                  onChange={(e) => updatePlan('description', e.target.value)}
-                  disabled={isReadOnly}
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    fontSize: '1rem',
-                    border: '1px solid #ddd',
-                    borderRadius: '8px',
-                    color: '#4a5676',
-                    fontWeight: 500,
-                    resize: 'vertical',
-                    minHeight: '120px',
-                    backgroundColor: isReadOnly ? '#f5f5f5' : '#fff',
-                    cursor: isReadOnly ? 'not-allowed' : 'text'
-                  }}
-                />
-              </div>
-              {!isReadOnly && (
-                <button style={{
-                  alignSelf: 'flex-start',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 20px',
-                  backgroundColor: '#f8f9ff',
-                  color: '#6B7FD7',
-                  border: '1px solid #6B7FD7',
-                  borderRadius: '8px',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}>
-                  <AutoAwesomeIcon style={{ width: '16px', height: '16px' }} />
-                  AI: Improve Description
-                </button>
-              )}
-            </div>
-          </div>
+          <OverviewTab
+            eventPlan={eventPlan}
+            updatePlan={updatePlan}
+            isReadOnly={isReadOnly}
+          />
+          
         )}
 
         {activeTab === 'activities' && (
