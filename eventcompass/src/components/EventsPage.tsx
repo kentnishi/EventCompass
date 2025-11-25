@@ -168,7 +168,8 @@ function EventCard({ event, onClick }: { event: Event; onClick: () => void }) {
               BUDGET
             </div>
             <div style={{ fontSize: '0.9rem', color: '#4a5676', fontWeight: 600 }}>
-              ${event.spending || 0} / ${event.budget || 0}
+
+              {event.spending === -1 ? 0: event.spending} / {event.budget === -1 ? 0 : event.budget}
             </div>
           </div>
         </div>
@@ -228,6 +229,11 @@ export default function EventsPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function createEvent() {
+    console.log("Created new event");
+    router.push(`/events/new`)
   }
 
   // Filter and sort events
@@ -332,7 +338,7 @@ export default function EventsPage() {
           </p>
         </div>
         <button
-          onClick={() => window.location.href = '/events/new'}
+          onClick={() => createEvent()}
           style={{
             display: 'flex',
             alignItems: 'center',
