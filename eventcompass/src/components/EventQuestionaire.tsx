@@ -252,57 +252,57 @@ const EventQuestionaire = () => {
         purchased: false 
       }
     ],
-    tasks: [
-      { 
-        task: "Book guest speaker", 
-        assignedTo: "", 
-        deadline: "2025-10-03", 
-        status: "pending", 
-        linkedTo: null
-      },
-      { 
-        task: "Order stationery supplies", 
-        assignedTo: "", 
-        deadline: "2025-10-03", 
-        status: "pending", 
-        linkedTo: null
-      },
-      { 
-        task: "Create letter writing prompts", 
-        assignedTo: "", 
-        deadline: "2025-10-03", 
-        status: "pending", 
-        linkedTo: "activity-3" 
-      },
-      { 
-        task: "Set up reflection board", 
-        assignedTo: "", 
-        deadline: "2025-10-03", 
-        status: "pending", 
-        linkedTo: "activity-4" 
-      },
-      { 
-        task: "Coordinate with nursing home", 
-        assignedTo: "", 
-        deadline: "2025-10-03", 
-        status: "pending", 
-        linkedTo: null 
-      },
-      { 
-        task: "Reserve venue", 
-        assignedTo: "", 
-        deadline: "2025-10-03", 
-        status: "pending", 
-        linkedTo: null 
-      },
-      { 
-        task: "Purchase refreshments", 
-        assignedTo: "", 
-        deadline: "2025-10-03", 
-        status: "pending", 
-        linkedTo: "activity-4" 
-      }
-    ],
+    // tasks: [
+    //   { 
+    //     task: "Book guest speaker", 
+    //     assignedTo: "", 
+    //     deadline: "2025-10-03", 
+    //     status: "pending", 
+    //     linkedTo: null
+    //   },
+    //   { 
+    //     task: "Order stationery supplies", 
+    //     assignedTo: "", 
+    //     deadline: "2025-10-03", 
+    //     status: "pending", 
+    //     linkedTo: null
+    //   },
+    //   { 
+    //     task: "Create letter writing prompts", 
+    //     assignedTo: "", 
+    //     deadline: "2025-10-03", 
+    //     status: "pending", 
+    //     linkedTo: null
+    //   },
+    //   { 
+    //     task: "Set up reflection board", 
+    //     assignedTo: "", 
+    //     deadline: "2025-10-03", 
+    //     status: "pending", 
+    //     linkedTo: null
+    //   },
+    //   { 
+    //     task: "Coordinate with nursing home", 
+    //     assignedTo: "", 
+    //     deadline: "2025-10-03", 
+    //     status: "pending", 
+    //     linkedTo: null 
+    //   },
+    //   { 
+    //     task: "Reserve venue", 
+    //     assignedTo: "", 
+    //     deadline: "2025-10-03", 
+    //     status: "pending", 
+    //     linkedTo: null 
+    //   },
+    //   { 
+    //     task: "Purchase refreshments", 
+    //     assignedTo: "", 
+    //     deadline: "2025-10-03", 
+    //     status: "pending", 
+    //     linkedTo: null
+    //   }
+    // ],
     budget: [
       { category: "Food & Beverages", estimated: 200, actual: 0 },
       { category: "Stationery & Materials", estimated: 150, actual: 0 },
@@ -336,65 +336,6 @@ const EventQuestionaire = () => {
     setKeepSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  // const proceedToEditor = async () => {
-
-  //   const customizedPlan = { ...eventPlan };
-  //   if (!keepSections.activities) customizedPlan.activities = [];
-  //   if (!keepSections.schedule) customizedPlan.schedule = [];
-  //   if (!keepSections.shopping) customizedPlan.shopping = [];
-  //   if (!keepSections.tasks) customizedPlan.tasks = [];
-  //   if (!keepSections.budget)
-  //     customizedPlan.budget = [
-  //       { category: "Food & Beverages", estimated: 0, actual: 0 },
-  //       { category: "Miscellaneous", estimated: 0, actual: 0 },
-  //     ];
-  
-  //   try {
-  //     // Create the event in the database
-  //     const response = await fetch("/api/event-plans", {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({
-  //         name: customizedPlan.name,
-  //         description: customizedPlan.description,
-  //         attendees: customizedPlan.attendance || 0,
-  //         start_date: "2023-11-15", // Replace with actual start_date
-  //         end_date: "2023-11-16", // Replace with actual end_date
-  //         start_time: "18:00:00", // Replace with actual start_time
-  //         end_time: "20:00:00", // Replace with actual end_time
-  //         budget: 200,
-  //         spending: 0,
-  //         location: "Main Quad",
-  //         committee: null,
-  //         status: "planning",
-  //         food_provided: true,
-  //         giveaways: false,
-  //         registration_required: true,
-  //         event_type: "Social",
-  //       }),
-  //     });
-  
-  //     if (!response.ok) {
-  //       const errorText = await response.text();
-  //       console.error("Failed to create event:", errorText);
-  //       throw new Error(`Failed to create event: ${errorText}`);
-  //     }
-  
-  //     const result = await response.json();
-  
-  //     // Navigate to the event page
-  //     router.push(`/event-plans/${result.event.id}?eventPlan=${encodeURIComponent(JSON.stringify(customizedPlan))}`);
-
-  //   } catch (error) {
-  //     console.error("Error creating event:", error);
-  //     alert("An error occurred while creating the event. Please try again.");
-  //   }
-  
-  //   setEventPlan(customizedPlan);
-  //   setStep("editor");
-  // };
 
   const proceedToEditor = async () => {
     const customizedPlan = PLACEHOLDER_EVENT_PLAN;
@@ -412,7 +353,7 @@ const EventQuestionaire = () => {
   
     try {
       // Create the event in the database with all related data
-      const response = await fetch("/api/event-plans", {
+      const eventResponse = await fetch("/api/event-plans", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -439,22 +380,40 @@ const EventQuestionaire = () => {
           // Related data
           activities: customizedPlan.activities,
           schedule: customizedPlan.schedule,
-          shopping: customizedPlan.shopping,
+          // shopping: customizedPlan.shopping,
           tasks: customizedPlan.tasks,
           budget: customizedPlan.budget,
         }),
       });
   
-      if (!response.ok) {
-        const errorText = await response.text();
+      if (!eventResponse.ok) {
+        const errorText = await eventResponse.text();
         console.error("Failed to create event:", errorText);
         throw new Error(`Failed to create event: ${errorText}`);
       }
   
-      const result = await response.json();
+      // const result = await response.json();
+      const { event } = await eventResponse.json();
+      const eventId = event.id;
+
+      const insertPromises = [];
+
+      if (customizedPlan.shopping.length > 0) {
+        insertPromises.push(
+          fetch(`/api/event-plans/${eventId}/shopping`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ shopping: customizedPlan.shopping }),
+          })
+        );
+      }
+
+      await Promise.all(insertPromises);
+  
+
       
       // Navigate to the event editor page
-      router.push(`/event-plans/${result.event.id}`);
+      router.push(`/event-plans/${eventId}`);
     } catch (error) {
       console.error("Error creating event:", error);
       alert("An error occurred while creating the event. Please try again.");

@@ -96,23 +96,23 @@ export async function POST(request: Request) {
     }
 
     // Insert shopping items
-    if (body.shopping && body.shopping.length > 0) {
-      const shoppingData = body.shopping.map((item: any) => ({
-        event_id: eventId,
-        item: item.item,
-        quantity: item.quantity || "",
-        group: item.group || "Other",
-        url: null,
-      }));
+    // if (body.shopping && body.shopping.length > 0) {
+    //   const shoppingData = body.shopping.map((item: any) => ({
+    //     event_id: eventId,
+    //     item: item.item,
+    //     quantity: item.quantity || "",
+    //     group: item.group || "Other",
+    //     url: null,
+    //   }));
 
-      const { error: shoppingError } = await supabase
-        .from("shopping_items")
-        .insert(shoppingData);
+    //   const { error: shoppingError } = await supabase
+    //     .from("shopping_items")
+    //     .insert(shoppingData);
 
-      if (shoppingError) {
-        console.error("Error inserting shopping items:", shoppingError);
-      }
-    }
+    //   if (shoppingError) {
+    //     console.error("Error inserting shopping items:", shoppingError);
+    //   }
+    // }
 
     // Insert tasks
     if (body.tasks && body.tasks.length > 0) {
