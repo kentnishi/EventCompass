@@ -1,6 +1,12 @@
 // src/app/api/event-plans/[id]/route.ts
 import { createServer } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export async function GET(
   request: Request,
@@ -96,90 +102,43 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    const params = await context.params;
-    const eventId = params.id;
-    const supabase = await createServer();
-    const body = await request.json();
-
-    // Get the current user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Verify the event exists and user has access
-    const { data: existingEvent, error: fetchError } = await supabase
-      .from("events")
-      .select("id, status")
-      .eq("id", eventId)
-      .single();
-
-    if (fetchError || !existingEvent) {
+    request: NextRequest,
+    { params }: { params: { id: string } }
+  ) {
+    try {
+      const body = await request.json();
+      const { id } = params;
+      
+      console.log('Updating event:', id, body);
+      
+      const { data, error } = await supabase
+        .from('events')
+        .update(body)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Supabase error:', error);
+        return NextResponse.json(
+          { error: error.message },
+          { status: 500 }
+        );
+      }
+      
+      return NextResponse.json({ 
+        success: true, 
+        event: data 
+      });
+      
+    } catch (error: any) {
+      console.error('Update error:', error);
       return NextResponse.json(
-        { error: "Event not found" },
-        { status: 404 }
-      );
-    }
-
-    // Check if event is editable (only if status is not read-only)
-    // Adjust this based on your status logic
-    // if (existingEvent.status !== 'planning' && existingEvent.status !== 'draft') {
-    //   return NextResponse.json(
-    //     { error: "Cannot edit event in current status" },
-    //     { status: 403 }
-    //   );
-    // }
-
-    // Update the event
-    const { data: updatedEvent, error: updateError } = await supabase
-      .from("events")
-      .update({
-        name: body.name,
-        description: body.description,
-        attendees: body.attendees,
-        start_date: body.start_date,
-        end_date: body.end_date,
-        start_time: body.start_time,
-        end_time: body.end_time,
-        location: body.location,
-        registration_required: body.registration_required,
-        food_provided: body.food_provided,
-        giveaways: body.giveaways,
-        committee: body.committee,
-        event_type: body.event_type,
-        status: body.status,
-        keywords: body.keywords,
-        // Note: budget and spending are auto-calculated from budget_items
-      })
-      .eq("id", eventId)
-      .select()
-      .single();
-
-    if (updateError) {
-      console.error("Error updating event:", updateError);
-      return NextResponse.json(
-        { error: updateError.message },
+        { error: 'Failed to update event', details: error.message },
         { status: 500 }
       );
     }
-
-    return NextResponse.json({ event: updatedEvent }, { status: 200 });
-  } catch (error: any) {
-    console.error("Error in PATCH /api/event-plans/[id]:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
   }
-}
 
 export async function DELETE(
   request: Request,

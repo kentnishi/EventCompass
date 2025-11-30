@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -214,7 +214,8 @@ const EventPlanningPage = ({ id }: { id: string }) => {
     budget: 500, // Total budget
     location: "Thwing Atrium",
     registration_required: true,
-    event_type: "Social"
+    event_type: "Social",
+    keywords: ["Community", "Awareness", "Social"]
   }
 
   const [eventPlan, setEventPlan] = useState(PLACEHOLDER_EVENT_PLAN);
@@ -223,7 +224,11 @@ const EventPlanningPage = ({ id }: { id: string }) => {
   const [status, setStatus] = useState("planning");
   const [loading, setLoading] = useState(true);
 
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+
+  // Fetching data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -265,13 +270,77 @@ const EventPlanningPage = ({ id }: { id: string }) => {
     fetchData();
   }, [id]);
   
-  
-  console.log("Event basics from EventPlanningPage:", eventBasics);
-  
 
   const updatePlan = (field, value) => {
     setEventPlan((prev) => ({ ...prev, [field]: value }));
   };
+
+   // ✅ Updated updatePlan with auto-save
+   const updateEventBasics = async (field: string, value: any) => {
+    // Update local state immediately (optimistic update)
+    // Implement the rest of the tabs too
+    setEventBasics((prev) => ({ ...prev, [field]: value }));
+    
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    // Show saving status immediately
+    setSaveStatus('saving');
+    
+    // Debounce the API call (wait 1 second after last change)
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/event-plans/${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            [field]: value
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to save');
+        }
+        
+        // Success!
+        setSaveStatus('saved');
+        
+        // Hide success message after 2 seconds
+        setTimeout(() => {
+          setSaveStatus('idle');
+        }, 2000);
+        
+      } catch (error) {
+        console.error('Save error:', error);
+        setSaveStatus('error');
+        
+        // Optionally: revert the optimistic update
+        // You could refetch the data here or keep a backup of previous state
+        
+        // Hide error message after 3 seconds
+        setTimeout(() => {
+          setSaveStatus('idle');
+        }, 3000);
+      }
+    }, 1000); // 1 second debounce
+  };
+
+  // ✅ Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // const updateEventBasics = (field, value) => {
+  //   setEventBasics((prev) => ({ ...prev, [field]: value }));
+  // };
 
   const updateActivity = (index, field, value) => {
     const newActivities = [...eventPlan.activities];
@@ -461,11 +530,55 @@ const EventPlanningPage = ({ id }: { id: string }) => {
         </div>
       )}
 
+      {/* ✅ Add Save Status Indicator (shared across all tabs) */}
+      {saveStatus !== 'idle' && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: "24px",
+            right: "24px",
+            background: 
+              saveStatus === 'saved' ? "#28a745" : 
+              saveStatus === 'error' ? "#dc3545" : 
+              "#ffc107",
+            color: saveStatus === 'saved' || saveStatus === 'error' ? "white" : "#333",
+            padding: "12px 20px",
+            borderRadius: "24px",
+            fontSize: "0.9rem",
+            fontWeight: 600,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            zIndex: 1000,
+            animation: "slideIn 0.3s ease",
+          }}
+        >
+          {saveStatus === 'saving' && (
+            <>
+              <CloudQueueIcon style={{ width: "18px", height: "18px" }} />
+              Saving...
+            </>
+          )}
+          {saveStatus === 'saved' && (
+            <>
+              <CloudDoneIcon style={{ width: "18px", height: "18px" }} />
+              All changes saved
+            </>
+          )}
+          {saveStatus === 'error' && (
+            <>
+              ⚠️ Failed to save
+            </>
+          )}
+        </div>
+      )}
+
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '30px' }}>
         {activeTab === 'overview' && (
           <OverviewTab
             eventPlan={eventBasics}
-            updatePlan={updatePlan}
+            updatePlan={updateEventBasics}
             isReadOnly={isReadOnly}
           />
           

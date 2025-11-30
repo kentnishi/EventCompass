@@ -26,16 +26,6 @@ const OverviewTab = ({
   const handleFieldChange = (field: string, value: any) => {
     updatePlan(field, value);
     
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    
-    setSaveStatus('saving');
-    
-    saveTimeoutRef.current = setTimeout(() => {
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
-    }, 1000);
   };
 
   const addKeyword = () => {
@@ -93,19 +83,29 @@ const OverviewTab = ({
     displayStyle?: React.CSSProperties;
   }) => {
     const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+    const [localValue, setLocalValue] = useState(value);
     const isEditing = editingField === field;
+
+    // Update local value when prop changes
+    useEffect(() => {
+      setLocalValue(value);
+    }, [value]);
 
     const startEdit = () => {
       if (!isReadOnly) {
         setEditingField(field);
+        setLocalValue(value);
         setTimeout(() => inputRef.current?.focus(), 0);
       }
     };
 
     const finishEdit = () => {
-      // Use setTimeout to ensure blur completes properly
       setTimeout(() => {
         setEditingField(null);
+        // Only save if value changed
+        if (localValue !== value) {
+          handleFieldChange(field, localValue);
+        }
       }, 0);
     };
 
@@ -114,10 +114,9 @@ const OverviewTab = ({
         e.preventDefault();
         finishEdit();
       } else if (e.key === 'Escape') {
-        // ESC key also exits edit mode
-        finishEdit();
+        setLocalValue(value); // Revert on escape
+        setTimeout(() => setEditingField(null), 0);
       } else if (e.key === 'Enter' && multiline && (e.metaKey || e.ctrlKey)) {
-        // Cmd+Enter or Ctrl+Enter to save textarea
         e.preventDefault();
         finishEdit();
       }
@@ -137,8 +136,8 @@ const OverviewTab = ({
           multiline ? (
             <textarea
               ref={inputRef as React.RefObject<HTMLTextAreaElement>}
-              value={value || ""}
-              onChange={(e) => handleFieldChange(field, e.target.value)}
+              value={localValue || ""}
+              onChange={(e) => setLocalValue(e.target.value)}
               onBlur={finishEdit}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
@@ -162,12 +161,12 @@ const OverviewTab = ({
             <input
               ref={inputRef as React.RefObject<HTMLInputElement>}
               type={type}
-              value={value || ""}
+              value={localValue || ""}
               onChange={(e) => {
                 const newValue = type === "number" 
                   ? (parseFloat(e.target.value) || 0)
                   : e.target.value;
-                handleFieldChange(field, newValue);
+                setLocalValue(newValue);
               }}
               onBlur={finishEdit}
               onKeyDown={handleKeyDown}
@@ -227,39 +226,6 @@ const OverviewTab = ({
         position: "relative",
       }}
     >
-      {saveStatus !== 'idle' && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: "24px",
-            right: "24px",
-            background: saveStatus === 'saved' ? "#28a745" : "#ffc107",
-            color: saveStatus === 'saved' ? "white" : "#333",
-            padding: "12px 20px",
-            borderRadius: "24px",
-            fontSize: "0.9rem",
-            fontWeight: 600,
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            zIndex: 1000,
-            animation: "slideIn 0.3s ease",
-          }}
-        >
-          {saveStatus === 'saving' ? (
-            <>
-              <CloudQueueIcon style={{ width: "18px", height: "18px" }} />
-              Saving...
-            </>
-          ) : (
-            <>
-              <CloudDoneIcon style={{ width: "18px", height: "18px" }} />
-              All changes saved
-            </>
-          )}
-        </div>
-      )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
         {/* Basic Information Section */}
