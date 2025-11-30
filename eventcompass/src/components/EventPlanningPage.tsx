@@ -8,7 +8,10 @@ import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import CloudDoneIcon from '@mui/icons-material/CloudDone';
 import CloudQueueIcon from '@mui/icons-material/CloudQueue';
+
 import OverviewTab from './builder/tabs/OverviewTab';
+import ActivitiesTab from "./builder/tabs/ActivitiesTab";
+
 import { EventPlan, EventBasics } from "@/types/eventPlan";
 
 const PLACEHOLDER_EVENT_PLAN = {
@@ -584,91 +587,14 @@ const EventPlanningPage = ({ id }: { id: string }) => {
           
         )}
 
-        {activeTab === 'activities' && (
-          <div style={{ backgroundColor: '#FFF', borderRadius: '12px', padding: '32px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#333', margin: 0 }}>Activities</h3>
-              {!isReadOnly && (
-                <button 
-                  onClick={addActivity}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '10px 20px',
-                    backgroundColor: '#6B7FD7',
-                    color: '#FFF',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '0.9rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <AddIcon style={{ width: '16px', height: '16px' }} />
-                  Add Activity
-                </button>
-              )}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {eventPlan.activities.map((activity, i) => (
-                <div key={i} style={{ padding: '16px', border: '1px solid #e0e0e0', borderRadius: '8px', backgroundColor: isReadOnly ? '#f9f9f9' : '#fff' }}>
-                  <input
-                    type="text"
-                    value={activity.name}
-                    onChange={(e) => updateActivity(i, 'name', e.target.value)}
-                    placeholder="Activity name"
-                    disabled={isReadOnly}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      fontSize: '1rem',
-                      fontWeight: 600,
-                      border: '1px solid #ddd',
-                      borderRadius: '6px',
-                      marginBottom: '8px',
-                      backgroundColor: isReadOnly ? '#f5f5f5' : '#fff',
-                      cursor: isReadOnly ? 'not-allowed' : 'text'
-                    }}
-                  />
-                  <textarea
-                    value={activity.description}
-                    onChange={(e) => updateActivity(i, 'description', e.target.value)}
-                    placeholder="Description"
-                    disabled={isReadOnly}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      fontSize: '0.95rem',
-                      border: '1px solid #ddd',
-                      borderRadius: '6px',
-                      minHeight: '60px',
-                      resize: 'vertical',
-                      backgroundColor: isReadOnly ? '#f5f5f5' : '#fff',
-                      cursor: isReadOnly ? 'not-allowed' : 'text'
-                    }}
-                  />
-                  {!isReadOnly && (
-                    <button 
-                      onClick={() => deleteActivity(i)}
-                      style={{
-                        marginTop: '8px',
-                        padding: '6px 12px',
-                        backgroundColor: 'transparent',
-                        color: '#f44336',
-                        border: '1px solid #f44336',
-                        borderRadius: '6px',
-                        fontSize: '0.85rem',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+        {activeTab === "activities" && (
+          <ActivitiesTab
+            activities={eventPlan.activities}
+            isReadOnly={isReadOnly}
+            updateActivity={updateActivity}
+            addActivity={addActivity}
+            deleteActivity={deleteActivity}
+          />
         )}
 
         {activeTab === 'schedule' && (
