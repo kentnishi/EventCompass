@@ -1,13 +1,12 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PeopleIcon from "@mui/icons-material/People";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
-import EditIcon from "@mui/icons-material/Edit";
-import SaveIcon from "@mui/icons-material/Save";
-import CloseIcon from "@mui/icons-material/Close";
+import CloudDoneIcon from "@mui/icons-material/CloudDone";
+import CloudQueueIcon from "@mui/icons-material/CloudQueue";
 
 const OverviewTab = ({ 
   eventPlan, 
@@ -18,76 +17,204 @@ const OverviewTab = ({
   updatePlan: (field: string, value: any) => void; 
   isReadOnly: boolean 
 }) => {
-  const [editingSection, setEditingSection] = useState<string | null>(null);
-  const [tempData, setTempData] = useState<any>({});
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [editingField, setEditingField] = useState<string | null>(null);
   const [keywordInput, setKeywordInput] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const startEditing = (section: string) => {
-    setEditingSection(section);
-    // Save current state as temp data
-    if (section === 'basic') {
-      setTempData({ 
-        name: eventPlan.name,
-        description: eventPlan.description,
-        keywords: eventPlan.keywords || []
-      });
-    } else if (section === 'datetime') {
-      setTempData({
-        start_date: eventPlan.start_date,
-        start_time: eventPlan.start_time,
-        end_date: eventPlan.end_date,
-        end_time: eventPlan.end_time,
-      });
-    } else if (section === 'logistics') {
-      setTempData({
-        location: eventPlan.location,
-        attendees: eventPlan.attendees,
-        registration_required: eventPlan.registration_required,
-      });
+  const handleFieldChange = (field: string, value: any) => {
+    updatePlan(field, value);
+    
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
     }
-    setHasUnsavedChanges(false);
-  };
-
-  const saveSection = () => {
-    // Apply temp changes to actual data
-    Object.keys(tempData).forEach(key => {
-      updatePlan(key, tempData[key]);
-    });
-    setEditingSection(null);
-    setTempData({});
-    setHasUnsavedChanges(false);
-  };
-
-  const cancelEdit = () => {
-    setEditingSection(null);
-    setTempData({});
-    setHasUnsavedChanges(false);
-  };
-
-  const updateTempData = (field: string, value: any) => {
-    setTempData((prev: any) => ({ ...prev, [field]: value }));
-    setHasUnsavedChanges(true);
+    
+    setSaveStatus('saving');
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    }, 1000);
   };
 
   const addKeyword = () => {
-    if (keywordInput.trim() && tempData.keywords) {
-      const newKeywords = [...tempData.keywords, keywordInput.trim()];
-      updateTempData("keywords", newKeywords);
+    if (keywordInput.trim()) {
+      const currentKeywords = eventPlan.keywords || [];
+      const newKeywords = [...currentKeywords, keywordInput.trim()];
+      handleFieldChange("keywords", newKeywords);
       setKeywordInput("");
     }
   };
 
   const removeKeyword = (index: number) => {
-    const newKeywords = tempData.keywords.filter((_: string, i: number) => i !== index);
-    updateTempData("keywords", newKeywords);
+    const newKeywords = eventPlan.keywords.filter((_: string, i: number) => i !== index);
+    handleFieldChange("keywords", newKeywords);
   };
 
   const handleKeywordKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      addKeyword();
+      if (keywordInput.trim()) {
+        addKeyword();
+      }
+      setEditingField(null);
+    } else if (e.key === 'Escape') {
+      setKeywordInput("");
+      setEditingField(null);
     }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const ClickToEditField = ({ 
+    field, 
+    label,
+    value, 
+    placeholder = "Click to add",
+    type = "text",
+    multiline = false,
+    displayFormat = (v: any) => v || <span style={{ color: "#999", fontStyle: "italic" }}>{placeholder}</span>,
+    displayStyle = {}
+  }: {
+    field: string;
+    label: string;
+    value: any;
+    placeholder?: string;
+    type?: string;
+    multiline?: boolean;
+    displayFormat?: (v: any) => any;
+    displayStyle?: React.CSSProperties;
+  }) => {
+    const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+    const isEditing = editingField === field;
+
+    const startEdit = () => {
+      if (!isReadOnly) {
+        setEditingField(field);
+        setTimeout(() => inputRef.current?.focus(), 0);
+      }
+    };
+
+    const finishEdit = () => {
+      // Use setTimeout to ensure blur completes properly
+      setTimeout(() => {
+        setEditingField(null);
+      }, 0);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && !multiline) {
+        e.preventDefault();
+        finishEdit();
+      } else if (e.key === 'Escape') {
+        // ESC key also exits edit mode
+        finishEdit();
+      } else if (e.key === 'Enter' && multiline && (e.metaKey || e.ctrlKey)) {
+        // Cmd+Enter or Ctrl+Enter to save textarea
+        e.preventDefault();
+        finishEdit();
+      }
+    };
+
+    return (
+      <div>
+        <div style={{ 
+          fontSize: "0.85rem", 
+          color: "#666", 
+          marginBottom: "6px" 
+        }}>
+          {label}
+        </div>
+        
+        {isEditing ? (
+          multiline ? (
+            <textarea
+              ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+              value={value || ""}
+              onChange={(e) => handleFieldChange(field, e.target.value)}
+              onBlur={finishEdit}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholder}
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                fontSize: "1rem",
+                border: "2px solid #6B7FD7",
+                borderRadius: "8px",
+                color: "#4a5676",
+                fontWeight: 500,
+                backgroundColor: "white",
+                boxShadow: "0 0 0 3px rgba(107, 127, 215, 0.1)",
+                outline: "none",
+                fontFamily: "inherit",
+                minHeight: "100px",
+                resize: "vertical",
+              }}
+            />
+          ) : (
+            <input
+              ref={inputRef as React.RefObject<HTMLInputElement>}
+              type={type}
+              value={value || ""}
+              onChange={(e) => {
+                const newValue = type === "number" 
+                  ? (parseFloat(e.target.value) || 0)
+                  : e.target.value;
+                handleFieldChange(field, newValue);
+              }}
+              onBlur={finishEdit}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholder}
+              step={type === "number" ? "0.01" : undefined}
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                fontSize: "1rem",
+                border: "2px solid #6B7FD7",
+                borderRadius: "8px",
+                color: "#4a5676",
+                fontWeight: 500,
+                backgroundColor: "white",
+                boxShadow: "0 0 0 3px rgba(107, 127, 215, 0.1)",
+                outline: "none",
+              }}
+            />
+          )
+        ) : (
+          <div
+            onClick={startEdit}
+            style={{
+              ...displayStyle,
+              cursor: isReadOnly ? "default" : "pointer",
+              padding: "8px 12px",
+              borderRadius: "6px",
+              border: "2px solid transparent",
+              backgroundColor: isReadOnly ? "transparent" : "transparent",
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              if (!isReadOnly) {
+                e.currentTarget.style.backgroundColor = "#f8f9fa";
+                e.currentTarget.style.borderColor = "#e5e7eb";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+              e.currentTarget.style.borderColor = "transparent";
+            }}
+          >
+            {displayFormat(value)}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -97,168 +224,83 @@ const OverviewTab = ({
         borderRadius: "12px",
         padding: "32px",
         boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+        position: "relative",
       }}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
-        {/* Basic Information Section */}
+      {saveStatus !== 'idle' && (
         <div
           style={{
-            paddingBottom: "32px",
-            borderBottom: "1px solid #e5e7ff",
+            position: "fixed",
+            bottom: "24px",
+            right: "24px",
+            background: saveStatus === 'saved' ? "#28a745" : "#ffc107",
+            color: saveStatus === 'saved' ? "white" : "#333",
+            padding: "12px 20px",
+            borderRadius: "24px",
+            fontSize: "0.9rem",
+            fontWeight: 600,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            zIndex: 1000,
+            animation: "slideIn 0.3s ease",
           }}
         >
-          <div style={{ 
-            display: "flex", 
-            justifyContent: "space-between", 
-            alignItems: "center",
-            marginBottom: "20px"
-          }}>
-            <h3 style={{ fontSize: "1.2rem", fontWeight: 700, color: "#333", margin: 0 }}>
-              Basic Information
-            </h3>
-            {!isReadOnly && editingSection !== 'basic' && (
-              <button
-                onClick={() => startEditing('basic')}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "8px 16px",
-                  backgroundColor: "transparent",
-                  color: "#6B7FD7",
-                  border: "1px solid #6B7FD7",
-                  borderRadius: "6px",
-                  fontSize: "0.9rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = "#6B7FD7";
-                  e.currentTarget.style.color = "#fff";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.color = "#6B7FD7";
-                }}
-              >
-                <EditIcon style={{ width: "16px", height: "16px" }} />
-                Edit
-              </button>
-            )}
-            {editingSection === 'basic' && (
-              <div style={{ display: "flex", gap: "8px" }}>
-                <button
-                  onClick={saveSection}
-                  disabled={!hasUnsavedChanges}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "8px 16px",
-                    backgroundColor: hasUnsavedChanges ? "#6B7FD7" : "#ccc",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "6px",
-                    fontSize: "0.9rem",
-                    fontWeight: 600,
-                    cursor: hasUnsavedChanges ? "pointer" : "not-allowed",
-                  }}
-                >
-                  <SaveIcon style={{ width: "16px", height: "16px" }} />
-                  Save
-                </button>
-                <button
-                  onClick={cancelEdit}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "8px 16px",
-                    backgroundColor: "transparent",
-                    color: "#666",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    fontSize: "0.9rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  <CloseIcon style={{ width: "16px", height: "16px" }} />
-                  Cancel
-                </button>
-              </div>
-            )}
-          </div>
+          {saveStatus === 'saving' ? (
+            <>
+              <CloudQueueIcon style={{ width: "18px", height: "18px" }} />
+              Saving...
+            </>
+          ) : (
+            <>
+              <CloudDoneIcon style={{ width: "18px", height: "18px" }} />
+              All changes saved
+            </>
+          )}
+        </div>
+      )}
 
-          {editingSection === 'basic' ? (
-            // Edit Mode
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.9rem",
-                    fontWeight: 600,
-                    color: "#4a5676",
-                    marginBottom: "8px",
-                  }}
-                >
-                  Event Name *
-                </label>
-                <input
-                  type="text"
-                  value={tempData.name || ""}
-                  onChange={(e) => updateTempData("name", e.target.value)}
-                  placeholder="Enter event name"
-                  autoFocus
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    fontSize: "1rem",
-                    border: "2px solid #6B7FD7",
-                    borderRadius: "8px",
-                    color: "#4a5676",
-                    fontWeight: 500,
-                    outline: "none",
-                  }}
-                />
+      <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+        {/* Basic Information Section */}
+        <div style={{ paddingBottom: "32px", borderBottom: "1px solid #e5e7ff" }}>
+          <h3 style={{ fontSize: "1.2rem", fontWeight: 700, color: "#333", marginBottom: "20px" }}>
+            Basic Information
+          </h3>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            <ClickToEditField
+              field="name"
+              label="Event Name"
+              value={eventPlan.name}
+              placeholder="Click to add event name"
+              displayFormat={(v) => v || <span style={{ color: "#999", fontStyle: "italic" }}>Click to add event name</span>}
+              displayStyle={{ fontSize: "1.5rem", fontWeight: 700, color: "#1a1a1a" }}
+            />
+            
+            <div>
+              <div style={{ fontSize: "0.85rem", color: "#666", marginBottom: "6px" }}>
+                Keywords
               </div>
               
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.9rem",
-                    fontWeight: 600,
-                    color: "#4a5676",
-                    marginBottom: "8px",
-                  }}
-                >
-                  Event Keywords
-                </label>
-                <div style={{ 
-                  display: "flex", 
-                  gap: "8px", 
-                  marginBottom: "12px",
-                  flexWrap: "wrap"
-                }}>
-                  {tempData.keywords?.map((keyword: string, index: number) => (
-                    <span
-                      key={index}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        padding: "6px 12px",
-                        backgroundColor: "#e5e7ff",
-                        color: "#6B7FD7",
-                        borderRadius: "20px",
-                        fontSize: "0.9rem",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {keyword}
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+                {eventPlan.keywords && eventPlan.keywords.length > 0 && eventPlan.keywords.map((keyword: string, index: number) => (
+                  <span
+                    key={index}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "6px 14px",
+                      backgroundColor: "#e5e7ff",
+                      color: "#6B7FD7",
+                      borderRadius: "20px",
+                      fontSize: "0.9rem",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {keyword}
+                    {!isReadOnly && (
                       <button
                         onClick={() => removeKeyword(index)}
                         style={{
@@ -275,79 +317,86 @@ const OverviewTab = ({
                       >
                         ×
                       </button>
-                    </span>
-                  ))}
-                </div>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <input
-                    type="text"
-                    value={keywordInput}
-                    onChange={(e) => setKeywordInput(e.target.value)}
-                    onKeyPress={handleKeywordKeyPress}
-                    placeholder="e.g., free food, giveaway, networking"
-                    style={{
-                      flex: 1,
-                      padding: "10px 14px",
-                      fontSize: "0.95rem",
-                      border: "2px solid #6B7FD7",
-                      borderRadius: "8px",
-                      color: "#4a5676",
-                      outline: "none",
-                    }}
-                  />
-                  <button
-                    onClick={addKeyword}
-                    disabled={!keywordInput.trim()}
-                    style={{
-                      padding: "10px 20px",
-                      backgroundColor: keywordInput.trim() ? "#6B7FD7" : "#ccc",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: "8px",
-                      fontSize: "0.9rem",
-                      fontWeight: 600,
-                      cursor: keywordInput.trim() ? "pointer" : "not-allowed",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    Add
-                  </button>
-                </div>
-                <p style={{ fontSize: "0.8rem", color: "#888", marginTop: "6px", fontStyle: "italic" }}>
-                  Press Enter or click Add to add keywords
-                </p>
+                    )}
+                  </span>
+                ))}
+                
+                {!isReadOnly && (
+                  editingField === 'keywords' ? (
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={keywordInput}
+                      onChange={(e) => setKeywordInput(e.target.value)}
+                      onKeyPress={handleKeywordKeyPress}
+                      onBlur={() => {
+                        if (keywordInput.trim()) {
+                          addKeyword();
+                        }
+                        setEditingField(null);
+                      }}
+                      placeholder="Type keyword..."
+                      autoFocus
+                      style={{
+                        padding: "6px 12px",
+                        fontSize: "0.9rem",
+                        border: "2px solid #6B7FD7",
+                        borderRadius: "20px",
+                        color: "#6B7FD7",
+                        backgroundColor: "white",
+                        boxShadow: "0 0 0 3px rgba(107, 127, 215, 0.1)",
+                        outline: "none",
+                        minWidth: "150px",
+                      }}
+                    />
+                  ) : (
+                    <button
+                      onClick={() => setEditingField('keywords')}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "32px",
+                        height: "32px",
+                        padding: "0",
+                        backgroundColor: "#f8f9ff",
+                        color: "#6B7FD7",
+                        border: "2px dashed #6B7FD7",
+                        borderRadius: "50%",
+                        fontSize: "1.2rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.backgroundColor = "#6B7FD7";
+                        e.currentTarget.style.color = "#fff";
+                        e.currentTarget.style.borderStyle = "solid";
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.backgroundColor = "#f8f9ff";
+                        e.currentTarget.style.color = "#6B7FD7";
+                        e.currentTarget.style.borderStyle = "dashed";
+                      }}
+                    >
+                      +
+                    </button>
+                  )
+                )}
               </div>
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.9rem",
-                    fontWeight: 600,
-                    color: "#4a5676",
-                    marginBottom: "8px",
-                  }}
-                >
-                  Description
-                </label>
-                <textarea
-                  value={tempData.description || ""}
-                  onChange={(e) => updateTempData("description", e.target.value)}
-                  placeholder="Describe your event..."
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    fontSize: "1rem",
-                    border: "2px solid #6B7FD7",
-                    borderRadius: "8px",
-                    color: "#4a5676",
-                    fontWeight: 500,
-                    resize: "vertical",
-                    minHeight: "120px",
-                    outline: "none",
-                    fontFamily: "inherit",
-                  }}
-                />
-              </div>
+            </div>
+
+            <ClickToEditField
+              field="description"
+              label="Description"
+              value={eventPlan.description}
+              placeholder="Click to add description"
+              multiline
+              displayFormat={(v) => v || <span style={{ color: "#999", fontStyle: "italic" }}>Click to add description</span>}
+              displayStyle={{ fontSize: "1rem", color: "#4a5676", lineHeight: "1.6" }}
+            />
+
+            {!isReadOnly && (
               <button
                 style={{
                   alignSelf: "flex-start",
@@ -376,452 +425,185 @@ const OverviewTab = ({
                 <AutoAwesomeIcon style={{ width: "16px", height: "16px" }} />
                 AI: Improve Description
               </button>
-            </div>
-          ) : (
-            // View Mode
-            <div>
-              <div style={{ fontSize: "0.85rem", color: "#666", marginBottom: "6px" }}>
-                Event Name
-              </div>
-              <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "#1a1a1a", marginBottom: "16px" }}>
-                {eventPlan.name || "Untitled Event"}
-              </div>
-              {eventPlan.keywords && eventPlan.keywords.length > 0 && (
-                <>
-                  <div style={{ fontSize: "0.85rem", color: "#666", marginBottom: "6px" }}>
-                    Keywords
-                  </div>
-                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px"}}>
-                    {eventPlan.keywords.map((keyword: string, index: number) => (
-                      <span
-                        key={index}
-                        style={{
-                          padding: "6px 14px",
-                          backgroundColor: "#e5e7ff",
-                          color: "#6B7FD7",
-                          borderRadius: "20px",
-                          fontSize: "0.9rem",
-                          fontWeight: 500,
-                        }}
-                      >
-                        {keyword}
-                      </span>
-                    ))}
-                  </div>
-                </>
-              )}
-              {eventPlan.description && (
-                <>
-                  <div style={{ fontSize: "0.85rem", color: "#666", marginBottom: "6px" }}>
-                    Description
-                  </div>
-                  <div style={{ fontSize: "1rem", color: "#4a5676", lineHeight: "1.6", marginBottom: "16px" }}>
-                    {eventPlan.description}
-                  </div>
-                </>
-              )}
-              
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Date & Time Section */}
-        <div
-          style={{
-            paddingBottom: "32px",
-            borderBottom: "1px solid #e5e7ff",
-          }}
-        >
-          <div style={{ 
-            display: "flex", 
-            justifyContent: "space-between", 
+        <div style={{ paddingBottom: "32px", borderBottom: "1px solid #e5e7ff" }}>
+          <h3 style={{ 
+            fontSize: "1.2rem", 
+            fontWeight: 700, 
+            color: "#333", 
+            marginBottom: "20px",
+            display: "flex",
             alignItems: "center",
-            marginBottom: "20px"
+            gap: "8px"
           }}>
-            <h3 style={{ 
-              fontSize: "1.2rem", 
-              fontWeight: 700, 
-              color: "#333", 
-              margin: 0,
-              display: "flex",
-              alignItems: "center",
-              gap: "8px"
-            }}>
-              <CalendarTodayIcon style={{ width: "20px", height: "20px", color: "#6B7FD7" }} />
-              Date & Time
-            </h3>
-            {!isReadOnly && editingSection !== 'datetime' && (
-              <button
-                onClick={() => startEditing('datetime')}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "8px 16px",
-                  backgroundColor: "transparent",
-                  color: "#6B7FD7",
-                  border: "1px solid #6B7FD7",
-                  borderRadius: "6px",
-                  fontSize: "0.9rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = "#6B7FD7";
-                  e.currentTarget.style.color = "#fff";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.color = "#6B7FD7";
-                }}
-              >
-                <EditIcon style={{ width: "16px", height: "16px" }} />
-                Edit
-              </button>
-            )}
-            {editingSection === 'datetime' && (
-              <div style={{ display: "flex", gap: "8px" }}>
-                <button
-                  onClick={saveSection}
-                  disabled={!hasUnsavedChanges}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "8px 16px",
-                    backgroundColor: hasUnsavedChanges ? "#6B7FD7" : "#ccc",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "6px",
-                    fontSize: "0.9rem",
-                    fontWeight: 600,
-                    cursor: hasUnsavedChanges ? "pointer" : "not-allowed",
-                  }}
-                >
-                  <SaveIcon style={{ width: "16px", height: "16px" }} />
-                  Save
-                </button>
-                <button
-                  onClick={cancelEdit}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "8px 16px",
-                    backgroundColor: "transparent",
-                    color: "#666",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    fontSize: "0.9rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  <CloseIcon style={{ width: "16px", height: "16px" }} />
-                  Cancel
-                </button>
-              </div>
-            )}
-          </div>
+            <CalendarTodayIcon style={{ width: "20px", height: "20px", color: "#6B7FD7" }} />
+            Date & Time
+          </h3>
 
-          {editingSection === 'datetime' ? (
-            // Edit Mode
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "0.9rem", fontWeight: 600, color: "#4a5676", marginBottom: "8px" }}>
-                  Start
-                </label>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                  <input
-                    type="date"
-                    value={tempData.start_date || ""}
-                    onChange={(e) => updateTempData("start_date", e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      fontSize: "1rem",
-                      border: "2px solid #6B7FD7",
-                      borderRadius: "8px",
-                      color: "#4a5676",
-                      fontWeight: 500,
-                    }}
-                  />
-                  <input
-                    type="time"
-                    value={tempData.start_time || ""}
-                    onChange={(e) => updateTempData("start_time", e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      fontSize: "1rem",
-                      border: "2px solid #6B7FD7",
-                      borderRadius: "8px",
-                      color: "#4a5676",
-                      fontWeight: 500,
-                    }}
-                  />
-                </div>
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: "0.9rem", fontWeight: 600, color: "#4a5676", marginBottom: "8px" }}>
-                  End
-                </label>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                  <input
-                    type="date"
-                    value={tempData.end_date || ""}
-                    onChange={(e) => updateTempData("end_date", e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      fontSize: "1rem",
-                      border: "2px solid #6B7FD7",
-                      borderRadius: "8px",
-                      color: "#4a5676",
-                      fontWeight: 500,
-                    }}
-                  />
-                  <input
-                    type="time"
-                    value={tempData.end_time || ""}
-                    onChange={(e) => updateTempData("end_time", e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      fontSize: "1rem",
-                      border: "2px solid #6B7FD7",
-                      borderRadius: "8px",
-                      color: "#4a5676",
-                      fontWeight: 500,
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          ) : (
-            // View Mode
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
-              <div>
-                <div style={{ fontSize: "0.85rem", color: "#666", marginBottom: "6px" }}>
-                  Start Date & Time
-                </div>
-                <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "#1a1a1a" }}>
-                  {eventPlan.start_date 
-                    ? new Date(eventPlan.start_date + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                    : "Not set"}
-                  {eventPlan.start_time && ` at ${eventPlan.start_time}`}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: "0.85rem", color: "#666", marginBottom: "6px" }}>
-                  End Date & Time
-                </div>
-                <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "#1a1a1a" }}>
-                  {eventPlan.end_date 
-                    ? new Date(eventPlan.end_date + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                    : "Not set"}
-                  {eventPlan.end_time && ` at ${eventPlan.end_time}`}
-                </div>
-              </div>
-            </div>
-          )}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+            <ClickToEditField
+              field="start_date"
+              label="Start Date"
+              value={eventPlan.start_date}
+              type="date"
+              placeholder="Select date"
+              displayFormat={(v) => v 
+                ? new Date(v + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                : <span style={{ color: "#999", fontStyle: "italic" }}>Click to set</span>
+              }
+              displayStyle={{ fontSize: "1.1rem", fontWeight: 600, color: "#1a1a1a" }}
+            />
+
+            <ClickToEditField
+              field="start_time"
+              label="Start Time"
+              value={eventPlan.start_time}
+              type="time"
+              placeholder="Select time"
+              displayFormat={(v) => v || <span style={{ color: "#999", fontStyle: "italic" }}>Click to set</span>}
+              displayStyle={{ fontSize: "1.1rem", fontWeight: 600, color: "#1a1a1a" }}
+            />
+
+            <ClickToEditField
+              field="end_date"
+              label="End Date"
+              value={eventPlan.end_date}
+              type="date"
+              placeholder="Select date"
+              displayFormat={(v) => v 
+                ? new Date(v + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                : <span style={{ color: "#999", fontStyle: "italic" }}>Click to set</span>
+              }
+              displayStyle={{ fontSize: "1.1rem", fontWeight: 600, color: "#1a1a1a" }}
+            />
+
+            <ClickToEditField
+              field="end_time"
+              label="End Time"
+              value={eventPlan.end_time}
+              type="time"
+              placeholder="Select time"
+              displayFormat={(v) => v || <span style={{ color: "#999", fontStyle: "italic" }}>Click to set</span>}
+              displayStyle={{ fontSize: "1.1rem", fontWeight: 600, color: "#1a1a1a" }}
+            />
+          </div>
         </div>
 
         {/* Location & Logistics Section */}
         <div>
-          <div style={{ 
-            display: "flex", 
-            justifyContent: "space-between", 
+          <h3 style={{ 
+            fontSize: "1.2rem", 
+            fontWeight: 700, 
+            color: "#333", 
+            marginBottom: "20px",
+            display: "flex",
             alignItems: "center",
-            marginBottom: "20px"
+            gap: "8px"
           }}>
-            <h3 style={{ 
-              fontSize: "1.2rem", 
-              fontWeight: 700, 
-              color: "#333", 
-              margin: 0,
-              display: "flex",
-              alignItems: "center",
-              gap: "8px"
-            }}>
-              <LocationOnIcon style={{ width: "20px", height: "20px", color: "#6B7FD7" }} />
-              Location & Logistics
-            </h3>
-            {!isReadOnly && editingSection !== 'logistics' && (
-              <button
-                onClick={() => startEditing('logistics')}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "8px 16px",
-                  backgroundColor: "transparent",
-                  color: "#6B7FD7",
-                  border: "1px solid #6B7FD7",
-                  borderRadius: "6px",
-                  fontSize: "0.9rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = "#6B7FD7";
-                  e.currentTarget.style.color = "#fff";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.color = "#6B7FD7";
-                }}
-              >
-                <EditIcon style={{ width: "16px", height: "16px" }} />
-                Edit
-              </button>
-            )}
-            {editingSection === 'logistics' && (
-              <div style={{ display: "flex", gap: "8px" }}>
-                <button
-                  onClick={saveSection}
-                  disabled={!hasUnsavedChanges}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "8px 16px",
-                    backgroundColor: hasUnsavedChanges ? "#6B7FD7" : "#ccc",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "6px",
-                    fontSize: "0.9rem",
-                    fontWeight: 600,
-                    cursor: hasUnsavedChanges ? "pointer" : "not-allowed",
-                  }}
-                >
-                  <SaveIcon style={{ width: "16px", height: "16px" }} />
-                  Save
-                </button>
-                <button
-                  onClick={cancelEdit}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "8px 16px",
-                    backgroundColor: "transparent",
-                    color: "#666",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    fontSize: "0.9rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  <CloseIcon style={{ width: "16px", height: "16px" }} />
-                  Cancel
-                </button>
-              </div>
-            )}
-          </div>
+            <LocationOnIcon style={{ width: "20px", height: "20px", color: "#6B7FD7" }} />
+            Location & Logistics
+          </h3>
 
-          {editingSection === 'logistics' ? (
-            // Edit Mode
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "0.9rem", fontWeight: 600, color: "#4a5676", marginBottom: "8px" }}>
-                  Venue / Location
-                </label>
-                <input
-                  type="text"
-                  value={tempData.location || ""}
-                  onChange={(e) => updateTempData("location", e.target.value)}
-                  placeholder="e.g., Student Center Room 201"
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    fontSize: "1rem",
-                    border: "2px solid #6B7FD7",
-                    borderRadius: "8px",
-                    color: "#4a5676",
-                    fontWeight: 500,
-                  }}
-                />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "24px" }}>
+            <ClickToEditField
+              field="location"
+              label="Venue / Location"
+              value={eventPlan.location}
+              placeholder="Click to add"
+              displayFormat={(v) => v || <span style={{ color: "#999", fontStyle: "italic" }}>Not set</span>}
+              displayStyle={{ fontSize: "1.1rem", fontWeight: 600, color: "#1a1a1a" }}
+            />
+
+            <ClickToEditField
+              field="attendees"
+              label="Expected Attendance"
+              value={eventPlan.attendees}
+              type="number"
+              placeholder="0"
+              displayFormat={(v) => v ? `${v} people` : <span style={{ color: "#999", fontStyle: "italic" }}>Not set</span>}
+              displayStyle={{ fontSize: "1.1rem", fontWeight: 600, color: "#1a1a1a" }}
+            />
+
+            <div>
+              <div style={{ fontSize: "0.85rem", color: "#666", marginBottom: "6px" }}>
+                Total Budget
               </div>
-              <div>
-                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.9rem", fontWeight: 600, color: "#4a5676", marginBottom: "8px" }}>
-                  <PeopleIcon style={{ width: "18px", height: "18px" }} />
-                  Expected Attendance
-                </label>
-                <input
-                  type="number"
-                  value={tempData.attendees || 0}
-                  onChange={(e) => updateTempData("attendees", parseInt(e.target.value) || 0)}
-                  placeholder="0"
-                  min="0"
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    fontSize: "1rem",
-                    border: "2px solid #6B7FD7",
-                    borderRadius: "8px",
-                    color: "#4a5676",
-                    fontWeight: 500,
-                  }}
-                />
+              <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "#1a1a1a", padding: "8px 12px" }}>
+                ${eventPlan.budget?.toFixed(2) || "0.00"}
               </div>
-              <div style={{ padding: "16px", backgroundColor: "#f8f9ff", borderRadius: "8px", border: "1px solid #e5e7ff" }}>
-                <label style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "0.95rem", fontWeight: 600, color: "#4a5676", cursor: "pointer" }}>
-                  <input
-                    type="checkbox"
-                    checked={tempData.registration_required || false}
-                    onChange={(e) => updateTempData("registration_required", e.target.checked)}
-                    style={{ width: "20px", height: "20px", cursor: "pointer", accentColor: "#6B7FD7" }}
-                  />
-                  Registration Required
-                </label>
+              <div style={{ fontSize: "0.75rem", color: "#888", fontStyle: "italic", marginTop: "2px", paddingLeft: "12px" }}>
+                Auto-calculated
               </div>
             </div>
-          ) : (
-            // View Mode
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "24px" }}>
-              <div>
-                <div style={{ fontSize: "0.85rem", color: "#666", marginBottom: "6px" }}>
-                  Venue / Location
-                </div>
-                <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "#1a1a1a" }}>
-                  {eventPlan.location || "Not set"}
-                </div>
+
+            <div>
+              <div style={{ fontSize: "0.85rem", color: "#666", marginBottom: "6px" }}>
+                Registration
               </div>
-              <div>
-                <div style={{ fontSize: "0.85rem", color: "#666", marginBottom: "6px" }}>
-                  Expected Attendance
-                </div>
-                <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "#1a1a1a" }}>
-                  {eventPlan.attendees || 0} people
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: "0.85rem", color: "#666", marginBottom: "6px" }}>
-                  Total Budget
-                </div>
-                <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "#1a1a1a" }}>
-                  ${eventPlan.budget?.toFixed(2) || "0.00"}
-                </div>
-                <div style={{ fontSize: "0.75rem", color: "#888", fontStyle: "italic", marginTop: "2px" }}>
-                  Auto-calculated
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: "0.85rem", color: "#666", marginBottom: "6px" }}>
-                  Registration
-                </div>
-                <div style={{ fontSize: "1.1rem", fontWeight: 600, color: eventPlan.registration_required ? "#4caf50" : "#888" }}>
+              <label style={{ 
+                display: "flex", 
+                alignItems: "center", 
+                gap: "12px", 
+                fontSize: "0.95rem", 
+                fontWeight: 600, 
+                color: "#4a5676",
+                padding: "8px 12px",
+                backgroundColor: isReadOnly ? "transparent" : "transparent",
+                borderRadius: "6px",
+                border: "2px solid transparent",
+                cursor: isReadOnly ? "default" : "pointer",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                if (!isReadOnly) {
+                  e.currentTarget.style.backgroundColor = "#f8f9fa";
+                  e.currentTarget.style.borderColor = "#e5e7eb";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.borderColor = "transparent";
+              }}
+              >
+                <input
+                  type="checkbox"
+                  checked={eventPlan.registration_required || false}
+                  onChange={(e) => handleFieldChange("registration_required", e.target.checked)}
+                  disabled={isReadOnly}
+                  style={{ 
+                    width: "20px", 
+                    height: "20px", 
+                    cursor: isReadOnly ? "not-allowed" : "pointer",
+                    accentColor: "#6B7FD7" 
+                  }}
+                />
+                <span style={{ color: eventPlan.registration_required ? "#4caf50" : "#888" }}>
                   {eventPlan.registration_required ? "✓ Required" : "Not required"}
-                </div>
-              </div>
+                </span>
+              </label>
             </div>
-          )}
+          </div>
         </div>
       </div>
+
+      <style>
+        {`
+          @keyframes slideIn {
+            from {
+              transform: translateY(100px);
+              opacity: 0;
+            }
+            to {
+              transform: translateY(0);
+              opacity: 1;
+            }
+          }
+        `}
+      </style>
     </div>
   );
 };

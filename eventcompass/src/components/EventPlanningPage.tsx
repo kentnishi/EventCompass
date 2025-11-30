@@ -4,7 +4,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-
+import EditIcon from '@mui/icons-material/Edit';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import CloudDoneIcon from '@mui/icons-material/CloudDone';
+import CloudQueueIcon from '@mui/icons-material/CloudQueue';
 import OverviewTab from './builder/tabs/OverviewTab';
 import { EventPlan, EventBasics } from "@/types/eventPlan";
 
