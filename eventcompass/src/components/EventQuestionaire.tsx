@@ -171,7 +171,16 @@ const EventQuestionaire = () => {
     description: "An intimate evening where students write heartfelt letters to nursing home residents while learning about Alzheimer's disease and memory care.",
     goals: ["Awareness/education", "Community bonding"],
     attendance: 60,
-    date: null,
+    location: "Thwing Atrium",
+    start_date: new Date().toISOString().split("T")[0], // Current date in YYYY-MM-DD format
+    end_date: new Date(new Date().setDate(new Date().getDate() + 1)) // Next day in YYYY-MM-DD format
+      .toISOString()
+      .split("T")[0],
+    start_time: "09:00 AM", // Default start time
+    end_time: "05:00 PM", // Default end time
+    committee: null,
+    budget: 500,
+    keywords: ["alzheimer's", "awareness", "community", "letters"],
     activities: [
       { 
         name: "Check-in & Welcome", 
@@ -303,7 +312,7 @@ const EventQuestionaire = () => {
     //     linkedTo: null
     //   }
     // ],
-    budget: [
+    budget_items: [
       { category: "Food & Beverages", estimated: 200, actual: 0 },
       { category: "Stationery & Materials", estimated: 150, actual: 0 },
       { category: "Guest Speaker", estimated: 0, actual: 0 },
@@ -360,28 +369,29 @@ const EventQuestionaire = () => {
         },
         body: JSON.stringify({
           // Main event data
-          name: customizedPlan.name || "Untitled Event",
-          description: customizedPlan.description || "",
-          organization: customizedPlan.org || "",
-          goals: customizedPlan.goals || [],
-          attendees: customizedPlan.attendance || 0,
-          start_date: customizedPlan.date !== "TBD" ? customizedPlan.date : null,
-          end_date: customizedPlan.date !== "TBD" ? customizedPlan.date : null,
-          start_time: null,
-          end_time: null,
-          location: "TBD",
-          committee: null,
+          name: PLACEHOLDER_EVENT_PLAN.name || "Untitled Event",
+          description: PLACEHOLDER_EVENT_PLAN.description || "",
+          organization: PLACEHOLDER_EVENT_PLAN.org || "",
+          goals: PLACEHOLDER_EVENT_PLAN.goals || [],
+          attendees: PLACEHOLDER_EVENT_PLAN.attendance || 0,
+          start_date: PLACEHOLDER_EVENT_PLAN.start_date,
+          end_date: PLACEHOLDER_EVENT_PLAN.end_date,
+          start_time: PLACEHOLDER_EVENT_PLAN.start_time !== "TBD" ? customizedPlan.start_time : null,
+          end_time: PLACEHOLDER_EVENT_PLAN.end_time !== "TBD" ? customizedPlan.end_time : null,
+          location: PLACEHOLDER_EVENT_PLAN.location,
+          committee: PLACEHOLDER_EVENT_PLAN.committee,
           status: "planning",
           food_provided: false,
           giveaways: false,
           registration_required: false,
           event_type: null,
+          keywords: PLACEHOLDER_EVENT_PLAN.keywords || [],
           
           // Related data
           activities: customizedPlan.activities,
           schedule: customizedPlan.schedule,
           // shopping: customizedPlan.shopping,
-          tasks: customizedPlan.tasks,
+          // tasks: customizedPlan.tasks,
           budget: customizedPlan.budget,
         }),
       });

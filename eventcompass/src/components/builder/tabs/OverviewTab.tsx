@@ -21,6 +21,7 @@ const OverviewTab = ({
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [tempData, setTempData] = useState<any>({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [keywordInput, setKeywordInput] = useState("");
 
   const startEditing = (section: string) => {
     setEditingSection(section);
@@ -28,7 +29,8 @@ const OverviewTab = ({
     if (section === 'basic') {
       setTempData({ 
         name: eventPlan.name,
-        description: eventPlan.description 
+        description: eventPlan.description,
+        keywords: eventPlan.keywords || []
       });
     } else if (section === 'datetime') {
       setTempData({
@@ -66,6 +68,26 @@ const OverviewTab = ({
   const updateTempData = (field: string, value: any) => {
     setTempData((prev: any) => ({ ...prev, [field]: value }));
     setHasUnsavedChanges(true);
+  };
+
+  const addKeyword = () => {
+    if (keywordInput.trim() && tempData.keywords) {
+      const newKeywords = [...tempData.keywords, keywordInput.trim()];
+      updateTempData("keywords", newKeywords);
+      setKeywordInput("");
+    }
+  };
+
+  const removeKeyword = (index: number) => {
+    const newKeywords = tempData.keywords.filter((_: string, i: number) => i !== index);
+    updateTempData("keywords", newKeywords);
+  };
+
+  const handleKeywordKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addKeyword();
+    }
   };
 
   return (
@@ -202,6 +224,99 @@ const OverviewTab = ({
                   }}
                 />
               </div>
+              
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.9rem",
+                    fontWeight: 600,
+                    color: "#4a5676",
+                    marginBottom: "8px",
+                  }}
+                >
+                  Event Keywords
+                </label>
+                <div style={{ 
+                  display: "flex", 
+                  gap: "8px", 
+                  marginBottom: "12px",
+                  flexWrap: "wrap"
+                }}>
+                  {tempData.keywords?.map((keyword: string, index: number) => (
+                    <span
+                      key={index}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        padding: "6px 12px",
+                        backgroundColor: "#e5e7ff",
+                        color: "#6B7FD7",
+                        borderRadius: "20px",
+                        fontSize: "0.9rem",
+                        fontWeight: 500,
+                      }}
+                    >
+                      {keyword}
+                      <button
+                        onClick={() => removeKeyword(index)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#6B7FD7",
+                          cursor: "pointer",
+                          padding: "0",
+                          display: "flex",
+                          alignItems: "center",
+                          fontSize: "1.2rem",
+                          lineHeight: "1",
+                        }}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <input
+                    type="text"
+                    value={keywordInput}
+                    onChange={(e) => setKeywordInput(e.target.value)}
+                    onKeyPress={handleKeywordKeyPress}
+                    placeholder="e.g., free food, giveaway, networking"
+                    style={{
+                      flex: 1,
+                      padding: "10px 14px",
+                      fontSize: "0.95rem",
+                      border: "2px solid #6B7FD7",
+                      borderRadius: "8px",
+                      color: "#4a5676",
+                      outline: "none",
+                    }}
+                  />
+                  <button
+                    onClick={addKeyword}
+                    disabled={!keywordInput.trim()}
+                    style={{
+                      padding: "10px 20px",
+                      backgroundColor: keywordInput.trim() ? "#6B7FD7" : "#ccc",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "8px",
+                      fontSize: "0.9rem",
+                      fontWeight: 600,
+                      cursor: keywordInput.trim() ? "pointer" : "not-allowed",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Add
+                  </button>
+                </div>
+                <p style={{ fontSize: "0.8rem", color: "#888", marginTop: "6px", fontStyle: "italic" }}>
+                  Press Enter or click Add to add keywords
+                </p>
+              </div>
               <div>
                 <label
                   style={{
@@ -271,16 +386,41 @@ const OverviewTab = ({
               <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "#1a1a1a", marginBottom: "16px" }}>
                 {eventPlan.name || "Untitled Event"}
               </div>
+              {eventPlan.keywords && eventPlan.keywords.length > 0 && (
+                <>
+                  <div style={{ fontSize: "0.85rem", color: "#666", marginBottom: "6px" }}>
+                    Keywords
+                  </div>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px"}}>
+                    {eventPlan.keywords.map((keyword: string, index: number) => (
+                      <span
+                        key={index}
+                        style={{
+                          padding: "6px 14px",
+                          backgroundColor: "#e5e7ff",
+                          color: "#6B7FD7",
+                          borderRadius: "20px",
+                          fontSize: "0.9rem",
+                          fontWeight: 500,
+                        }}
+                      >
+                        {keyword}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
               {eventPlan.description && (
                 <>
                   <div style={{ fontSize: "0.85rem", color: "#666", marginBottom: "6px" }}>
                     Description
                   </div>
-                  <div style={{ fontSize: "1rem", color: "#4a5676", lineHeight: "1.6" }}>
+                  <div style={{ fontSize: "1rem", color: "#4a5676", lineHeight: "1.6", marginBottom: "16px" }}>
                     {eventPlan.description}
                   </div>
                 </>
               )}
+              
             </div>
           )}
         </div>
@@ -664,7 +804,7 @@ const OverviewTab = ({
                   Total Budget
                 </div>
                 <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "#1a1a1a" }}>
-                  ${Number(eventPlan.budget || 0).toFixed(2) || "0.00"}
+                  ${eventPlan.budget?.toFixed(2) || "0.00"}
                 </div>
                 <div style={{ fontSize: "0.75rem", color: "#888", fontStyle: "italic", marginTop: "2px" }}>
                   Auto-calculated

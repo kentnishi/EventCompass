@@ -36,7 +36,7 @@ export async function POST(request: Request) {
           end_date: body.end_date || null,
           start_time: body.start_time || null,
           end_time: body.end_time || null,
-          budget: 0, // Will be calculated from budget_items
+          budget: body.budget || 0, 
           spending: 0, // Will be calculated from budget_items
           location: body.location || null,
           committee: body.committee || null,
@@ -45,6 +45,7 @@ export async function POST(request: Request) {
           giveaways: body.giveaways || false,
           registration_required: body.registration_required || false,
           event_type: body.event_type || null,
+          keywords: body.keywords || [],
         },
       ])
       .select("*")

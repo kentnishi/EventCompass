@@ -1,20 +1,31 @@
 "use client";
-import React, { useState } from "react";
-import EditorScreen from "./builder/EditorScreen";
+import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 import OverviewTab from './builder/tabs/OverviewTab';
+import { EventPlan, EventBasics } from "@/types/eventPlan";
 
 const PLACEHOLDER_EVENT_PLAN = {
+  id: "794208bc-af43-4c6b-9a5d-f339d1c131aa",
   name: "Memory Lane Letter Writing Night",
-  org: "Alzheimer's Awareness Group",
+  // org: "Alzheimer's Awareness Group",
   description: "An intimate evening where students write heartfelt letters to nursing home residents while learning about Alzheimer's disease and memory care.",
-  goals: ["Awareness/education", "Community bonding"],
-  attendance: 60,
-  date: "TBD",
+  // goals: ["Awareness/education", "Community bonding"],
+  start_date: new Date().toISOString().split("T")[0], // Current date in YYYY-MM-DD format
+  end_date: new Date(new Date().setDate(new Date().getDate() + 1)) // Next day in YYYY-MM-DD format
+    .toISOString()
+    .split("T")[0],
+  start_time: "09:00 AM", // Default start time
+  end_time: "05:00 PM", // Default end time
+  // committee: "On-Campus",
+  budget: 500,
+  location: "Thwing Atrium",
+  attendees: 60,
+  registration_required: true,
+  event_type: "Social",
   activities: [
     { 
       id: 1, 
@@ -42,14 +53,14 @@ const PLACEHOLDER_EVENT_PLAN = {
       description: "Collect letters, thank attendees, and coordinate cleanup" 
     }
   ],
-  schedule: [
+  schedule_items: [
     { time: "6:00 PM", duration: 15, activityId: 1, notes: "" },
     { time: "6:15 PM", duration: 15, activityId: 2, notes: "" },
     { time: "6:35 PM", duration: 15, activityId: 3, notes: "" },
     { time: "7:20 PM", duration: 20, activityId: 4, notes: "" },
     { time: "7:40 PM", duration: 20, activityId: 5, notes: "" }
   ],
-  shopping: [
+  shopping_items: [
     { 
       id: 1, 
       item: "Stationery sets", 
@@ -165,7 +176,7 @@ const PLACEHOLDER_EVENT_PLAN = {
       linkedTo: "activity-4" 
     }
   ],
-  budget: [
+  budget_items: [
     { category: "Food & Beverages", estimated: 200, actual: 0 },
     { category: "Stationery & Materials", estimated: 150, actual: 0 },
     { category: "Guest Speaker", estimated: 0, actual: 0 },
@@ -175,17 +186,85 @@ const PLACEHOLDER_EVENT_PLAN = {
   ]
 };
 
-const EventPlanningPage = () => {
-  const searchParams = useSearchParams();
-  const eventPlanParam = searchParams.get("eventPlan");
+const EventPlanningPage = ({ id }: { id: string }) => {
+  console.log("Event ID in EventPlanningPage:", id);
   
-  const initialEventPlan = eventPlanParam 
-    ? JSON.parse(eventPlanParam) 
-    : PLACEHOLDER_EVENT_PLAN;
   
-  const [eventPlan, setEventPlan] = useState(initialEventPlan);
+  // const searchParams = useSearchParams();
+  // const eventPlanParam = searchParams.get("eventPlan");
+
+  // console.log("EventPlanParam: ", eventPlanParam);
+  
+  // const initialEventPlan = eventPlanParam 
+  //   ? JSON.parse(eventPlanParam) 
+  //   : PLACEHOLDER_EVENT_PLAN;
+  
+  
+  const PLACEHOLDER_EVENT_BASICS = {
+    name: "Memory Lane Letter Writing Night",
+    description: "An intimate evening where students write heartfelt letters to nursing home residents while learning about Alzheimer's disease and memory care.",
+    attendees: 60,
+    start_date: "2023-10-05", // ISO date string (e.g., "2023-10-05")
+    start_time: "9:00 AM", // Time string (e.g., "09:00 AM")
+    end_date: "2023-10-05", // ISO date string (e.g., "2023-10-06")
+    end_time: "10:00 AM", // Time string (e.g., "05:00 PM")
+    budget: 500, // Total budget
+    location: "Thwing Atrium",
+    registration_required: true,
+    event_type: "Social"
+  }
+
+  const [eventPlan, setEventPlan] = useState(PLACEHOLDER_EVENT_PLAN);
+  const [eventBasics, setEventBasics] = useState<EventBasics>(PLACEHOLDER_EVENT_BASICS);
   const [activeTab, setActiveTab] = useState("overview");
   const [status, setStatus] = useState("planning");
+  const [loading, setLoading] = useState(true);
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        const [ 
+          eventResponse
+        ] = await Promise.all([
+          fetch(`/api/event-plans/${id}`)
+        ])
+
+        const event_response = await eventResponse.json();
+        const event = event_response.event;
+        console.log("Updating state with: ", event);
+        setEventBasics({
+          // id: event.id,
+          name: event.name || "Untitled Event",
+          description: event.description || "",
+          attendees: event.attendees || 0,
+          start_date: event.start_date || "",
+          start_time: event.start_time || "",
+          end_date: event.end_date || "",
+          end_time: event.end_time || "",
+          budget: event.budget || 0,
+          location: event.location || "Unknown",
+          registration_required: event.registration_required ?? false,
+          event_type: event.event_type || "General",
+          keywords: event.keywords || []
+        });
+
+        
+        console.log("eventBasics: ", eventBasics);
+        // setEventPlan(data.eventPlan);
+      } catch (error) {
+        console.error("Error fetching event plan:", error);
+      } 
+    };
+
+    fetchData();
+  }, [id]);
+  
+  
+  console.log("Event basics from EventPlanningPage:", eventBasics);
+  
 
   const updatePlan = (field, value) => {
     setEventPlan((prev) => ({ ...prev, [field]: value }));
@@ -275,8 +354,9 @@ const EventPlanningPage = () => {
     newBudget[index][field] = value;
     updatePlan("budget", newBudget);
   };
-
-  const totalBudget = eventPlan?.budget.reduce((sum, item) => sum + item.estimated, 0) || 0;
+  
+  const totalBudget = eventBasics.budget;
+  // const totalBudget = eventBasics.budget = (eventBasics.budget | 0).reduce((sum, item) => sum + item.estimated, 0) || 0;
   const isReadOnly = status !== "planning";
 
 
@@ -305,7 +385,7 @@ const EventPlanningPage = () => {
       <div style={{ backgroundColor: '#FFF', borderBottom: '1px solid #e0e0e0', padding: '20px 30px' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#333', margin: 0 }}>
-            {eventPlan.name}
+            {eventBasics.name}
           </h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <label style={{ fontSize: '0.9rem', fontWeight: 600, color: '#666' }}>Status:</label>
@@ -381,7 +461,7 @@ const EventPlanningPage = () => {
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '30px' }}>
         {activeTab === 'overview' && (
           <OverviewTab
-            eventPlan={eventPlan}
+            eventPlan={eventBasics}
             updatePlan={updatePlan}
             isReadOnly={isReadOnly}
           />
