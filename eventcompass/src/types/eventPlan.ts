@@ -45,9 +45,13 @@ export interface StaffingNeed {
   }
 
 export interface ScheduleItem {
-    time: string; // Time string (e.g., "6:00 PM")
-    duration: number; // Duration in minutes
-    activityId: number | null; // ID of the linked activity
+    event_id: string;
+    activity_id: number | null; // Linked activity ID or null
+    start_date: string;
+    end_date: string | null;
+    start_time: string;
+    end_time: string;
+    location: string;
     notes: string;
 }
 

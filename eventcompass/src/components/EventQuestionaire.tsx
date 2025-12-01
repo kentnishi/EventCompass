@@ -7,7 +7,7 @@ import IntakeForm from './questionaire/IntakeForm';
 import ConceptsScreen from './questionaire/ConceptsScreen';
 import PreviewScreen from './questionaire/PreviewScreen';
 
-import { PLACEHOLDER_EVENT_PLAN, generatePlaceholderActivities } from "@/app/utils/placeholderData";
+import { PLACEHOLDER_EVENT_PLAN, generatePlaceholderActivities, generatePlaceholderScheduleItems } from "@/app/utils/placeholderData";
 
 
 // Main App Component
@@ -232,7 +232,7 @@ const EventQuestionaire = () => {
           
           // Related data
           // activities: customizedPlan.activities,
-          schedule: customizedPlan.schedule,
+          // schedule: customizedPlan.schedule,
           // shopping: customizedPlan.shopping,
           // tasks: customizedPlan.tasks,
           budget: customizedPlan.budget,
@@ -253,20 +253,56 @@ const EventQuestionaire = () => {
 
       const PLACEHOLDER_ACTIVITIES = generatePlaceholderActivities(id);
 
-      console.log("Length of Placeholders: ", PLACEHOLDER_ACTIVITIES.length)
       // Add activities
-      if (PLACEHOLDER_ACTIVITIES.length > 0) {
-        insertPromises.push(
-          fetch(`/api/event-plans/${id}/activities`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(PLACEHOLDER_ACTIVITIES),
-          })
-        );
+
+
+      if (PLACEHOLDER_ACTIVITIES.length > 0) { //Replace with whether activities is being kept
+        const activitiesResponse = await fetch(`/api/event-plans/${id}/activities`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(PLACEHOLDER_ACTIVITIES),
+        });
+
+        if (!activitiesResponse.ok) {
+          const errorText = await activitiesResponse.text();
+          console.error("Failed to add activities:", errorText);
+          throw new Error(`Failed to add activities: ${errorText}`);
+        }
+
+        const activities = await activitiesResponse.json();
+        console.log("Activities added:", activities);
+
+        // Activities must exist for schedule to work
+        const PLACEHOLDER_SCHEDULE = generatePlaceholderScheduleItems(id, activities);
+        if (PLACEHOLDER_SCHEDULE.length > 0) {
+          const scheduleResponse = await fetch(`/api/event-plans/${id}/schedule`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(PLACEHOLDER_SCHEDULE),
+            })
+
+            const { schedule } = await scheduleResponse.json();
+
+            if (!scheduleResponse.ok) {
+              const errorText = await scheduleResponse.text();
+              console.error("Failed to add schedule:", errorText);
+              throw new Error(`Failed to add schedule: ${errorText}`);
+            }
+
+            console.log("Schedule added:", schedule);
+        }
+
+
       }
 
+      
+      
+
+
+
+    
       
       if (customizedPlan.shopping.length > 0) {
         insertPromises.push(
@@ -280,6 +316,7 @@ const EventQuestionaire = () => {
 
       const insertPromisesResponses = await Promise.all(insertPromises);
       console.log("Insert related data responses:", insertPromisesResponses);
+
 
         // Check for errors in related data API calls
       for (const response of insertPromisesResponses) {

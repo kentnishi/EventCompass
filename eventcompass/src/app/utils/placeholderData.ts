@@ -1,4 +1,4 @@
-import { Activity } from "@/types/eventPlan";
+import { Activity, ScheduleItem } from "@/types/eventPlan";
 const placeholder_name = `TEST EVENT ${new Date().toISOString()}`;
 
 export const PLACEHOLDER_EVENT_PLAN = {
@@ -208,3 +208,84 @@ export const generatePlaceholderActivities = (eventId: string): Activity[] => [
       ],
     },
 ];
+
+export const generatePlaceholderScheduleItems = (eventId: string, activities: Activity[]): ScheduleItem[] => [
+    // Friday, December 14, 2024 - Main Event Day
+    {
+        start_date: "2024-12-14",
+        event_id: eventId,
+        end_date: null,
+        start_time: "18:00",
+        end_time: "19:00",
+        activity_id: activities[0].id,
+        location: "Grand Ballroom Foyer",
+        notes: "Wine, beer, and light appetizers. Setup starts at 5:30 PM.",
+    },
+    {
+        start_date: "2024-12-14",
+        event_id: eventId,
+        end_date: null,
+        start_time: "18:30",
+        end_time: "19:00",
+        activity_id: activities[1].id,
+        location: "Main Entrance",
+        notes: "Have name badges and programs ready",
+    },
+    // Multi-day activity spanning overnight
+    {
+        start_date: "2024-12-14",
+        end_date: "2024-12-15",
+        event_id: eventId,
+        start_time: "23:00",
+        end_time: "02:00",
+        activity_id: activities[2].id,
+        location: "Main Hall",
+        notes: "Continues past midnight into Saturday. Cleanup crew scheduled.",
+    },
+];
+      
+      // Example usage in a component:
+      /*
+      const ExampleComponent = () => {
+        const [schedule, setSchedule] = useState(placeholderSchedule);
+        const [activities, setActivities] = useState(placeholderActivities);
+        
+        const addScheduleItem = () => {
+          const today = new Date().toISOString().split('T')[0];
+          setSchedule([
+            ...schedule,
+            {
+              start_date: today,
+              end_date: null,
+              start_time: "09:00",
+              end_time: "10:00",
+              activityId: null,
+              location: "",
+              notes: "",
+            },
+          ]);
+        };
+      
+        const updateSchedule = (index: number, field: string, value: any) => {
+          const updated = [...schedule];
+          updated[index] = { ...updated[index], [field]: value };
+          setSchedule(updated);
+        };
+      
+        const deleteScheduleItem = (index: number) => {
+          setSchedule(schedule.filter((_, i) => i !== index));
+        };
+      
+        return (
+          <ScheduleTab
+            schedule={schedule}
+            activities={activities}
+            isReadOnly={false}
+            addScheduleItem={addScheduleItem}
+            updateSchedule={updateSchedule}
+            deleteScheduleItem={deleteScheduleItem}
+          />
+        );
+      };
+      */
+      

@@ -6,11 +6,13 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CloudDoneIcon from '@mui/icons-material/CloudDone';
 import CloudQueueIcon from '@mui/icons-material/CloudQueue';
 
-import OverviewTab from './builder/tabs/OverviewTab';
-import ActivitiesTab from "./builder/tabs/ActivitiesTab";
-import { PLACEHOLDER_EVENT_PLAN, PLACEHOLDER_EVENT_BASICS, generatePlaceholderActivities } from "@/app/utils/placeholderData";
+import OverviewTab from '@/components/builder/tabs/OverviewTab';
+import ActivitiesTab from "@/components/builder/tabs/ActivitiesTab";
+import ScheduleTab from "@/components/builder/tabs/ScheduleTab";
 
-import { EventPlan, EventBasics, Activity } from "@/types/eventPlan";
+import { PLACEHOLDER_EVENT_PLAN, PLACEHOLDER_EVENT_BASICS, generatePlaceholderActivities, generatePlaceholderScheduleItems } from "@/app/utils/placeholderData";
+
+import { EventPlan, EventBasics, Activity, ScheduleItem } from "@/types/eventPlan";
 
 const EventPlanningPage = ({ id }: { id: string }) => {
   console.log("Event ID in EventPlanningPage:", id);
@@ -18,6 +20,8 @@ const EventPlanningPage = ({ id }: { id: string }) => {
   const [eventPlan, setEventPlan] = useState(PLACEHOLDER_EVENT_PLAN);
   const [eventBasics, setEventBasics] = useState<EventBasics>(PLACEHOLDER_EVENT_BASICS);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
+
   const [activeTab, setActiveTab] = useState("overview");
   const [status, setStatus] = useState("planning");
   const [loading, setLoading] = useState(true);
@@ -34,10 +38,12 @@ const EventPlanningPage = ({ id }: { id: string }) => {
 
         const [ 
           eventResponse,
-          eventActivitiesResponse
+          eventActivitiesResponse,
+          eventScheduleResponse
         ] = await Promise.all([
           fetch(`/api/event-plans/${id}`),
-          fetch(`/api/event-plans/${id}/activities`)
+          fetch(`/api/event-plans/${id}/activities`),
+          fetch(`/api/event-plans/${id}/schedule`)
         ])
 
         const event_response = await eventResponse.json();
@@ -58,14 +64,17 @@ const EventPlanningPage = ({ id }: { id: string }) => {
           event_type: event.event_type || "General",
           keywords: event.keywords || []
         });
+        console.log("eventBasics: ", eventBasics);
 
         const activities_response = await eventActivitiesResponse.json()
         console.log("Activities response from API: ", activities_response);
         setActivities(activities_response || []);
 
+        const schedule_response = await eventScheduleResponse.json()
+        console.log("Schedule response from API: ", schedule_response);
+        setSchedule(schedule_response || []);
 
-        
-        console.log("eventBasics: ", eventBasics);
+
         // setEventPlan(data.eventPlan);
       } catch (error) {
         console.error("Error fetching event plan:", error);
@@ -74,6 +83,7 @@ const EventPlanningPage = ({ id }: { id: string }) => {
 
     fetchData();
   }, [id]);
+  
   
 
   const updatePlan = (field, value) => {
@@ -400,115 +410,15 @@ const EventPlanningPage = ({ id }: { id: string }) => {
           />
         )}
 
-        {activeTab === 'schedule' && (
-          <div style={{ backgroundColor: '#FFF', borderRadius: '12px', padding: '32px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#333', margin: 0 }}>Schedule</h3>
-              {!isReadOnly && (
-                <button 
-                  onClick={addScheduleItem}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '10px 20px',
-                    backgroundColor: '#6B7FD7',
-                    color: '#FFF',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '0.9rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <AddIcon style={{ width: '16px', height: '16px' }} />
-                  Add Time Slot
-                </button>
-              )}
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f5f5f5' }}>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.85rem', fontWeight: 600, color: '#666' }}>Time</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.85rem', fontWeight: 600, color: '#666' }}>Duration</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.85rem', fontWeight: 600, color: '#666' }}>Activity</th>
-                    {!isReadOnly && <th style={{ padding: '12px' }}></th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {eventPlan.schedule.map((item, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #e0e0e0' }}>
-                      <td style={{ padding: '12px' }}>
-                        <input
-                          type="text"
-                          value={item.time}
-                          onChange={(e) => updateSchedule(i, 'time', e.target.value)}
-                          placeholder="7:00 PM"
-                          disabled={isReadOnly}
-                          style={{ 
-                            padding: '8px', 
-                            fontSize: '0.9rem', 
-                            border: '1px solid #ddd', 
-                            borderRadius: '6px', 
-                            width: '100px',
-                            backgroundColor: isReadOnly ? '#f5f5f5' : '#fff',
-                            cursor: isReadOnly ? 'not-allowed' : 'text'
-                          }}
-                        />
-                      </td>
-                      <td style={{ padding: '12px' }}>
-                        <input
-                          type="text"
-                          value={item.duration}
-                          onChange={(e) => updateSchedule(i, 'duration', e.target.value)}
-                          placeholder="30 min"
-                          disabled={isReadOnly}
-                          style={{ 
-                            padding: '8px', 
-                            fontSize: '0.9rem', 
-                            border: '1px solid #ddd', 
-                            borderRadius: '6px', 
-                            width: '100px',
-                            backgroundColor: isReadOnly ? '#f5f5f5' : '#fff',
-                            cursor: isReadOnly ? 'not-allowed' : 'text'
-                          }}
-                        />
-                      </td>
-                      <td style={{ padding: '12px' }}>
-                        <select
-                          value={item.activityId || ''}
-                          onChange={(e) => updateSchedule(i, 'activityId', e.target.value ? parseInt(e.target.value) : null)}
-                          disabled={isReadOnly}
-                          style={{ 
-                            padding: '8px', 
-                            fontSize: '0.9rem', 
-                            border: '1px solid #ddd', 
-                            borderRadius: '6px', 
-                            width: '100%',
-                            backgroundColor: isReadOnly ? '#f5f5f5' : '#fff',
-                            cursor: isReadOnly ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          <option value="">Select...</option>
-                          {eventPlan.activities.map(a => (
-                            <option key={a.id} value={a.id}>{a.name}</option>
-                          ))}
-                        </select>
-                      </td>
-                      {!isReadOnly && (
-                        <td style={{ padding: '12px' }}>
-                          <button onClick={() => deleteScheduleItem(i)} style={{ background: 'none', border: 'none', color: '#f44336', cursor: 'pointer' }}>
-                            <DeleteIcon style={{ width: '18px', height: '18px' }} />
-                          </button>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        {activeTab === "schedule" && (
+          <ScheduleTab
+            schedule={schedule}
+            activities={activities}
+            isReadOnly={isReadOnly}
+            addScheduleItem={addScheduleItem}
+            updateSchedule={updateSchedule}
+            deleteScheduleItem={deleteScheduleItem}
+          />
         )}
 
         {activeTab === 'shopping' && (
