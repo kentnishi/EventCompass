@@ -7,7 +7,7 @@ import IntakeForm from './questionaire/IntakeForm';
 import ConceptsScreen from './questionaire/ConceptsScreen';
 import PreviewScreen from './questionaire/PreviewScreen';
 
-import { PLACEHOLDER_EVENT_PLAN, generatePlaceholderActivities, generatePlaceholderScheduleItems } from "@/app/utils/placeholderData";
+import { PLACEHOLDER_EVENT_PLAN, generatePlaceholderActivities, generatePlaceholderScheduleItems, generatePlaceholderTasks } from "@/app/utils/placeholderData";
 
 
 // Main App Component
@@ -276,7 +276,7 @@ const EventQuestionaire = () => {
 
         // Activities must exist for schedule to work
         const PLACEHOLDER_SCHEDULE = generatePlaceholderScheduleItems(id, activities);
-        if (PLACEHOLDER_SCHEDULE.length > 0) {
+        if (PLACEHOLDER_SCHEDULE.length > 0) { // Replace with logic about whether schedule is being kept
           const scheduleResponse = await fetch(`/api/event-plans/${id}/schedule`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -293,6 +293,27 @@ const EventQuestionaire = () => {
 
             console.log("Schedule added:", schedule);
         }
+
+        const PLACEHOLDER_TASKS = generatePlaceholderTasks(id, activities);
+        if (PLACEHOLDER_TASKS.length > 0) { // Replace with logic about whether tasks is being kept
+          const tasksResponse = await fetch(`/api/event-plans/${id}/tasks`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(PLACEHOLDER_TASKS),
+            })
+
+            const { tasks } = await tasksResponse.json();
+
+            if (!tasksResponse.ok) {
+              const errorText = await tasksResponse.text();
+              console.error("Failed to add tasks:", errorText);
+              throw new Error(`Failed to add tasks: ${errorText}`);
+            }
+
+            console.log("Tasks added:", tasks);
+        }
+
+
 
 
       }

@@ -9,10 +9,11 @@ import CloudQueueIcon from '@mui/icons-material/CloudQueue';
 import OverviewTab from '@/components/builder/tabs/OverviewTab';
 import ActivitiesTab from "@/components/builder/tabs/ActivitiesTab";
 import ScheduleTab from "@/components/builder/tabs/ScheduleTab";
+import TasksTab from "@/components/builder/tabs/TasksTab";
 
 import { PLACEHOLDER_EVENT_PLAN, PLACEHOLDER_EVENT_BASICS, generatePlaceholderActivities, generatePlaceholderScheduleItems } from "@/app/utils/placeholderData";
 
-import { EventPlan, EventBasics, Activity, ScheduleItem } from "@/types/eventPlan";
+import { EventPlan, EventBasics, Activity, ScheduleItem, Task } from "@/types/eventPlan";
 
 const EventPlanningPage = ({ id }: { id: string }) => {
   console.log("Event ID in EventPlanningPage:", id);
@@ -21,6 +22,7 @@ const EventPlanningPage = ({ id }: { id: string }) => {
   const [eventBasics, setEventBasics] = useState<EventBasics>(PLACEHOLDER_EVENT_BASICS);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   const [activeTab, setActiveTab] = useState("overview");
   const [status, setStatus] = useState("planning");
@@ -39,13 +41,16 @@ const EventPlanningPage = ({ id }: { id: string }) => {
         const [ 
           eventResponse,
           eventActivitiesResponse,
-          eventScheduleResponse
+          eventScheduleResponse,
+          eventTasksResponse
         ] = await Promise.all([
           fetch(`/api/event-plans/${id}`),
           fetch(`/api/event-plans/${id}/activities`),
-          fetch(`/api/event-plans/${id}/schedule`)
+          fetch(`/api/event-plans/${id}/schedule`),
+          fetch(`/api/event-plans/${id}/tasks`),
         ])
 
+        // Event Basics: Name, Description, etc.
         const event_response = await eventResponse.json();
         const event = event_response.event;
         // console.log("Event Basics: ", event);
@@ -66,13 +71,21 @@ const EventPlanningPage = ({ id }: { id: string }) => {
         });
         console.log("eventBasics: ", eventBasics);
 
+
+        // Activities: List of activities
         const activities_response = await eventActivitiesResponse.json()
         console.log("Activities response from API: ", activities_response);
         setActivities(activities_response || []);
 
+        // Schedule: List of schedule items
         const schedule_response = await eventScheduleResponse.json()
         console.log("Schedule response from API: ", schedule_response);
         setSchedule(schedule_response || []);
+
+        // Tasks: List of tasks
+        const tasks_response = await eventTasksResponse.json()
+        console.log("Tasks response from API: ", tasks_response);
+        setTasks(tasks_response || []);
 
 
         // setEventPlan(data.eventPlan);
@@ -560,112 +573,15 @@ const EventPlanningPage = ({ id }: { id: string }) => {
           </div>
         )}
 
-        {activeTab === 'tasks' && (
-          <div style={{ backgroundColor: '#FFF', borderRadius: '12px', padding: '32px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#333', margin: 0 }}>Tasks</h3>
-              {!isReadOnly && (
-                <button 
-                  onClick={addTask}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '10px 20px',
-                    backgroundColor: '#6B7FD7',
-                    color: '#FFF',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '0.9rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <AddIcon style={{ width: '16px', height: '16px' }} />
-                  Add Task
-                </button>
-              )}
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f5f5f5' }}>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.85rem', fontWeight: 600, color: '#666' }}>Task</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.85rem', fontWeight: 600, color: '#666' }}>Assigned</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.85rem', fontWeight: 600, color: '#666' }}>Deadline</th>
-                    {!isReadOnly && <th style={{ padding: '12px' }}></th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {eventPlan.tasks.map((task, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #e0e0e0' }}>
-                      <td style={{ padding: '12px' }}>
-                        <input
-                          type="text"
-                          value={task.task}
-                          onChange={(e) => updateTask(i, 'task', e.target.value)}
-                          placeholder="Task description"
-                          disabled={isReadOnly}
-                          style={{ 
-                            padding: '8px', 
-                            fontSize: '0.9rem', 
-                            border: '1px solid #ddd', 
-                            borderRadius: '6px', 
-                            width: '100%',
-                            backgroundColor: isReadOnly ? '#f5f5f5' : '#fff',
-                            cursor: isReadOnly ? 'not-allowed' : 'text'
-                          }}
-                        />
-                      </td>
-                      <td style={{ padding: '12px' }}>
-                        <input
-                          type="text"
-                          value={task.assignedTo}
-                          onChange={(e) => updateTask(i, 'assignedTo', e.target.value)}
-                          placeholder="Name"
-                          disabled={isReadOnly}
-                          style={{ 
-                            padding: '8px', 
-                            fontSize: '0.9rem', 
-                            border: '1px solid #ddd', 
-                            borderRadius: '6px', 
-                            width: '120px',
-                            backgroundColor: isReadOnly ? '#f5f5f5' : '#fff',
-                            cursor: isReadOnly ? 'not-allowed' : 'text'
-                          }}
-                        />
-                      </td>
-                      <td style={{ padding: '12px' }}>
-                        <input
-                          type="text"
-                          value={task.deadline}
-                          onChange={(e) => updateTask(i, 'deadline', e.target.value)}
-                          placeholder="Date"
-                          disabled={isReadOnly}
-                          style={{ 
-                            padding: '8px', 
-                            fontSize: '0.9rem', 
-                            border: '1px solid #ddd', 
-                            borderRadius: '6px', 
-                            width: '120px',
-                            backgroundColor: isReadOnly ? '#f5f5f5' : '#fff',
-                            cursor: isReadOnly ? 'not-allowed' : 'text'
-                          }}
-                        />
-                      </td>
-                      {!isReadOnly && (
-                        <td style={{ padding: '12px' }}>
-                          <button onClick={() => deleteTask(i)} style={{ background: 'none', border: 'none', color: '#f44336', cursor: 'pointer' }}>
-                            <DeleteIcon style={{ width: '18px', height: '18px' }} />
-                          </button>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        {activeTab === "tasks" && (
+          <TasksTab
+            tasks={tasks}
+            activities={activities}
+            isReadOnly={isReadOnly}
+            addTask={addTask}
+            updateTask={updateTask}
+            deleteTask={deleteTask}
+          />
         )}
 
         {activeTab === 'budget' && (

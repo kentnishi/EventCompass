@@ -1,4 +1,4 @@
-import { Activity, ScheduleItem } from "@/types/eventPlan";
+import { Activity, ScheduleItem, Task } from "@/types/eventPlan";
 const placeholder_name = `TEST EVENT ${new Date().toISOString()}`;
 
 export const PLACEHOLDER_EVENT_PLAN = {
@@ -97,57 +97,57 @@ export const PLACEHOLDER_EVENT_PLAN = {
         purchased: false 
       }
     ],
-    // tasks: [
-    //   { 
-    //     task: "Book guest speaker", 
-    //     assignedTo: "", 
-    //     deadline: "2025-10-03", 
-    //     status: "pending", 
-    //     linkedTo: null
-    //   },
-    //   { 
-    //     task: "Order stationery supplies", 
-    //     assignedTo: "", 
-    //     deadline: "2025-10-03", 
-    //     status: "pending", 
-    //     linkedTo: null
-    //   },
-    //   { 
-    //     task: "Create letter writing prompts", 
-    //     assignedTo: "", 
-    //     deadline: "2025-10-03", 
-    //     status: "pending", 
-    //     linkedTo: null
-    //   },
-    //   { 
-    //     task: "Set up reflection board", 
-    //     assignedTo: "", 
-    //     deadline: "2025-10-03", 
-    //     status: "pending", 
-    //     linkedTo: null
-    //   },
-    //   { 
-    //     task: "Coordinate with nursing home", 
-    //     assignedTo: "", 
-    //     deadline: "2025-10-03", 
-    //     status: "pending", 
-    //     linkedTo: null 
-    //   },
-    //   { 
-    //     task: "Reserve venue", 
-    //     assignedTo: "", 
-    //     deadline: "2025-10-03", 
-    //     status: "pending", 
-    //     linkedTo: null 
-    //   },
-    //   { 
-    //     task: "Purchase refreshments", 
-    //     assignedTo: "", 
-    //     deadline: "2025-10-03", 
-    //     status: "pending", 
-    //     linkedTo: null
-    //   }
-    // ],
+    tasks: [
+      { 
+        task: "Book guest speaker", 
+        assignedTo: "", 
+        deadline: "2025-10-03", 
+        status: "pending", 
+        linkedTo: null
+      },
+      { 
+        task: "Order stationery supplies", 
+        assignedTo: "", 
+        deadline: "2025-10-03", 
+        status: "pending", 
+        linkedTo: null
+      },
+      { 
+        task: "Create letter writing prompts", 
+        assignedTo: "", 
+        deadline: "2025-10-03", 
+        status: "pending", 
+        linkedTo: null
+      },
+      { 
+        task: "Set up reflection board", 
+        assignedTo: "", 
+        deadline: "2025-10-03", 
+        status: "pending", 
+        linkedTo: null
+      },
+      { 
+        task: "Coordinate with nursing home", 
+        assignedTo: "", 
+        deadline: "2025-10-03", 
+        status: "pending", 
+        linkedTo: null 
+      },
+      { 
+        task: "Reserve venue", 
+        assignedTo: "", 
+        deadline: "2025-10-03", 
+        status: "pending", 
+        linkedTo: null 
+      },
+      { 
+        task: "Purchase refreshments", 
+        assignedTo: "", 
+        deadline: "2025-10-03", 
+        status: "pending", 
+        linkedTo: null
+      }
+    ],
     budget_items: [
       { category: "Food & Beverages", estimated: 200, actual: 0 },
       { category: "Stationery & Materials", estimated: 150, actual: 0 },
@@ -244,48 +244,100 @@ export const generatePlaceholderScheduleItems = (eventId: string, activities: Ac
     },
 ];
       
-      // Example usage in a component:
-      /*
-      const ExampleComponent = () => {
-        const [schedule, setSchedule] = useState(placeholderSchedule);
-        const [activities, setActivities] = useState(placeholderActivities);
-        
-        const addScheduleItem = () => {
-          const today = new Date().toISOString().split('T')[0];
-          setSchedule([
-            ...schedule,
-            {
-              start_date: today,
-              end_date: null,
-              start_time: "09:00",
-              end_time: "10:00",
-              activityId: null,
-              location: "",
-              notes: "",
-            },
-          ]);
-        };
-      
-        const updateSchedule = (index: number, field: string, value: any) => {
-          const updated = [...schedule];
-          updated[index] = { ...updated[index], [field]: value };
-          setSchedule(updated);
-        };
-      
-        const deleteScheduleItem = (index: number) => {
-          setSchedule(schedule.filter((_, i) => i !== index));
-        };
-      
-        return (
-          <ScheduleTab
-            schedule={schedule}
-            activities={activities}
-            isReadOnly={false}
-            addScheduleItem={addScheduleItem}
-            updateSchedule={updateSchedule}
-            deleteScheduleItem={deleteScheduleItem}
-          />
-        );
+export const generatePlaceholderTasks = (eventId: string, activities: Activity[]): Task[] => [
+    // Placeholder Tasks Data
+    {
+      event_id: eventId,
+      activity_id: activities[0].id,
+      title: "Coordinate with photographer",
+      description: "Book professional photographer for cocktail hour. Need someone experienced with event photography and comfortable working in dimly lit environments.",
+      status: "in_progress" as const,
+      assignee_name: "Emily Lee",
+      assignee_email: "emily.lee@example.com",
+      due_date: "2024-12-05T10:20:00Z",
+      priority: "medium" as const,
+      notes: "Nov 25: Contacted three photographers. Waiting on quotes from two of them. Sarah Photography responded with $800 quote.",
+      completed_at: null,
+    },    
+    {
+      event_id: eventId,
+      activity_id: null,
+      title: "Send invitations to scholarship recipients",
+      description: "Send formal invitations to all 15 scholarship recipients and their families (2 guests each). Include RSVP deadline of Nov 15 and dietary restriction form.",
+      status: "done" as const,
+      assignee_name: "Sarah Miller",
+      assignee_email: "sarah.m@example.com",
+      due_date: "2024-11-10T10:20:00Z",
+      priority: "high" as const,
+      notes: "Sent via email on Nov 8. All 15 recipients confirmed attendance. 12 vegetarian, 3 gluten-free requests received.",
+      completed_at: "2024-11-08T10:20:00Z",
+    },
+    {
+      event_id: eventId,
+      activity_id: activities[1].id,
+      title: "Finalize program booklet",
+      description: "Design and finalize program booklet with event schedule, scholarship recipient bios, donor recognition, and speaker information. Need 210 copies printed.",
+      status: "blocked" as const,
+      assignee_name: "John Davis",
+      assignee_email: "john.davis@example.com",
+      due_date: "2024-11-30T10:20:00Z",
+      priority: "high" as const,
+      notes: "Nov 26: Design is 90% complete. BLOCKED: Still waiting on keynote speaker bio and headshot. Can't finalize until we have this.",
+      completed_at: null,
+    },
+  ];
+  
+  // Example usage in a component:
+  /*
+  const ExampleComponent = () => {
+    const [tasks, setTasks] = useState<Task[]>(placeholderTasks);
+    const [activities] = useState<Activity[]>(placeholderActivities);
+    
+    const addTask = () => {
+      const newTask: Task = {
+        event_id: "evt_123",
+        activity_id: null,
+        title: "",
+        description: "",
+        status: "todo",
+        assignee_name: "",
+        assignee_email: "",
+        due_date: null,
+        priority: "medium",
+        notes: "",
+        completed_at: null,
       };
-      */
+      setTasks([...tasks, newTask]);
+    };
+  
+    const updateTask = (index: number, field: string, value: any) => {
+      const updated = [...tasks];
+      updated[index] = { ...updated[index], [field]: value };
       
+      // Auto-set completed_at when status changes to done
+      if (field === "status" && value === "done" && !updated[index].completed_at) {
+        updated[index].completed_at = new Date().toISOString();
+      } else if (field === "status" && value !== "done") {
+        updated[index].completed_at = null;
+      }
+      
+      setTasks(updated);
+    };
+  
+    const deleteTask = (index: number) => {
+      setTasks(tasks.filter((_, i) => i !== index));
+    };
+  
+    return (
+      <TasksTab
+        tasks={tasks}
+        activities={activities}
+        isReadOnly={false}
+        addTask={addTask}
+        updateTask={updateTask}
+        deleteTask={deleteTask}
+      />
+    );
+  };
+  */
+  

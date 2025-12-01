@@ -65,12 +65,18 @@ export interface ShoppingItem {
 }
 
 export interface Task {
-    id: number;
-    task: string;
-    assignedTo: string; // Name of the person assigned
-    deadline: string; // Deadline as a string (e.g., "2025-11-25")
-    status: string; // Status of the task (e.g., "pending", "completed")
-    linkedTo: string | null; // Linked activity ID or null
+    id?: number;
+    event_id: string;
+    activity_id: number | null;
+    title: string;
+    description: string;
+    status: 'todo' | 'in_progress' | 'blocked' | 'done';
+    assignee_name: string;
+    assignee_email: string;
+    due_date: string | null;
+    priority: 'low' | 'medium' | 'high';
+    notes: string;
+    completed_at?: string | null;
 }
 
 export interface BudgetItem {
