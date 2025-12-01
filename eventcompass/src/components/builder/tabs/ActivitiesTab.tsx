@@ -24,6 +24,7 @@ interface ShoppingItem {
 
 interface ActivitiesTabProps {
   activities: Activity[];
+  setActivities: React.Dispatch<React.SetStateAction<Activity[]>>;
   isReadOnly: boolean;
   updateActivity: (index: number, field: string, value: any) => void;
   addActivity: () => void;
@@ -34,6 +35,7 @@ interface ActivitiesTabProps {
 
 const ActivitiesTab: React.FC<ActivitiesTabProps> = ({
   activities,
+  setActivities,
   isReadOnly,
   updateActivity,
   addActivity,
@@ -49,19 +51,19 @@ const ActivitiesTab: React.FC<ActivitiesTabProps> = ({
     setSelectedIndex(index);
   };
 
-  const handleUpdateActivity = (updatedActivity: Activity) => {
-    if (selectedIndex !== null) {
-      Object.keys(updatedActivity).forEach((key) => {
-        if (key !== "id") {
-          updateActivity(selectedIndex, key, updatedActivity[key as keyof Activity]);
-        }
-      });
-    }
+  const handleActivityUpdated = (updatedActivity: Activity) => {
+    setActivities((prevActivities) =>
+      prevActivities.map((activity) =>
+        activity.id === updatedActivity.id ? updatedActivity : activity
+      )
+    );
   };
-
-  const handleDeleteActivity = () => {
+  
+  const handleActivityDeleted = () => {
     if (selectedIndex !== null) {
-      deleteActivity(selectedIndex);
+      setActivities((prevActivities) =>
+        prevActivities.filter((_, index) => index !== selectedIndex)
+      );
       setSelectedActivity(null);
       setSelectedIndex(null);
     }
@@ -201,8 +203,8 @@ const ActivitiesTab: React.FC<ActivitiesTabProps> = ({
             setSelectedActivity(null);
             setSelectedIndex(null);
           }}
-          onUpdate={handleUpdateActivity}
-          onDelete={handleDeleteActivity}
+          onActivityUpdated={handleActivityUpdated}
+          onActivityDeleted={handleActivityDeleted}
           isReadOnly={isReadOnly}
           scheduleItems={getRelatedScheduleItems(selectedActivity.id)}
           shoppingItems={getRelatedShoppingItems(selectedActivity.id)}

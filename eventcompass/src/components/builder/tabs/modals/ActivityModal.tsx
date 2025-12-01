@@ -8,13 +8,11 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import PeopleIcon from "@mui/icons-material/People";
 import AddIcon from "@mui/icons-material/Add";
 
-
-
 interface ActivityModalProps {
   activity: Activity;
   onClose: () => void;
-  onUpdate: (activity: Activity) => void;
-  onDelete: () => void;
+  onActivityUpdated: (updatedActivity: Activity) => void;
+  onActivityDeleted: () => void;
   isReadOnly: boolean;
   scheduleItems: ScheduleItem[];
   shoppingItems: ShoppingItem[];
@@ -23,38 +21,61 @@ interface ActivityModalProps {
 const ActivityModal: React.FC<ActivityModalProps> = ({
     activity,
     onClose,
-    onUpdate,
-    onDelete,
+    onActivityUpdated,
+    onActivityDeleted,
     isReadOnly,
     scheduleItems,
     shoppingItems,
-  }) => {
+}) => {
     const [name, setName] = useState(activity.name);
     const [description, setDescription] = useState(activity.description);
     const [notes, setNotes] = useState(activity.notes || "");
     const [staffingNeeds, setStaffingNeeds] = useState<StaffingNeed[]>(
-      activity.staffing_needs || []
+        activity.staffing_needs || []
     );
-  
-    const handleSave = () => {
-      onUpdate({
-        ...activity,
-        name,
-        description,
-        notes,
-        staffing_needs: staffingNeeds,
-      });
+
+    const handleSave = async () => {
+        try {
+            const response = await fetch(`/api/event-plans/activities/${activity.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                name,
+                description,
+                notes,
+                staffing_needs: staffingNeeds,
+            }),
+            });
+
+            if (!response.ok) {
+            throw new Error("Failed to update activity");
+            }
+
+            const updatedActivity = await response.json();
+            onActivityUpdated(updatedActivity); // Notify parent component
+            onClose();
+        } catch (error) {
+            console.error("Error updating activity:", error);
+        }
+        };
+
+    const handleDelete = async () => {
+        try {
+            const response = await fetch(`/api/event-plans/activities/${activity.id}`, {
+            method: "DELETE",
+            });
+
+            if (!response.ok) {
+            throw new Error("Failed to delete activity");
+            }
+
+            onActivityDeleted(); // Notify parent component
+            onClose();
+        } catch (error) {
+            console.error("Error deleting activity:", error);
+        }
     };
-  
-    // Auto-save on changes
-    React.useEffect(() => {
-      if (!isReadOnly) {
-        const timer = setTimeout(() => {
-          handleSave();
-        }, 2000);
-        return () => clearTimeout(timer);
-      }
-    }, [name, description, notes, staffingNeeds]);
+    
   
     const addStaffingNeed = () => {
       setStaffingNeeds([
@@ -543,10 +564,9 @@ const ActivityModal: React.FC<ActivityModalProps> = ({
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <div style={{ fontSize: "0.875rem", color: "#6B7280" }}>Auto-saved</div>
               {!isReadOnly && (
                 <button
-                  onClick={onDelete}
+                  onClick={handleDelete}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -566,7 +586,7 @@ const ActivityModal: React.FC<ActivityModalProps> = ({
               )}
             </div>
             <button
-              onClick={onClose}
+              onClick={handleSave}
               style={{
                 padding: "8px 16px",
                 backgroundColor: "#8B5CF6",
