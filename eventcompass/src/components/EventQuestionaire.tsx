@@ -7,7 +7,7 @@ import IntakeForm from './questionaire/IntakeForm';
 import ConceptsScreen from './questionaire/ConceptsScreen';
 import PreviewScreen from './questionaire/PreviewScreen';
 
-import { PLACEHOLDER_EVENT_PLAN, generatePlaceholderActivities, generatePlaceholderScheduleItems, generatePlaceholderTasks } from "@/app/utils/placeholderData";
+import { PLACEHOLDER_EVENT_BASICS, generatePlaceholderActivities, generatePlaceholderScheduleItems, generatePlaceholderTasks, generatePlaceholderBudgetItems } from "@/app/utils/placeholderData";
 
 
 // Main App Component
@@ -190,18 +190,18 @@ const EventQuestionaire = () => {
 
 
   const proceedToEditor = async () => {
-    const customizedPlan = PLACEHOLDER_EVENT_PLAN;
-    
-    if (!keepSections.activities) customizedPlan.activities = [];
-    if (!keepSections.schedule) customizedPlan.schedule = [];
-    if (!keepSections.shopping) customizedPlan.shopping = [];
-    if (!keepSections.tasks) customizedPlan.tasks = [];
-    if (!keepSections.budget) {
-      customizedPlan.budget = [
-        { category: "Food & Beverages", estimated: 0, actual: 0 },
-        { category: "Miscellaneous", estimated: 0, actual: 0 },
-      ];
-    }
+    // const customizedPlan = PLACEHOLDER_EVENT_PLAN;
+
+    // if (!keepSections.activities) PLACEHOLDER_ACTIVITIES.activities = [];
+    // if (!keepSections.schedule) customizedPlan.schedule = [];
+    // if (!keepSections.shopping) customizedPlan.shopping = [];
+    // if (!keepSections.tasks) customizedPlan.tasks = [];
+    // if (!keepSections.budget) {
+    //   customizedPlan.budget = [
+    //     { category: "Food & Beverages", estimated: 0, actual: 0 },
+    //     { category: "Miscellaneous", estimated: 0, actual: 0 },
+    //   ];
+    // }
   
     try {
       // Create the event in the database with all related data
@@ -211,31 +211,7 @@ const EventQuestionaire = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          // Main event data
-          name: PLACEHOLDER_EVENT_PLAN.name || "Untitled Event",
-          description: PLACEHOLDER_EVENT_PLAN.description || "",
-          organization: PLACEHOLDER_EVENT_PLAN.org || "",
-          goals: PLACEHOLDER_EVENT_PLAN.goals || [],
-          attendees: PLACEHOLDER_EVENT_PLAN.attendance || 0,
-          start_date: PLACEHOLDER_EVENT_PLAN.start_date,
-          end_date: PLACEHOLDER_EVENT_PLAN.end_date,
-          start_time: PLACEHOLDER_EVENT_PLAN.start_time !== "TBD" ? customizedPlan.start_time : null,
-          end_time: PLACEHOLDER_EVENT_PLAN.end_time !== "TBD" ? customizedPlan.end_time : null,
-          location: PLACEHOLDER_EVENT_PLAN.location,
-          committee: PLACEHOLDER_EVENT_PLAN.committee,
-          status: "planning",
-          food_provided: false,
-          giveaways: false,
-          registration_required: false,
-          event_type: null,
-          keywords: PLACEHOLDER_EVENT_PLAN.keywords || [],
-          
-          // Related data
-          // activities: customizedPlan.activities,
-          // schedule: customizedPlan.schedule,
-          // shopping: customizedPlan.shopping,
-          // tasks: customizedPlan.tasks,
-          budget: customizedPlan.budget,
+          ...PLACEHOLDER_EVENT_BASICS, 
         }),
       });
   
@@ -313,40 +289,29 @@ const EventQuestionaire = () => {
             console.log("Tasks added:", tasks);
         }
 
+        const PLACEHOLDER_BUDGET = generatePlaceholderBudgetItems(id);
+        if (PLACEHOLDER_BUDGET.length > 0) { // Replace with logic about whether budget is being kept
+          const budgetResponse = await fetch(`/api/event-plans/${id}/budget`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(PLACEHOLDER_BUDGET),
+            })
 
+            const { budget } = await budgetResponse.json();
 
+            if (!budgetResponse.ok) {
+              const errorText = await budgetResponse.text();
+              console.error("Failed to add budget items:", errorText);
+              throw new Error(`Failed to add budget items: ${errorText}`);
+            }
 
-      }
-
-      
-      
-
-
-
-    
-      
-      if (customizedPlan.shopping.length > 0) {
-        insertPromises.push(
-          fetch(`/api/event-plans/${id}/shopping`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ shopping: customizedPlan.shopping }),
-          })
-        );
-      }
-
-      const insertPromisesResponses = await Promise.all(insertPromises);
-      console.log("Insert related data responses:", insertPromisesResponses);
-
-
-        // Check for errors in related data API calls
-      for (const response of insertPromisesResponses) {
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Failed to add related data:", errorText);
-          throw new Error(`Failed to add related data: ${errorText}`);
+            console.log("Budget items added:", budget);
         }
+
+
+
       }
+
 
       
       // Navigate to the event editor page

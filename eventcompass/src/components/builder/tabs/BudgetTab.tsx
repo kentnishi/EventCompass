@@ -35,41 +35,47 @@ import {
   ShoppingCart,
   Edit,
   Delete,
+  Add,
 } from "@mui/icons-material";
 
 interface BudgetItem {
-  id: string;
-  category: string;
-  allocated: number;
-  spent: number;
-  shoppingListId?: string;
+  id?: number;
+  event_id: string;
+  category: string; // Budget category (e.g., "Food & Beverages") -> linked to shopping
+  allocated: number; // Allocated budget
+  description: string; // Description of the budget category
+  spent: number; // Amount spent per category
 }
 
 interface BudgetTabProps {
+  event_id: string;
   budgetItems: BudgetItem[];
   isReadOnly: boolean;
-  updateBudgetItem: (id: string, field: "allocated" | "spent", value: number) => void;
-  updateCategory: (id: string, category: string) => void;
-  deleteBudgetItem: (id: string) => void;
   totalBudget: number;
-  shoppingCategories: string[];
+//   shoppingCategories: string[];
+  onBudgetChange: () => void; // Callback to refresh budget data
 }
 
 const BudgetTab: React.FC<BudgetTabProps> = ({
+  event_id,
   budgetItems,
   isReadOnly,
-  updateBudgetItem,
-  updateCategory,
-  deleteBudgetItem,
   totalBudget,
-  shoppingCategories,
+  
+  onBudgetChange,
 }) => {
-  const [editingAllocated, setEditingAllocated] = useState<string | null>(null);
+  const [editingAllocated, setEditingAllocated] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<BudgetItem | null>(null);
+  const [editingItem, setEditingItem] = useState<BudgetItem | null>(null);
   const [modalCategory, setModalCategory] = useState("");
+  const [modalDescription, setModalDescription] = useState("");
   const [modalAllocated, setModalAllocated] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const shoppingCategories = Array.from(new Set(budgetItems.map((item) => item.category)));
+
 
   const totalAllocated = budgetItems.reduce((sum, item) => sum + item.allocated, 0);
   const totalSpent = budgetItems.reduce((sum, item) => sum + item.spent, 0);
@@ -92,16 +98,29 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
     return "success";
   };
 
-  const handleStartEditAllocated = (itemId: string, currentValue: number) => {
+  // Quick inline edit for allocated amount
+  const handleStartEditAllocated = (itemId: number, currentValue: number) => {
     if (isReadOnly) return;
     setEditingAllocated(itemId);
     setEditValue(currentValue.toString());
   };
 
-  const handleSaveAllocated = (itemId: string) => {
+  const handleSaveAllocated = async (itemId: number) => {
     const newValue = parseFloat(editValue);
     if (!isNaN(newValue) && newValue >= 0) {
-      updateBudgetItem(itemId, "allocated", newValue);
+      try {
+        const response = await fetch(`/api/event-plans/budget/${itemId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ allocated: newValue }),
+        });
+
+        if (!response.ok) throw new Error("Failed to update budget item");
+        
+        onBudgetChange(); // Refresh data
+      } catch (error) {
+        console.error("Error updating allocated amount:", error);
+      }
     }
     setEditingAllocated(null);
     setEditValue("");
@@ -112,7 +131,7 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
     setEditValue("");
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent, itemId: string) => {
+  const handleKeyDown = (e: React.KeyboardEvent, itemId: number) => {
     if (e.key === "Enter") {
       handleSaveAllocated(itemId);
     } else if (e.key === "Escape") {
@@ -120,34 +139,109 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
     }
   };
 
+  // Modal for editing/creating full budget item
   const handleOpenEditModal = (item: BudgetItem) => {
     if (isReadOnly) return;
-    setEditingCategory(item);
+    setIsCreating(false);
+    setEditingItem(item);
     setModalCategory(item.category);
+    setModalDescription(item.description);
     setModalAllocated(item.allocated.toString());
+    setShowEditModal(true);
+  };
+
+  const handleOpenCreateModal = () => {
+    if (isReadOnly) return;
+    setIsCreating(true);
+    setEditingItem(null);
+    setModalCategory(shoppingCategories[0] || "");
+    setModalDescription("");
+    setModalAllocated("0");
     setShowEditModal(true);
   };
 
   const handleCloseEditModal = () => {
     setShowEditModal(false);
-    setEditingCategory(null);
+    setEditingItem(null);
     setModalCategory("");
+    setModalDescription("");
     setModalAllocated("");
+    setIsCreating(false);
   };
 
-  const handleSaveModal = () => {
-    if (!editingCategory) return;
+  const handleSaveModal = async () => {
+    setIsSaving(true);
     
-    const newAllocated = parseFloat(modalAllocated);
-    if (!isNaN(newAllocated) && newAllocated >= 0) {
-      updateBudgetItem(editingCategory.id, "allocated", newAllocated);
+    try {
+      const newAllocated = parseFloat(modalAllocated);
+      if (isNaN(newAllocated) || newAllocated < 0) {
+        alert("Please enter a valid allocated amount");
+        setIsSaving(false);
+        return;
+      }
+
+      if (!modalCategory.trim()) {
+        alert("Please select a category");
+        setIsSaving(false);
+        return;
+      }
+
+      if (isCreating) {
+        // Create new budget item
+        const response = await fetch(`/api/event-plans/${event_id}/budget`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            category: modalCategory,
+            description: modalDescription,
+            allocated: newAllocated,
+            spent: 0, // New items start with 0 spent
+          }),
+        });
+
+        if (!response.ok) throw new Error("Failed to create budget item");
+      } else if (editingItem?.id) {
+        // Update existing budget item
+        const response = await fetch(`/api/event-plans/budget/${editingItem.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            category: modalCategory,
+            description: modalDescription,
+            allocated: newAllocated,
+          }),
+        });
+
+        if (!response.ok) throw new Error("Failed to update budget item");
+      }
+
+      onBudgetChange(); // Refresh data
+      handleCloseEditModal();
+    } catch (error) {
+      console.error("Error saving budget item:", error);
+      alert("Failed to save budget item. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
+  };
+
+  const handleDelete = async (itemId: number) => {
+    if (isReadOnly) return;
     
-    if (modalCategory !== editingCategory.category) {
-      updateCategory(editingCategory.id, modalCategory);
+    if (!confirm("Are you sure you want to delete this budget item?")) return;
+
+    try {
+      const response = await fetch(`/api/event-plans/budget/${itemId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Failed to delete budget item");
+      
+      onBudgetChange(); // Refresh data
+    } catch (error) {
+      console.error("Error deleting budget item:", error);
+      alert("Failed to delete budget item. Please try again.");
     }
-    
-    handleCloseEditModal();
   };
 
   return (
@@ -158,14 +252,6 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
           <Typography variant="h5" sx={{ fontWeight: 700 }}>
             Budget Overview
           </Typography>
-          <Button
-            variant="text"
-            color="primary"
-            disabled={isReadOnly}
-            sx={{ textTransform: "none" }}
-          >
-            Edit Total Budget
-          </Button>
         </Box>
 
         <Grid container spacing={2}>
@@ -275,12 +361,13 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
               </Typography>
             </Box>
             <Button
-              variant="text"
-              color="primary"
+              variant="contained"
+              startIcon={<Add />}
+              onClick={handleOpenCreateModal}
               disabled={isReadOnly}
               sx={{ textTransform: "none" }}
             >
-              + Add Category
+              Add Category
             </Button>
           </Box>
         </Box>
@@ -291,6 +378,9 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
               <TableRow>
                 <TableCell sx={{ fontWeight: 600, fontSize: "0.75rem", textTransform: "uppercase", color: "text.secondary" }}>
                   Category
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: "0.75rem", textTransform: "uppercase", color: "text.secondary" }}>
+                  Description
                 </TableCell>
                 <TableCell align="right" sx={{ fontWeight: 600, fontSize: "0.75rem", textTransform: "uppercase", color: "text.secondary" }}>
                   Allocated
@@ -325,14 +415,19 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
                         {item.category}
                       </Typography>
                     </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {item.description || "—"}
+                      </Typography>
+                    </TableCell>
                     <TableCell align="right">
                       {editingAllocated === item.id ? (
                         <TextField
                           type="number"
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
-                          onBlur={() => handleSaveAllocated(item.id)}
-                          onKeyDown={(e) => handleKeyDown(e, item.id)}
+                          onBlur={() => handleSaveAllocated(item.id!)}
+                          onKeyDown={(e) => handleKeyDown(e, item.id!)}
                           size="small"
                           autoFocus
                           InputProps={{
@@ -343,7 +438,7 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
                       ) : (
                         <Typography
                           variant="body2"
-                          onClick={() => handleStartEditAllocated(item.id, item.allocated)}
+                          onClick={() => handleStartEditAllocated(item.id!, item.allocated)}
                           sx={{ 
                             cursor: isReadOnly ? "default" : "pointer",
                             "&:hover": !isReadOnly ? { color: "primary.main" } : {},
@@ -395,7 +490,7 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
                           </IconButton>
                           <IconButton
                             size="small"
-                            onClick={() => deleteBudgetItem(item.id)}
+                            onClick={() => handleDelete(item.id!)}
                             sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }}
                           >
                             <Delete fontSize="small" />
@@ -408,71 +503,89 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
               })}
 
               {/* Totals Row */}
-              <TableRow sx={{ bgcolor: "#F5F5F5" }}>
-                <TableCell>
-                  <Typography variant="body2" fontWeight={700}>
-                    Total
-                  </Typography>
-                </TableCell>
-                <TableCell align="right">
-                  <Typography variant="body2" fontWeight={700}>
-                    ${totalAllocated.toLocaleString()}
-                  </Typography>
-                </TableCell>
-                <TableCell align="right">
-                  <Typography variant="body2" fontWeight={700}>
-                    ${totalSpent.toLocaleString()}
-                  </Typography>
-                </TableCell>
-                <TableCell align="right">
-                  <Typography variant="body2" fontWeight={700}>
-                    ${Math.max(0, totalAllocated - totalSpent).toLocaleString()}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                    <Box sx={{ flexGrow: 1, maxWidth: 100 }}>
-                      <LinearProgress
-                        variant="determinate"
-                        value={totalAllocated > 0 ? Math.min(100, (totalSpent / totalAllocated) * 100) : 0}
-                        color="primary"
-                        sx={{ height: 8, borderRadius: 4 }}
-                      />
-                    </Box>
-                    <Typography variant="body2" fontWeight={700} sx={{ minWidth: 45, textAlign: "right" }}>
-                      {totalAllocated > 0 ? ((totalSpent / totalAllocated) * 100).toFixed(0) : 0}%
+              {budgetItems.length > 0 && (
+                <TableRow sx={{ bgcolor: "#F5F5F5" }}>
+                  <TableCell colSpan={2}>
+                    <Typography variant="body2" fontWeight={700}>
+                      Total
                     </Typography>
-                  </Box>
-                </TableCell>
-                {!isReadOnly && <TableCell />}
-              </TableRow>
+                  </TableCell>
+                  <TableCell align="right">
+                    <Typography variant="body2" fontWeight={700}>
+                      ${totalAllocated.toLocaleString()}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="right">
+                    <Typography variant="body2" fontWeight={700}>
+                      ${totalSpent.toLocaleString()}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="right">
+                    <Typography variant="body2" fontWeight={700}>
+                      ${Math.max(0, totalAllocated - totalSpent).toLocaleString()}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Box sx={{ flexGrow: 1, maxWidth: 100 }}>
+                        <LinearProgress
+                          variant="determinate"
+                          value={totalAllocated > 0 ? Math.min(100, (totalSpent / totalAllocated) * 100) : 0}
+                          color="primary"
+                          sx={{ height: 8, borderRadius: 4 }}
+                        />
+                      </Box>
+                      <Typography variant="body2" fontWeight={700} sx={{ minWidth: 45, textAlign: "right" }}>
+                        {totalAllocated > 0 ? ((totalSpent / totalAllocated) * 100).toFixed(0) : 0}%
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                  {!isReadOnly && <TableCell />}
+                </TableRow>
+              )}
+
+              {/* Empty State */}
+              {budgetItems.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={!isReadOnly ? 7 : 6} align="center" sx={{ py: 6 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      No budget categories yet. Click "Add Category" to get started.
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>
       </Paper>
 
-      {/* Edit Category Modal */}
+      {/* Edit/Create Category Modal */}
       <Dialog open={showEditModal} onClose={handleCloseEditModal} maxWidth="sm" fullWidth>
-        <DialogTitle>Edit Budget Category</DialogTitle>
+        <DialogTitle>{isCreating ? "Add Budget Category" : "Edit Budget Category"}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: "flex", flexDirection: "column", gap: 3 }}>
-            <FormControl fullWidth>
-              <InputLabel>Shopping Category</InputLabel>
-              <Select
-                value={modalCategory}
-                label="Shopping Category"
-                onChange={(e) => setModalCategory(e.target.value)}
-              >
-                {shoppingCategories.map((cat) => (
-                  <MenuItem key={cat} value={cat}>
-                    {cat}
-                  </MenuItem>
-                ))}
-              </Select>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-                Select which shopping list this budget category tracks
-              </Typography>
+          <FormControl fullWidth>
+                <TextField
+                    label="Shopping Category"
+                    value={modalCategory}
+                    onChange={(e) => setModalCategory(e.target.value)}
+                    placeholder="Enter a category"
+                    fullWidth
+                />
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                    Enter the shopping category this budget item tracks
+                </Typography>
             </FormControl>
+
+            <TextField
+              label="Description"
+              value={modalDescription}
+              onChange={(e) => setModalDescription(e.target.value)}
+              fullWidth
+              multiline
+              rows={2}
+              placeholder="e.g., Catering, decorations, venue rental..."
+            />
 
             <TextField
               label="Allocated Amount"
@@ -485,7 +598,7 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
               }}
             />
 
-            {editingCategory && (
+            {editingItem && (
               <>
                 <Paper sx={{ p: 2, bgcolor: "#F5F5F5" }}>
                   <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
@@ -493,7 +606,7 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
                       Current Spent:
                     </Typography>
                     <Typography variant="body2" fontWeight={600}>
-                      ${editingCategory.spent.toLocaleString()}
+                      ${editingItem.spent.toLocaleString()}
                     </Typography>
                   </Box>
                   <Box sx={{ display: "flex", justifyContent: "space-between" }}>
@@ -501,7 +614,7 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
                       Remaining:
                     </Typography>
                     <Typography variant="body2" fontWeight={600}>
-                      ${Math.max(0, editingCategory.allocated - editingCategory.spent).toLocaleString()}
+                      ${Math.max(0, parseFloat(modalAllocated || "0") - editingItem.spent).toLocaleString()}
                     </Typography>
                   </Box>
                 </Paper>
@@ -516,11 +629,11 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 2 }}>
-          <Button onClick={handleCloseEditModal} sx={{ textTransform: "none" }}>
+          <Button onClick={handleCloseEditModal} sx={{ textTransform: "none" }} disabled={isSaving}>
             Cancel
           </Button>
-          <Button onClick={handleSaveModal} variant="contained" sx={{ textTransform: "none" }}>
-            Save Changes
+          <Button onClick={handleSaveModal} variant="contained" sx={{ textTransform: "none" }} disabled={isSaving}>
+            {isSaving ? "Saving..." : isCreating ? "Create Category" : "Save Changes"}
           </Button>
         </DialogActions>
       </Dialog>

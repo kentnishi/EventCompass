@@ -13,18 +13,19 @@ import TasksTab from "@/components/builder/tabs/TasksTab";
 import BudgetTab from "@/components/builder/tabs/BudgetTab";
 import ShoppingTab from "@/components/builder/tabs/ShoppingTab";
 
-import { PLACEHOLDER_EVENT_PLAN, PLACEHOLDER_EVENT_BASICS, generatePlaceholderActivities, generatePlaceholderScheduleItems } from "@/app/utils/placeholderData";
+import { PLACEHOLDER_EVENT_BASICS, generatePlaceholderActivities, generatePlaceholderScheduleItems } from "@/app/utils/placeholderData";
 
-import { EventPlan, EventBasics, Activity, ScheduleItem, Task } from "@/types/eventPlan";
+import { EventPlan, EventBasics, Activity, ScheduleItem, Task, BudgetItem } from "@/types/eventPlan";
 
 const EventPlanningPage = ({ id }: { id: string }) => {
   console.log("Event ID in EventPlanningPage:", id);
 
-  const [eventPlan, setEventPlan] = useState(PLACEHOLDER_EVENT_PLAN);
+  // const [eventPlan, setEventPlan] = useState(PLACEHOLDER_EVENT_PLAN);
   const [eventBasics, setEventBasics] = useState<EventBasics>(PLACEHOLDER_EVENT_BASICS);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [budget, setBudget] = useState<BudgetItem[]>([]);
 
   const [activeTab, setActiveTab] = useState("overview");
   const [status, setStatus] = useState("planning");
@@ -44,12 +45,14 @@ const EventPlanningPage = ({ id }: { id: string }) => {
           eventResponse,
           eventActivitiesResponse,
           eventScheduleResponse,
-          eventTasksResponse
+          eventTasksResponse,
+          eventBudgetResponse
         ] = await Promise.all([
           fetch(`/api/event-plans/${id}`),
           fetch(`/api/event-plans/${id}/activities`),
           fetch(`/api/event-plans/${id}/schedule`),
           fetch(`/api/event-plans/${id}/tasks`),
+          fetch(`/api/event-plans/${id}/budget`),
         ])
 
         // Event Basics: Name, Description, etc.
@@ -88,6 +91,11 @@ const EventPlanningPage = ({ id }: { id: string }) => {
         const tasks_response = await eventTasksResponse.json()
         console.log("Tasks response from API: ", tasks_response);
         setTasks(tasks_response || []);
+
+        // Budget: List of budget items
+        const budget_response = await eventBudgetResponse.json()
+        console.log("Budget response from API: ", budget_response);
+        setBudget(budget_response || []);
 
 
         // setEventPlan(data.eventPlan);
@@ -277,14 +285,38 @@ const EventPlanningPage = ({ id }: { id: string }) => {
     }
   };
 
-  const updateBudgetItem = (index, field, value) => {
-    const newBudget = [...eventPlan.budget];
-    newBudget[index][field] = value;
-    updatePlan("budget", newBudget);
+   // Function to fetch budget items from API
+   const fetchBudgetItems = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/event-plans/${id}/budget`);
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch budget items");
+      }
+      
+      const data = await response.json();
+      setBudget(data);
+    } catch (error) {
+      console.error("Error fetching budget items:", error);
+    } finally {
+      setLoading(false);
+    }
   };
+
   
-  const totalBudget = eventBasics.budget;
-  // const totalBudget = eventBasics.budget = (eventBasics.budget | 0).reduce((sum, item) => sum + item.estimated, 0) || 0;
+
+  // This is the callback function to pass to BudgetTab
+  const onBudgetChange = () => {
+    fetchBudgetItems();
+  };
+
+  
+  // useEffect(() => {
+  //   const totalBudget = eventBasics.budget;
+  //   console.log("total budget: ", totalBudget);
+  // }, [eventBasics]);
+  
   const isReadOnly = status !== "planning";
 
 
@@ -486,10 +518,12 @@ const EventPlanningPage = ({ id }: { id: string }) => {
 
       {activeTab === "budget" && (
         <BudgetTab
-          budgetItems={eventPlan.budget_items}
+          event_id={id}
+          onBudgetChange={onBudgetChange}
+          budgetItems={budget}
           isReadOnly={isReadOnly}
-          updateBudgetItem={updateBudgetItem}
-          totalBudget={totalBudget}
+          // updateBudgetItem={updateBudgetItem}
+          totalBudget={eventBasics.budget}
         />
       )}
       </div>
