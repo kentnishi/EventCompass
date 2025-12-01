@@ -1,6 +1,6 @@
 export interface EventPlan {
     id: string;
-    
+
     event_basics: EventBasics;
     // Subsections of the event plan
     activities: Activity[];
@@ -8,9 +8,9 @@ export interface EventPlan {
     shopping_items: ShoppingItem[];
     tasks: Task[];
     budget_items: BudgetItem[];
-  }
+}
 
-  export interface EventBasics {
+export interface EventBasics {
     name: string;
     description: string;
     keywords: string[]; // Array of keywords/tags
@@ -22,43 +22,55 @@ export interface EventPlan {
     budget: number; // Total budget
     location: string;
     registration_required: boolean;
-    event_type: string;
-  }
-  
-  // Define smaller types for each subsection
-  export interface Activity {
+    event_type: string | null;
+}
+
+// Define smaller types for each subsection
+export interface Activity {
     id: number;
+    event_id: string;
     name: string;
     description: string;
+    notes?: string;
+    staffing_needs?: StaffingNeed[];
+    // created_at: string;
+    // schedule_item_ids: number[] | null; // Array of linked schedule item IDs
+    // shopping_item_ids: number[] | null; // Array of linked shopping item IDs
+}
+
+export interface StaffingNeed {
+    id: number;
+    count: number | null;
+    responsibility: string;
   }
-  
-  export interface ScheduleItem {
+
+export interface ScheduleItem {
     time: string; // Time string (e.g., "6:00 PM")
     duration: number; // Duration in minutes
     activityId: number | null; // ID of the linked activity
     notes: string;
-  }
-  
-  export interface ShoppingItem {
+}
+
+export interface ShoppingItem {
     id: number;
     item: string;
     quantity: string; // Quantity as a string (e.g., "60", "5 boxes")
     category: string; // Category of the item (e.g., "Materials", "Food")
     linkedTo: string | null; // Linked activity ID or null
     purchased: boolean; // Whether the item has been purchased
-  }
-  
-  export interface Task {
+}
+
+export interface Task {
     id: number;
     task: string;
     assignedTo: string; // Name of the person assigned
     deadline: string; // Deadline as a string (e.g., "2025-11-25")
     status: string; // Status of the task (e.g., "pending", "completed")
     linkedTo: string | null; // Linked activity ID or null
-  }
-  
-  export interface BudgetItem {
+}
+
+export interface BudgetItem {
     category: string; // Budget category (e.g., "Food & Beverages")
     estimated: number; // Estimated cost
     actual: number; // Actual cost
-  }
+}

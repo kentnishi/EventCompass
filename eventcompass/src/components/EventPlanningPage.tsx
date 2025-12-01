@@ -1,228 +1,23 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import EditIcon from '@mui/icons-material/Edit';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import CloudDoneIcon from '@mui/icons-material/CloudDone';
 import CloudQueueIcon from '@mui/icons-material/CloudQueue';
 
 import OverviewTab from './builder/tabs/OverviewTab';
 import ActivitiesTab from "./builder/tabs/ActivitiesTab";
+import { PLACEHOLDER_EVENT_PLAN, PLACEHOLDER_EVENT_BASICS, generatePlaceholderActivities } from "@/app/utils/placeholderData";
 
-import { EventPlan, EventBasics } from "@/types/eventPlan";
-
-const PLACEHOLDER_EVENT_PLAN = {
-  id: "794208bc-af43-4c6b-9a5d-f339d1c131aa",
-  name: "Memory Lane Letter Writing Night",
-  // org: "Alzheimer's Awareness Group",
-  description: "An intimate evening where students write heartfelt letters to nursing home residents while learning about Alzheimer's disease and memory care.",
-  // goals: ["Awareness/education", "Community bonding"],
-  start_date: new Date().toISOString().split("T")[0], // Current date in YYYY-MM-DD format
-  end_date: new Date(new Date().setDate(new Date().getDate() + 1)) // Next day in YYYY-MM-DD format
-    .toISOString()
-    .split("T")[0],
-  start_time: "09:00 AM", // Default start time
-  end_time: "05:00 PM", // Default end time
-  // committee: "On-Campus",
-  budget: 500,
-  location: "Thwing Atrium",
-  attendees: 60,
-  registration_required: true,
-  event_type: "Social",
-  activities: [
-    { 
-      id: 1, 
-      name: "Check-in & Welcome", 
-      description: "Greet attendees, distribute writing materials and name tags" 
-    },
-    { 
-      id: 2, 
-      name: "Educational Introduction", 
-      description: "Guest speaker shares about Alzheimer's disease and the impact of letters on residents" 
-    },
-    { 
-      id: 3, 
-      name: "Letter Writing Session", 
-      description: "Guided letter writing with prompts and examples provided at each table" 
-    },
-    { 
-      id: 4, 
-      name: "Reflection & Sharing", 
-      description: "Optional sharing at reflection board with light refreshments" 
-    },
-    { 
-      id: 5, 
-      name: "Wrap-up & Clean-up", 
-      description: "Collect letters, thank attendees, and coordinate cleanup" 
-    }
-  ],
-  schedule_items: [
-    { time: "6:00 PM", duration: 15, activityId: 1, notes: "" },
-    { time: "6:15 PM", duration: 15, activityId: 2, notes: "" },
-    { time: "6:35 PM", duration: 15, activityId: 3, notes: "" },
-    { time: "7:20 PM", duration: 20, activityId: 4, notes: "" },
-    { time: "7:40 PM", duration: 20, activityId: 5, notes: "" }
-  ],
-  shopping_items: [
-    { 
-      id: 1, 
-      item: "Stationery sets", 
-      quantity: "60", 
-      category: "Materials", 
-      linkedTo: "activity-3", 
-      purchased: false 
-    },
-    { 
-      id: 2, 
-      item: "Writing prompts cards", 
-      quantity: "60", 
-      category: "Materials", 
-      linkedTo: "activity-3", 
-      purchased: false 
-    },
-    { 
-      id: 3, 
-      item: "Tea & Coffee", 
-      quantity: "For 60", 
-      category: "Food", 
-      linkedTo: "activity-4", 
-      purchased: false 
-    },
-    { 
-      id: 4, 
-      item: "Cookies", 
-      quantity: "5 boxes", 
-      category: "Food", 
-      linkedTo: "activity-4", 
-      purchased: false 
-    },
-    { 
-      id: 5, 
-      item: "Display boards", 
-      quantity: "2", 
-      category: "Equipment", 
-      linkedTo: "activity-4", 
-      purchased: false 
-    },
-    { 
-      id: 6, 
-      item: "Name tags", 
-      quantity: "60", 
-      category: "Materials", 
-      linkedTo: "activity-1", 
-      purchased: false 
-    },
-    { 
-      id: 7, 
-      item: "Envelopes", 
-      quantity: "60", 
-      category: "Materials", 
-      linkedTo: "activity-3", 
-      purchased: false 
-    }
-  ],
-  tasks: [
-    { 
-      id: 1, 
-      task: "Book guest speaker", 
-      assignedTo: "", 
-      deadline: "2025-11-25",
-      status: "pending", 
-      linkedTo: "activity-2" 
-    },
-    { 
-      id: 2, 
-      task: "Order stationery supplies", 
-      assignedTo: "", 
-      deadline: "2025-11-25", 
-      status: "pending", 
-      linkedTo: "activity-3" 
-    },
-    { 
-      id: 3, 
-      task: "Create letter writing prompts", 
-      assignedTo: "", 
-      deadline: "2025-11-25", 
-      status: "pending", 
-      linkedTo: "activity-3" 
-    },
-    { 
-      id: 4, 
-      task: "Set up reflection board", 
-      assignedTo: "", 
-      deadline: "Day of event", 
-      status: "pending", 
-      linkedTo: "activity-4" 
-    },
-    { 
-      id: 5, 
-      task: "Coordinate with nursing home", 
-      assignedTo: "", 
-      deadline: "2025-11-25", 
-      status: "pending", 
-      linkedTo: null 
-    },
-    { 
-      id: 6, 
-      task: "Reserve venue", 
-      assignedTo: "", 
-      deadline: "2025-11-25", 
-      status: "pending", 
-      linkedTo: null 
-    },
-    { 
-      id: 7, 
-      task: "Purchase refreshments", 
-      assignedTo: "", 
-      deadline: "2025-11-25", 
-      status: "pending", 
-      linkedTo: "activity-4" 
-    }
-  ],
-  budget_items: [
-    { category: "Food & Beverages", estimated: 200, actual: 0 },
-    { category: "Stationery & Materials", estimated: 150, actual: 0 },
-    { category: "Guest Speaker", estimated: 0, actual: 0 },
-    { category: "Decorations", estimated: 75, actual: 0 },
-    { category: "Printing & Signage", estimated: 50, actual: 0 },
-    { category: "Miscellaneous", estimated: 25, actual: 0 }
-  ]
-};
+import { EventPlan, EventBasics, Activity } from "@/types/eventPlan";
 
 const EventPlanningPage = ({ id }: { id: string }) => {
   console.log("Event ID in EventPlanningPage:", id);
-  
-  
-  // const searchParams = useSearchParams();
-  // const eventPlanParam = searchParams.get("eventPlan");
-
-  // console.log("EventPlanParam: ", eventPlanParam);
-  
-  // const initialEventPlan = eventPlanParam 
-  //   ? JSON.parse(eventPlanParam) 
-  //   : PLACEHOLDER_EVENT_PLAN;
-  
-  
-  const PLACEHOLDER_EVENT_BASICS = {
-    name: "Memory Lane Letter Writing Night",
-    description: "An intimate evening where students write heartfelt letters to nursing home residents while learning about Alzheimer's disease and memory care.",
-    attendees: 60,
-    start_date: "2023-10-05", // ISO date string (e.g., "2023-10-05")
-    start_time: "9:00 AM", // Time string (e.g., "09:00 AM")
-    end_date: "2023-10-05", // ISO date string (e.g., "2023-10-06")
-    end_time: "10:00 AM", // Time string (e.g., "05:00 PM")
-    budget: 500, // Total budget
-    location: "Thwing Atrium",
-    registration_required: true,
-    event_type: "Social",
-    keywords: ["Community", "Awareness", "Social"]
-  }
 
   const [eventPlan, setEventPlan] = useState(PLACEHOLDER_EVENT_PLAN);
   const [eventBasics, setEventBasics] = useState<EventBasics>(PLACEHOLDER_EVENT_BASICS);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [status, setStatus] = useState("planning");
   const [loading, setLoading] = useState(true);
@@ -238,14 +33,16 @@ const EventPlanningPage = ({ id }: { id: string }) => {
         setLoading(true);
 
         const [ 
-          eventResponse
+          eventResponse,
+          eventActivitiesResponse
         ] = await Promise.all([
-          fetch(`/api/event-plans/${id}`)
+          fetch(`/api/event-plans/${id}`),
+          fetch(`/api/event-plans/${id}/activities`)
         ])
 
         const event_response = await eventResponse.json();
         const event = event_response.event;
-        console.log("Updating state with: ", event);
+        // console.log("Event Basics: ", event);
         setEventBasics({
           // id: event.id,
           name: event.name || "Untitled Event",
@@ -261,6 +58,11 @@ const EventPlanningPage = ({ id }: { id: string }) => {
           event_type: event.event_type || "General",
           keywords: event.keywords || []
         });
+
+        const activities_response = await eventActivitiesResponse.json()
+        console.log("Activities response from API: ", activities_response);
+        setActivities(activities_response || []);
+
 
         
         console.log("eventBasics: ", eventBasics);
@@ -589,7 +391,7 @@ const EventPlanningPage = ({ id }: { id: string }) => {
 
         {activeTab === "activities" && (
           <ActivitiesTab
-            activities={eventPlan.activities}
+            activities={activities}
             isReadOnly={isReadOnly}
             updateActivity={updateActivity}
             addActivity={addActivity}
