@@ -154,7 +154,7 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
     if (isReadOnly) return;
     setIsCreating(true);
     setEditingItem(null);
-    setModalCategory(shoppingCategories[0] || "");
+    setModalCategory("");
     setModalDescription("");
     setModalAllocated("0");
     setShowEditModal(true);

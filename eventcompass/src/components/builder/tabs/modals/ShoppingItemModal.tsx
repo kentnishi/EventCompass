@@ -333,21 +333,30 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
                   $
                 </span>
                 <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={localItem.unitCost}
-                  onChange={(e) => handleFieldChange("unitCost", parseFloat(e.target.value) || 0)}
-                  disabled={isReadOnly}
-                  style={{
-                    width: "100%",
-                    padding: "10px 10px 10px 28px",
-                    fontSize: "0.9rem",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    backgroundColor: isReadOnly ? "#f5f5f5" : "#fff",
-                    cursor: isReadOnly ? "not-allowed" : "text",
-                  }}
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={localItem.unitCost || ""}
+                    onChange={(e) => {
+                        const value = e.target.value;
+                        handleFieldChange("unitCost", value === "" ? "" : parseFloat(value));
+                    }}
+                    onBlur={(e) => {
+                        // Convert empty input to 0 on blur
+                        if (e.target.value === "") {
+                        handleFieldChange("unitCost", 0);
+                        }
+                    }}
+                    disabled={isReadOnly}
+                    style={{
+                        width: "100%",
+                        padding: "10px 10px 10px 28px",
+                        fontSize: "0.9rem",
+                        border: "1px solid #ddd",
+                        borderRadius: "6px",
+                        backgroundColor: isReadOnly ? "#f5f5f5" : "#fff",
+                        cursor: isReadOnly ? "not-allowed" : "text",
+                    }}
                 />
               </div>
             </div>
