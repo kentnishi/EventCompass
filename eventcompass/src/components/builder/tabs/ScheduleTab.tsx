@@ -6,19 +6,21 @@ import CloseIcon from "@mui/icons-material/Close";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import NotesIcon from "@mui/icons-material/Notes";
 
-import { ScheduleItem, Activity } from "@/types/eventPlan";
+import { ScheduleItem, Activity, EventBasics } from "@/types/eventPlan";
 
 import ScheduleEditModal from "./modals/ScheduleEditModal";
 
 
 
 interface ScheduleTabProps {
+  event_id: string;
+  event_basics: EventBasics;
   schedule: ScheduleItem[];
+  setSchedule: React.Dispatch<React.SetStateAction<ScheduleItem[]>>;
   activities: Activity[];
   isReadOnly: boolean;
   addScheduleItem: () => void;
-  updateSchedule: (index: number, field: string, value: any) => void;
-  deleteScheduleItem: (index: number) => void;
+  fetchSchedule: () => void; // Function to refetch the schedule after updates
 }
 
 
@@ -87,17 +89,72 @@ const formatTime = (time: string): string => {
 
 
 const ScheduleTab: React.FC<ScheduleTabProps> = ({
-  schedule,
-  activities,
-  isReadOnly,
-  addScheduleItem,
-  updateSchedule,
-  deleteScheduleItem,
+    event_id,
+    event_basics,
+    schedule,
+    setSchedule,
+    activities,
+    isReadOnly,
+    addScheduleItem,
+    fetchSchedule,
 }) => {
   const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(
     null
   );
-  
+
+  // API Calls
+
+  // Function to add a new schedule item
+  const handleAddScheduleItem = async () => {
+    try {
+      console.log("Event Basics passed into Schedule: ", event_basics);
+      const newScheduleItem = {
+        start_date: event_basics.start_date, // Example default values
+        start_time: event_basics.start_time,
+        end_time: event_basics.end_time,
+        end_date: null,
+        activity_id: null,
+        location: "",
+        notes: "",
+      };
+
+      const response = await fetch(`/api/event-plans/${event_id}/schedule`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newScheduleItem),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add schedule item");
+      }
+
+      console.log("Schedule item added successfully");
+      fetchSchedule(); // Refresh the schedule after adding
+    } catch (error) {
+      console.error("Error adding schedule item:", error);
+    }
+  };
+
+
+  // Function to handle updates from the modal
+  const handleUpdate = (index: number, field: keyof ScheduleItem, updatedValue: any) => {
+    const updatedSchedule = [...schedule];
+    updatedSchedule[index] = {
+      ...updatedSchedule[index],
+      [field]: updatedValue, // Dynamically update the specific field
+    };
+    setSchedule(updatedSchedule); // Update the state directly
+  };
+
+  // Function to handle deletions from the modal
+  const handleDelete = (index: number) => {
+    const updatedSchedule = schedule.filter((_, i) => i !== index);
+    fetchSchedule(); // Optionally refetch the schedule
+  };
+
+
 
   // Group schedule items by start_date
   const groupedByDate = schedule.reduce(
@@ -186,7 +243,7 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({
           </h3>
           {!isReadOnly && (
             <button
-              onClick={addScheduleItem}
+              onClick={handleAddScheduleItem}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -447,8 +504,8 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({
           activities={activities}
           isReadOnly={isReadOnly}
           onClose={() => setSelectedItemIndex(null)}
-          onUpdate={updateSchedule}
-          onDelete={deleteScheduleItem}
+          onUpdate={handleUpdate}
+          onDelete={handleDelete}
         />
       )}
     </>

@@ -177,23 +177,49 @@ const EventPlanningPage = ({ id }: { id: string }) => {
     updatePlan("activities", newActivities);
   };
 
-  const updateSchedule = (index, field, value) => {
-    const newSchedule = [...eventPlan.schedule];
-    newSchedule[index][field] = value;
-    updatePlan("schedule", newSchedule);
+  const fetchSchedule = async () => {
+    try {
+      const response = await fetch(`/api/event-plans/${id}/schedule`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch schedule");
+      }
+      const scheduleData = await response.json();
+      console.log("Fetched schedule:", scheduleData);
+      setSchedule(scheduleData || []);
+    } catch (error) {
+      console.error("Error fetching schedule:", error);
+    }
   };
 
-  const addScheduleItem = () => {
-    const newSchedule = [
-      ...eventPlan.schedule, 
-      { time: "", duration: "", activityId: null, notes: "" }
-    ];
-    updatePlan("schedule", newSchedule);
-  };
+  // Function to add a new schedule item
+  const addScheduleItem = async () => {
+    try {
+      const newScheduleItem = {
+        start_date: "2024-12-14", // Example default values
+        start_time: "12:00",
+        end_time: "13:00",
+        activity_id: null,
+        location: "",
+        notes: "",
+      };
 
-  const deleteScheduleItem = (index) => {
-    const newSchedule = eventPlan.schedule.filter((_, i) => i !== index);
-    updatePlan("schedule", newSchedule);
+      const response = await fetch(`/api/event-plans/${id}/schedule`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newScheduleItem),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add schedule item");
+      }
+
+      console.log("Schedule item added successfully");
+      fetchSchedule(); // Refresh the schedule after adding
+    } catch (error) {
+      console.error("Error adding schedule item:", error);
+    }
   };
 
   const updateShoppingItem = (index, field, value) => {
@@ -412,12 +438,14 @@ const EventPlanningPage = ({ id }: { id: string }) => {
 
         {activeTab === "schedule" && (
           <ScheduleTab
+            event_id={id}
+            event_basics={eventBasics}
             schedule={schedule}
+            setSchedule={setSchedule}
             activities={activities}
             isReadOnly={isReadOnly}
             addScheduleItem={addScheduleItem}
-            updateSchedule={updateSchedule}
-            deleteScheduleItem={deleteScheduleItem}
+            fetchSchedule={fetchSchedule}
           />
         )}
 

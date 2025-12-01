@@ -5,6 +5,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import NotesIcon from "@mui/icons-material/Notes";
 
 import { ScheduleItem, Activity } from "@/types/eventPlan";
+import { LocalActivity } from "@mui/icons-material";
 
 
 interface ScheduleEditModalProps {
@@ -13,7 +14,7 @@ interface ScheduleEditModalProps {
   activities: Activity[];
   isReadOnly: boolean;
   onClose: () => void;
-  onUpdate: (index: number, field: string, value: any) => void;
+  onUpdate: (index: number, field: keyof ScheduleItem, updatedValue: any) => void;
   onDelete: (index: number) => void;
 }
 
@@ -27,24 +28,100 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
   onDelete,
 }) => {
   const [isMultiDay, setIsMultiDay] = useState(!!item.end_date);
+  const [localActivityId, setLocalActivityId] = useState<number | null>(item.activity_id);
   const [localStartDate, setLocalStartDate] = useState(item.start_date);
   const [localEndDate, setLocalEndDate] = useState(item.end_date || item.start_date);
   const [localStartTime, setLocalStartTime] = useState(item.start_time);
   const [localEndTime, setLocalEndTime] = useState(item.end_time);
+  const [localLocation, setLocalLocation] = useState(item.location || "");
+  const [localNotes, setLocalNotes] = useState(item.notes || "");
 
   const handleMultiDayToggle = (checked: boolean) => {
     setIsMultiDay(checked);
+  
     if (checked) {
       const nextDay = new Date(localStartDate + "T00:00:00");
       nextDay.setDate(nextDay.getDate() + 1);
       const newEndDate = nextDay.toISOString().split("T")[0];
       setLocalEndDate(newEndDate);
+  
+      // Update only the end_date field
       onUpdate(index, "end_date", newEndDate);
     } else {
       setLocalEndDate(localStartDate);
+  
+      // Update only the end_date field to null
       onUpdate(index, "end_date", null);
     }
   };
+
+  // Function to handle updating a schedule item
+  const handleUpdateScheduleItem = async () => {
+    try {
+      // Update each field individually using the new onUpdate method
+      onUpdate(index, "start_date", localStartDate);
+      onUpdate(index, "end_date", localEndDate);
+      onUpdate(index, "start_time", localStartTime);
+      onUpdate(index, "end_time", localEndTime);
+      onUpdate(index, "location", localLocation);
+      onUpdate(index, "notes", localNotes);
+  
+      // Send the updated item to the backend
+      const updatedItem = {
+        ...item,
+        start_date: localStartDate,
+        end_date: localEndDate,
+        start_time: localStartTime,
+        end_time: localEndTime,
+        location: localLocation,
+        notes: localNotes,
+      };
+      const id = item.id;
+      const response = await fetch(`/api/event-plans/schedule/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedItem),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to update schedule item");
+      }
+  
+      console.log("Schedule item updated successfully");
+      onClose(); // Close the modal after successful update
+    } catch (error) {
+      console.error("Error updating schedule item:", error);
+    }
+  };
+
+  // Function to handle deleting a schedule item
+  const handleDeleteScheduleItem = async () => {
+    try {
+      const id = item.id;
+      const response = await fetch(`/api/event-plans/schedule/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete schedule item");
+      }
+
+      console.log("Schedule item deleted successfully");
+      onDelete(index); // Notify parent component
+      onClose();
+    } catch (error) {
+      console.error("Error deleting schedule item:", error);
+    }
+  };
+
+  const handleActivityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newActivityId = e.target.value ? parseInt(e.target.value) : null;
+    setLocalActivityId(newActivityId);
+    onUpdate(index, "activity_id", newActivityId); // Update the activity_id field
+  };
+
 
   return (
     <div
@@ -109,6 +186,42 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+         {/* Activity Dropdown */}
+         <div>
+            <label
+              style={{
+                display: "block",
+                fontSize: "0.9rem",
+                fontWeight: 600,
+                color: "#333",
+                marginBottom: "8px",
+              }}
+            >
+              Activity
+            </label>
+            <select
+              value={localActivityId || ""}
+              onChange={handleActivityChange}
+              disabled={isReadOnly}
+              style={{
+                width: "100%",
+                padding: "10px",
+                fontSize: "0.9rem",
+                border: "1px solid #ddd",
+                borderRadius: "6px",
+                backgroundColor: isReadOnly ? "#f5f5f5" : "#fff",
+                cursor: isReadOnly ? "not-allowed" : "pointer",
+              }}
+            >
+              <option value="">Select an activity...</option>
+              {activities.map((activity) => (
+                <option key={activity.id} value={activity.id}>
+                  {activity.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Start Date */}
           <div>
             <label
@@ -361,13 +474,11 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
           {!isReadOnly && (
             <button
               onClick={() => {
-                if (
-                  confirm("Are you sure you want to delete this schedule item?")
-                ) {
-                  onDelete(index);
-                  onClose();
+                if (confirm("Are you sure you want to delete this schedule item?")) {
+                  handleDeleteScheduleItem();
                 }
               }}
+              disabled={isReadOnly}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -387,7 +498,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
             </button>
           )}
           <button
-            onClick={onClose}
+            onClick={handleUpdateScheduleItem} 
+            disabled={isReadOnly}
             style={{
               padding: "10px 20px",
               backgroundColor: "#6B7FD7",

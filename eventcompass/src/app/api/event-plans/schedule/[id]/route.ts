@@ -6,13 +6,12 @@ import { ScheduleItem } from "@/types/eventPlan";
 // PUT api/event-plans/schedule/[schedule_id]/route.ts - Update a schedule item
 export async function PUT(
     request: NextRequest,
-    context: { params: Promise<{ id: string; schedule_id: number }> }
+    context: { params: Promise<{ id: number }> }
   ) {
     try {
       const supabase = await createServer();
       const params = await context.params;
-      const event_id = params.id;
-      const schedule_id = params.schedule_id;
+      const schedule_id = params.id;
       
       const body: Partial<ScheduleItem> = await request.json();
   
@@ -21,10 +20,10 @@ export async function PUT(
         .from("schedule_items")
         .select("*")
         .eq("id", schedule_id)
-        .eq("event_id", event_id)
         .single();
   
       if (fetchError || !existingItem) {
+        console.log("Schedule item not found for update:", fetchError);
         return NextResponse.json(
           { error: "Schedule item not found" },
           { status: 404 }
@@ -37,7 +36,6 @@ export async function PUT(
           .from("activities")
           .select("id")
           .eq("id", body.activity_id)
-          .eq("event_id", event_id)
           .single();
   
         if (activityError || !activity) {
@@ -63,7 +61,6 @@ export async function PUT(
         .from("schedule_items")
         .update(updateData)
         .eq("id", schedule_id)
-        .eq("event_id", event_id)
         .select()
         .single();
   
@@ -88,23 +85,25 @@ export async function PUT(
   // DELETE api/event-plans/schedule/[schedule_id]/route.ts - Delete a schedule item
   export async function DELETE(
     request: NextRequest,
-    context: { params: Promise<{ id: string; schedule_id: number }> }
+    context: { params: Promise<{ id: number }> }
   ) {
     try {
       const supabase = await createServer();
       const params = await context.params;
-      const event_id = params.id;
-      const schedule_id = params.schedule_id;
+      // const event_id = params.id;
+      const schedule_id = params.id;
+
+      console.log("Event ID for schedule item deletion:", schedule_id);
   
-      // Verify the schedule item exists and belongs to this event
+      // Verify the schedule item exists
       const { data: existingItem, error: fetchError } = await supabase
         .from("schedule_items")
         .select("id")
         .eq("id", schedule_id)
-        .eq("event_id", event_id)
         .single();
   
       if (fetchError || !existingItem) {
+        console.log("Schedule item not found for update:", fetchError);
         return NextResponse.json(
           { error: "Schedule item not found" },
           { status: 404 }
@@ -116,7 +115,6 @@ export async function PUT(
         .from("schedule_items")
         .delete()
         .eq("id", schedule_id)
-        .eq("event_id", event_id);
   
       if (error) {
         console.error("Error deleting schedule item:", error);
@@ -142,7 +140,7 @@ export async function PUT(
   // PATCH api/event-plans/schedule/[schedule_id]/route.ts - Partial update
   export async function PATCH(
     request: NextRequest,
-    context: { params: Promise<{ id: string; schedule_id: number }> }
+    context: { params: Promise<{ id: number }> }
   ) {
     // Same implementation as PUT
     return PUT(request, context);
