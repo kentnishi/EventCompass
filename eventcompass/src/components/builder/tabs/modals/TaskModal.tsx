@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PersonIcon from "@mui/icons-material/Person";
@@ -13,8 +13,7 @@ interface TaskModalProps {
   activities: Activity[];
   isReadOnly: boolean;
   onClose: () => void;
-  onUpdate: (index: number, field: keyof Task, value: any) => void;
-  onDelete: (index: number) => void;
+  fetchTasks: () => void; // Function to refresh tasks after updates or deletions
 }
 
 const TaskModal: React.FC<TaskModalProps> = ({
@@ -23,10 +22,64 @@ const TaskModal: React.FC<TaskModalProps> = ({
   activities,
   isReadOnly,
   onClose,
-  onUpdate,
-  onDelete,
+  fetchTasks,
 }) => {
+  const [localTask, setLocalTask] = useState<Task>(task);
+  const [isSaving, setIsSaving] = useState(false);
   const selectedActivity = activities.find((a) => a.id === task.activity_id);
+
+  // Update task field locally
+  const handleFieldChange = (field: keyof Task, value: any) => {
+    setLocalTask((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Save changes to the backend
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+
+      const response = await fetch(`/api/event-plans/tasks/${localTask.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(localTask),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update task");
+      }
+
+      console.log("Task updated successfully");
+      fetchTasks(); // Refresh tasks after saving
+      onClose(); // Close the modal
+    } catch (error) {
+      console.error("Error updating task:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Delete the task
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this task?")) return;
+
+    try {
+      const response = await fetch(`/api/event-plans/tasks/${localTask.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete task");
+      }
+
+      console.log("Task deleted successfully");
+      fetchTasks(); // Refresh tasks after deletion
+      onClose(); // Close the modal
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
+  };
 
   return (
     <div
@@ -108,8 +161,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
             </label>
             <input
               type="text"
-              value={task.title}
-              onChange={(e) => onUpdate(index, "title", e.target.value)}
+              value={localTask.title}
+              onChange={(e) => handleFieldChange("title", e.target.value)}
               placeholder="Enter task title..."
               disabled={isReadOnly}
               style={{
@@ -145,8 +198,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
                 Status
               </label>
               <select
-                value={task.status}
-                onChange={(e) => onUpdate(index, "status", e.target.value)}
+                value={localTask.status}
+                onChange={(e) => handleFieldChange("status", e.target.value)}
                 disabled={isReadOnly}
                 style={{
                   width: "100%",
@@ -177,8 +230,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
                 Priority
               </label>
               <select
-                value={task.priority}
-                onChange={(e) => onUpdate(index, "priority", e.target.value)}
+                value={localTask.priority}
+                onChange={(e) => handleFieldChange("priority", e.target.value)}
                 disabled={isReadOnly}
                 style={{
                   width: "100%",
@@ -222,8 +275,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
               </label>
               <input
                 type="text"
-                value={task.assignee_name}
-                onChange={(e) => onUpdate(index, "assignee_name", e.target.value)}
+                value={localTask.assignee_name}
+                onChange={(e) => handleFieldChange("assignee_name", e.target.value)}
                 placeholder="Enter name..."
                 disabled={isReadOnly}
                 style={{
@@ -251,8 +304,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
               </label>
               <input
                 type="email"
-                value={task.assignee_email}
-                onChange={(e) => onUpdate(index, "assignee_email", e.target.value)}
+                value={localTask.assignee_email}
+                onChange={(e) => handleFieldChange("assignee_email", e.target.value)}
                 placeholder="email@example.com"
                 disabled={isReadOnly}
                 style={{
@@ -285,13 +338,9 @@ const TaskModal: React.FC<TaskModalProps> = ({
               Activity
             </label>
             <select
-              value={task.activity_id || ""}
+              value={localTask.activity_id || ""}
               onChange={(e) =>
-                onUpdate(
-                  index,
-                  "activity_id",
-                  e.target.value ? parseInt(e.target.value) : null
-                )
+                handleFieldChange("activity_id", parseInt(e.target.value) || null)
               }
               disabled={isReadOnly}
               style={{
@@ -330,12 +379,12 @@ const TaskModal: React.FC<TaskModalProps> = ({
                 {/* Date Input */}
                 <input
                 type="date"
-                value={task.due_date ? task.due_date.split("T")[0] : ""}
+                value={localTask.due_date ? localTask.due_date.split("T")[0] : ""}
                 onChange={(e) => {
                     const date = e.target.value;
                     const time = task.due_date ? task.due_date.split("T")[1] : "00:00:00";
                     const timestamp = date ? `${date}T${time}` : null;
-                    onUpdate(index, "due_date", timestamp);
+                    handleFieldChange("due_date", timestamp);
                 }}
                 disabled={isReadOnly}
                 style={{
@@ -352,12 +401,12 @@ const TaskModal: React.FC<TaskModalProps> = ({
                 {/* Time Input */}
                 <input
                 type="time"
-                value={task.due_date ? task.due_date.split("T")[1]?.slice(0, 5) : ""}
+                value={localTask.due_date ? localTask.due_date.split("T")[1]?.slice(0, 5) : ""}
                 onChange={(e) => {
                     const time = e.target.value;
-                    const date = task.due_date ? task.due_date.split("T")[0] : "";
+                    const date = localTask.due_date ? localTask.due_date.split("T")[0] : "";
                     const timestamp = date ? `${date}T${time}` : null;
-                    onUpdate(index, "due_date", timestamp);
+                    handleFieldChange("due_date", timestamp);
                 }}
                 disabled={isReadOnly}
                 style={{
@@ -387,8 +436,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
               Description
             </label>
             <textarea
-              value={task.description}
-              onChange={(e) => onUpdate(index, "description", e.target.value)}
+              value={localTask.description}
+              onChange={(e) => handleFieldChange("description", e.target.value)}
               placeholder="Add detailed description..."
               disabled={isReadOnly}
               rows={4}
@@ -423,8 +472,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
               Notes / Updates
             </label>
             <textarea
-              value={task.notes}
-              onChange={(e) => onUpdate(index, "notes", e.target.value)}
+              value={localTask.notes}
+              onChange={(e) => handleFieldChange("notes", e.target.value)}
               placeholder="Add progress updates, blockers, or additional notes..."
               disabled={isReadOnly}
               rows={4}
@@ -453,12 +502,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
         >
           {!isReadOnly && (
             <button
-              onClick={() => {
-                if (confirm("Are you sure you want to delete this task?")) {
-                  onDelete(index);
-                  onClose();
-                }
-              }}
+              onClick={handleDelete}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -477,21 +521,24 @@ const TaskModal: React.FC<TaskModalProps> = ({
               Delete
             </button>
           )}
-          <button
-            onClick={onClose}
-            style={{
-              padding: "10px 20px",
-              backgroundColor: "#6B7FD7",
-              color: "#fff",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "0.9rem",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            {isReadOnly ? "Close" : "Done"}
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: isSaving ? "#ccc" : "#6B7FD7",
+                color: "#fff",
+                border: "none",
+                borderRadius: "8px",
+                fontSize: "0.9rem",
+                fontWeight: 600,
+                cursor: isSaving ? "not-allowed" : "pointer",
+              }}
+            >
+              {isSaving ? "Saving..." : "Save"}
+            </button>
+          )}
         </div>
       </div>
     </div>

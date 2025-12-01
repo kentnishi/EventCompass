@@ -255,24 +255,24 @@ const EventPlanningPage = ({ id }: { id: string }) => {
     updatePlan("shopping", newShopping);
   };
 
-  const updateTask = (index, field, value) => {
-    const newTasks = [...eventPlan.tasks];
-    newTasks[index][field] = value;
-    updatePlan("tasks", newTasks);
-  };
-
-  const addTask = () => {
-    const newId = Math.max(0, ...eventPlan.tasks.map((t) => t.id)) + 1;
-    const newTasks = [
-      ...eventPlan.tasks, 
-      { id: newId, task: "", assignedTo: "", deadline: "", status: "pending", linkedTo: null }
-    ];
-    updatePlan("tasks", newTasks);
-  };
-
-  const deleteTask = (index) => {
-    const newTasks = eventPlan.tasks.filter((_, i) => i !== index);
-    updatePlan("tasks", newTasks);
+  const fetchTasks = async (eventId: string, setTasks: (tasks: Task[]) => void) => {
+    try {
+      const response = await fetch(`/api/event-plans/${eventId}/tasks`, {
+        method: "GET",
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to fetch tasks");
+      }
+  
+      const tasks = await response.json();
+      console.log("Fetched tasks:", tasks);
+  
+      // Update the tasks state
+      setTasks(tasks);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
   };
 
   const updateBudgetItem = (index, field, value) => {
@@ -575,12 +575,11 @@ const EventPlanningPage = ({ id }: { id: string }) => {
 
         {activeTab === "tasks" && (
           <TasksTab
+            event_id={id}
             tasks={tasks}
             activities={activities}
             isReadOnly={isReadOnly}
-            addTask={addTask}
-            updateTask={updateTask}
-            deleteTask={deleteTask}
+            fetchTasks={() => fetchTasks(id, setTasks)}
           />
         )}
 

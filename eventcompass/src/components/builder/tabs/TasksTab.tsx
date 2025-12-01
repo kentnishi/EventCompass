@@ -15,12 +15,11 @@ export type TaskPriority = "low" | "medium" | "high";
 
 
 interface TasksTabProps {
+  event_id: string;
   tasks: Task[];
   activities: Activity[];
   isReadOnly: boolean;
-  addTask: () => void;
-  updateTask: (index: number, field: string, value: any) => void;
-  deleteTask: (index: number) => void;
+  fetchTasks: () => void;
 }
 
 // Helper function to get status badge styling
@@ -54,12 +53,11 @@ const getInitials = (name: string): string => {
 };
 
 const TasksTab: React.FC<TasksTabProps> = ({
+  event_id,
   tasks,
   activities,
   isReadOnly,
-  addTask,
-  updateTask,
-  deleteTask,
+  fetchTasks,
 }) => {
   const [selectedTaskIndex, setSelectedTaskIndex] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">("all");
@@ -79,14 +77,23 @@ const TasksTab: React.FC<TasksTabProps> = ({
   };
 
   // Format date for display
-  const formatDate = (dateStr: string | null): string => {
-    if (!dateStr) return "—";
-    const date = new Date(dateStr + "T00:00:00");
-    return date.toLocaleDateString("en-US", {
+  const formatDate = (timestamp: string | null): string => {
+    if (!timestamp) return "—";
+  
+    const date = new Date(timestamp);
+    const formattedDate = date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
     });
+  
+    const formattedTime = date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  
+    // If the timestamp includes a time, display both date and time
+    return timestamp.includes("T") ? `${formattedDate} at ${formattedTime}` : formattedDate;
   };
 
   // Check if date is overdue
@@ -96,6 +103,41 @@ const TasksTab: React.FC<TasksTabProps> = ({
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return due < today;
+  };
+
+  // AddTask handler
+  const addTask = async () => {
+    try {
+      const newTask:Task = {
+        event_id: event_id,
+        title: "New Task", // Default title
+        description: "",
+        status: "todo", // Default status
+        priority: "medium", // Default priority
+        assignee_name: "",
+        assignee_email: "",
+        activity_id: null,
+        due_date: null,
+        notes: "",
+      };
+  
+      const response = await fetch(`/api/event-plans/${event_id}/tasks`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newTask),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to add task");
+      }
+  
+      console.log("Task added successfully");
+      fetchTasks(); // Refresh the task list after adding
+    } catch (error) {
+      console.error("Error adding task:", error);
+    }
   };
 
   return (
@@ -439,13 +481,12 @@ const TasksTab: React.FC<TasksTabProps> = ({
       {/* Task Modal */}
       {selectedTaskIndex !== null && (
         <TaskModal
-          task={tasks[selectedTaskIndex]}
-          index={selectedTaskIndex}
-          activities={activities}
-          isReadOnly={isReadOnly}
-          onClose={() => setSelectedTaskIndex(null)}
-          onUpdate={updateTask}
-          onDelete={deleteTask}
+            task={tasks[selectedTaskIndex]}
+            index={selectedTaskIndex}
+            activities={activities}
+            isReadOnly={isReadOnly}
+            onClose={() => setSelectedTaskIndex(null)}
+            fetchTasks={fetchTasks}
         />
       )}
     </>
