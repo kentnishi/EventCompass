@@ -1,4 +1,4 @@
-import { Activity, ScheduleItem, Task } from "@/types/eventPlan";
+import { Activity, ScheduleItem, Task, BudgetItem } from "@/types/eventPlan";
 const placeholder_name = `TEST EVENT ${new Date().toISOString()}`;
 
 export const PLACEHOLDER_EVENT_PLAN = {
@@ -287,57 +287,27 @@ export const generatePlaceholderTasks = (eventId: string, activities: Activity[]
     },
   ];
   
-  // Example usage in a component:
-  /*
-  const ExampleComponent = () => {
-    const [tasks, setTasks] = useState<Task[]>(placeholderTasks);
-    const [activities] = useState<Activity[]>(placeholderActivities);
-    
-    const addTask = () => {
-      const newTask: Task = {
-        event_id: "evt_123",
-        activity_id: null,
-        title: "",
-        description: "",
-        status: "todo",
-        assignee_name: "",
-        assignee_email: "",
-        due_date: null,
-        priority: "medium",
-        notes: "",
-        completed_at: null,
-      };
-      setTasks([...tasks, newTask]);
-    };
-  
-    const updateTask = (index: number, field: string, value: any) => {
-      const updated = [...tasks];
-      updated[index] = { ...updated[index], [field]: value };
-      
-      // Auto-set completed_at when status changes to done
-      if (field === "status" && value === "done" && !updated[index].completed_at) {
-        updated[index].completed_at = new Date().toISOString();
-      } else if (field === "status" && value !== "done") {
-        updated[index].completed_at = null;
-      }
-      
-      setTasks(updated);
-    };
-  
-    const deleteTask = (index: number) => {
-      setTasks(tasks.filter((_, i) => i !== index));
-    };
-  
-    return (
-      <TasksTab
-        tasks={tasks}
-        activities={activities}
-        isReadOnly={false}
-        addTask={addTask}
-        updateTask={updateTask}
-        deleteTask={deleteTask}
-      />
-    );
-  };
-  */
+  export const generatePlaceholderBudgetItems = (eventId: string,): BudgetItem[] => [
+    {
+        event_id: eventId,
+        category: "Catering",
+        allocated: 3000,
+        description: "Initial quote received from Gourmet Catering for $3200. Negotiating for a better price.",
+        spent: 200
+    },
+    {
+        event_id: eventId,
+        category: "Venue Rental",
+        allocated: 3000,
+        description: "Deposit of $500 paid. Remaining balance due one week before event.",
+        spent: 200
+    },
+    {
+        event_id: eventId,
+        category: "Photography",
+        allocated: 800,
+        description: "Waiting on final quote from preferred photographer.",
+        spent: 200
+    }
+  ];
   

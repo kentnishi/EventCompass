@@ -80,7 +80,10 @@ export interface Task {
 }
 
 export interface BudgetItem {
-    category: string; // Budget category (e.g., "Food & Beverages")
-    estimated: number; // Estimated cost
-    actual: number; // Actual cost
+    id?: number;
+    event_id: string;
+    category: string; // Budget category (e.g., "Food & Beverages") -> linked to shopping
+    allocated: number; // Allocated budget
+    description: string; // Description of the budget category
+    spent: number; // Amount spent per category
 }

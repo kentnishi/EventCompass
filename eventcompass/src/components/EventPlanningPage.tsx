@@ -10,6 +10,8 @@ import OverviewTab from '@/components/builder/tabs/OverviewTab';
 import ActivitiesTab from "@/components/builder/tabs/ActivitiesTab";
 import ScheduleTab from "@/components/builder/tabs/ScheduleTab";
 import TasksTab from "@/components/builder/tabs/TasksTab";
+import BudgetTab from "@/components/builder/tabs/BudgetTab";
+import ShoppingTab from "@/components/builder/tabs/ShoppingTab";
 
 import { PLACEHOLDER_EVENT_PLAN, PLACEHOLDER_EVENT_BASICS, generatePlaceholderActivities, generatePlaceholderScheduleItems } from "@/app/utils/placeholderData";
 
@@ -462,115 +464,14 @@ const EventPlanningPage = ({ id }: { id: string }) => {
           />
         )}
 
-        {activeTab === 'shopping' && (
-          <div style={{ backgroundColor: '#FFF', borderRadius: '12px', padding: '32px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#333', margin: 0 }}>Shopping List</h3>
-              {!isReadOnly && (
-                <button 
-                  onClick={addShoppingItem}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '10px 20px',
-                    backgroundColor: '#6B7FD7',
-                    color: '#FFF',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '0.9rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <AddIcon style={{ width: '16px', height: '16px' }} />
-                  Add Item
-                </button>
-              )}
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f5f5f5' }}>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.85rem', fontWeight: 600, color: '#666' }}>Item</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.85rem', fontWeight: 600, color: '#666' }}>Qty</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.85rem', fontWeight: 600, color: '#666' }}>Category</th>
-                    {!isReadOnly && <th style={{ padding: '12px' }}></th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {eventPlan.shopping.map((item, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #e0e0e0' }}>
-                      <td style={{ padding: '12px' }}>
-                        <input
-                          type="text"
-                          value={item.item}
-                          onChange={(e) => updateShoppingItem(i, 'item', e.target.value)}
-                          placeholder="Item name"
-                          disabled={isReadOnly}
-                          style={{ 
-                            padding: '8px', 
-                            fontSize: '0.9rem', 
-                            border: '1px solid #ddd', 
-                            borderRadius: '6px', 
-                            width: '100%',
-                            backgroundColor: isReadOnly ? '#f5f5f5' : '#fff',
-                            cursor: isReadOnly ? 'not-allowed' : 'text'
-                          }}
-                        />
-                      </td>
-                      <td style={{ padding: '12px' }}>
-                        <input
-                          type="text"
-                          value={item.quantity}
-                          onChange={(e) => updateShoppingItem(i, 'quantity', e.target.value)}
-                          placeholder="Qty"
-                          disabled={isReadOnly}
-                          style={{ 
-                            padding: '8px', 
-                            fontSize: '0.9rem', 
-                            border: '1px solid #ddd', 
-                            borderRadius: '6px', 
-                            width: '80px',
-                            backgroundColor: isReadOnly ? '#f5f5f5' : '#fff',
-                            cursor: isReadOnly ? 'not-allowed' : 'text'
-                          }}
-                        />
-                      </td>
-                      <td style={{ padding: '12px' }}>
-                        <select
-                          value={item.category}
-                          onChange={(e) => updateShoppingItem(i, 'category', e.target.value)}
-                          disabled={isReadOnly}
-                          style={{ 
-                            padding: '8px', 
-                            fontSize: '0.9rem', 
-                            border: '1px solid #ddd', 
-                            borderRadius: '6px', 
-                            width: '150px',
-                            backgroundColor: isReadOnly ? '#f5f5f5' : '#fff',
-                            cursor: isReadOnly ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          <option value="">Select...</option>
-                          <option value="Food">Food</option>
-                          <option value="Materials">Materials</option>
-                          <option value="Equipment">Equipment</option>
-                        </select>
-                      </td>
-                      {!isReadOnly && (
-                        <td style={{ padding: '12px' }}>
-                          <button onClick={() => deleteShoppingItem(i)} style={{ background: 'none', border: 'none', color: '#f44336', cursor: 'pointer' }}>
-                            <DeleteIcon style={{ width: '18px', height: '18px' }} />
-                          </button>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        {activeTab === "shopping" && (
+          <ShoppingTab
+            shoppingItems={eventPlan.shopping}
+            isReadOnly={isReadOnly}
+            addShoppingItem={addShoppingItem}
+            updateShoppingItem={updateShoppingItem}
+            deleteShoppingItem={deleteShoppingItem}
+          />
         )}
 
         {activeTab === "tasks" && (
@@ -583,68 +484,14 @@ const EventPlanningPage = ({ id }: { id: string }) => {
           />
         )}
 
-        {activeTab === 'budget' && (
-          <div style={{ backgroundColor: '#FFF', borderRadius: '12px', padding: '32px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#333', marginBottom: '24px' }}>Budget</h3>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f5f5f5' }}>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.85rem', fontWeight: 600, color: '#666' }}>Category</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.85rem', fontWeight: 600, color: '#666' }}>Estimated</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.85rem', fontWeight: 600, color: '#666' }}>Actual</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {eventPlan.budget.map((item, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #e0e0e0' }}>
-                      <td style={{ padding: '12px', fontWeight: 600, color: '#333' }}>{item.category}</td>
-                      <td style={{ padding: '12px' }}>
-                        <input
-                          type="number"
-                          value={item.estimated}
-                          onChange={(e) => updateBudgetItem(i, 'estimated', parseInt(e.target.value) || 0)}
-                          disabled={isReadOnly}
-                          style={{ 
-                            padding: '8px', 
-                            fontSize: '0.9rem', 
-                            border: '1px solid #ddd', 
-                            borderRadius: '6px', 
-                            width: '100px',
-                            backgroundColor: isReadOnly ? '#f5f5f5' : '#fff',
-                            cursor: isReadOnly ? 'not-allowed' : 'text'
-                          }}
-                        />
-                      </td>
-                      <td style={{ padding: '12px' }}>
-                        <input
-                          type="number"
-                          value={item.actual}
-                          onChange={(e) => updateBudgetItem(i, 'actual', parseInt(e.target.value) || 0)}
-                          disabled={isReadOnly}
-                          style={{ 
-                            padding: '8px', 
-                            fontSize: '0.9rem', 
-                            border: '1px solid #ddd', 
-                            borderRadius: '6px', 
-                            width: '100px',
-                            backgroundColor: isReadOnly ? '#f5f5f5' : '#fff',
-                            cursor: isReadOnly ? 'not-allowed' : 'text'
-                          }}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                  <tr style={{ backgroundColor: '#f5f5f5', fontWeight: 700 }}>
-                    <td style={{ padding: '12px' }}>Total</td>
-                    <td style={{ padding: '12px' }}>${totalBudget}</td>
-                    <td style={{ padding: '12px' }}>${eventPlan.budget.reduce((s, i) => s + i.actual, 0)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+      {activeTab === "budget" && (
+        <BudgetTab
+          budgetItems={eventPlan.budget_items}
+          isReadOnly={isReadOnly}
+          updateBudgetItem={updateBudgetItem}
+          totalBudget={totalBudget}
+        />
+      )}
       </div>
     </div>
   );
