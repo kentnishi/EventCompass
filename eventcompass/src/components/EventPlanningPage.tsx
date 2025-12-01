@@ -498,11 +498,10 @@ const EventPlanningPage = ({ id }: { id: string }) => {
 
         {activeTab === "shopping" && (
           <ShoppingTab
-            shoppingItems={eventPlan.shopping}
+            event_id={id}
+            budgetItems={budget}
+            activities={activities}
             isReadOnly={isReadOnly}
-            addShoppingItem={addShoppingItem}
-            updateShoppingItem={updateShoppingItem}
-            deleteShoppingItem={deleteShoppingItem}
           />
         )}
 

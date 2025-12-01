@@ -1,8 +1,10 @@
-import { Activity, ScheduleItem, Task, BudgetItem } from "@/types/eventPlan";
+"use client";
+
+import { Activity, ScheduleItem, Task, BudgetItem, ShoppingItem } from "@/types/eventPlan";
 const placeholder_name = `TEST EVENT ${new Date().toISOString()}`;
 
 export const PLACEHOLDER_EVENT_BASICS = {
-    name: placeholder_name,
+    name: "RANDOM NAME",
     description: "An intimate evening where students write heartfelt letters to nursing home residents while learning about Alzheimer's disease and memory care.",
     attendees: 60,
     start_date: "2023-10-05", // ISO date string (e.g., "2023-10-05")
@@ -130,7 +132,7 @@ export const generatePlaceholderTasks = (eventId: string, activities: Activity[]
     },
   ];
   
-  export const generatePlaceholderBudgetItems = (eventId: string,): BudgetItem[] => [
+export const generatePlaceholderBudgetItems = (eventId: string,): BudgetItem[] => [
     {
         event_id: eventId,
         category: "Catering",
@@ -152,5 +154,31 @@ export const generatePlaceholderTasks = (eventId: string, activities: Activity[]
         description: "Waiting on final quote from preferred photographer.",
         spent: 200
     }
-  ];
+];
   
+export const generatePlaceholderShoppingItems = (eventId: string, activities: Activity[], budgetItems: BudgetItem[]): ShoppingItem[] => [
+    {
+        event_id: eventId,
+        item: "Champagne Bottles",
+        vendor: "Fine Wines Co.",
+        unitCost: 10.99,
+        quantity: 10,
+        notes: "Must be sparkling",
+        activity_id: activities[0].id,
+        link: "https://www.walgreens.com/store/c/cooks-california-champagne-brut-white-sparkling-wine/ID=prod6084901-product",
+        budget_id: budgetItems[0]?.id ?? null, // Linked budget item ID
+        status: 'pending',
+    },
+    {
+        event_id: eventId,
+        item: "Appetizer Platters",
+        vendor: "Gourmet Catering Supplies",
+        unitCost: 50.14,
+        quantity: 4,
+        notes: "Vegetarian options included",
+        activity_id: activities[1].id,
+        link: "https://www.gourmetcateringsupplies.com/appetizer-platters",
+        budget_id: budgetItems[0]?.id ?? null, // Linked budget item ID
+        status: 'ordered',
+    }
+];

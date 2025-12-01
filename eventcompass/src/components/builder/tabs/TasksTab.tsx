@@ -1,10 +1,5 @@
 import React, { useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
-import CloseIcon from "@mui/icons-material/Close";
-import PersonIcon from "@mui/icons-material/Person";
-import NotesIcon from "@mui/icons-material/Notes";
-import LinkIcon from "@mui/icons-material/Link";
 
 import { Task, Activity } from "@/types/eventPlan";
 

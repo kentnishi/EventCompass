@@ -7,7 +7,7 @@ import IntakeForm from './questionaire/IntakeForm';
 import ConceptsScreen from './questionaire/ConceptsScreen';
 import PreviewScreen from './questionaire/PreviewScreen';
 
-import { PLACEHOLDER_EVENT_BASICS, generatePlaceholderActivities, generatePlaceholderScheduleItems, generatePlaceholderTasks, generatePlaceholderBudgetItems } from "@/app/utils/placeholderData";
+import { PLACEHOLDER_EVENT_BASICS, generatePlaceholderActivities, generatePlaceholderScheduleItems, generatePlaceholderTasks, generatePlaceholderBudgetItems, generatePlaceholderShoppingItems } from "@/app/utils/placeholderData";
 
 
 // Main App Component
@@ -259,7 +259,7 @@ const EventQuestionaire = () => {
               body: JSON.stringify(PLACEHOLDER_SCHEDULE),
             })
 
-            const { schedule } = await scheduleResponse.json();
+            const schedule = await scheduleResponse.json();
 
             if (!scheduleResponse.ok) {
               const errorText = await scheduleResponse.text();
@@ -278,7 +278,7 @@ const EventQuestionaire = () => {
               body: JSON.stringify(PLACEHOLDER_TASKS),
             })
 
-            const { tasks } = await tasksResponse.json();
+            const tasks = await tasksResponse.json();
 
             if (!tasksResponse.ok) {
               const errorText = await tasksResponse.text();
@@ -297,7 +297,7 @@ const EventQuestionaire = () => {
               body: JSON.stringify(PLACEHOLDER_BUDGET),
             })
 
-            const { budget } = await budgetResponse.json();
+            const budget = await budgetResponse.json();
 
             if (!budgetResponse.ok) {
               const errorText = await budgetResponse.text();
@@ -306,8 +306,28 @@ const EventQuestionaire = () => {
             }
 
             console.log("Budget items added:", budget);
-        }
 
+            // Shopping depends on activities for linking (and also activity but that can be null)
+            const PLACEHOLDER_SHOPPING = generatePlaceholderShoppingItems(id, activities, budget);
+
+            if (PLACEHOLDER_SHOPPING.length > 0) { // Replace with logic about whether shopping is being kept
+              const shoppingResponse = await fetch(`/api/event-plans/${id}/shopping`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(PLACEHOLDER_SHOPPING),
+                })
+  
+                const shopping = await shoppingResponse.json();
+  
+                if (!shoppingResponse.ok) {
+                  const errorText = await shoppingResponse.text();
+                  console.error("Failed to add shopping items:", errorText);
+                  throw new Error(`Failed to add shopping items: ${errorText}`);
+                }
+  
+                console.log("Shopping items added:", shopping);
+            }
+          }
 
 
       }

@@ -56,12 +56,17 @@ export interface ScheduleItem {
 }
 
 export interface ShoppingItem {
-    id: number;
+    id?: number;
+    event_id: string;
     item: string;
-    quantity: string; // Quantity as a string (e.g., "60", "5 boxes")
-    category: string; // Category of the item (e.g., "Materials", "Food")
-    linkedTo: string | null; // Linked activity ID or null
-    purchased: boolean; // Whether the item has been purchased
+    vendor: string;
+    unitCost: number;
+    quantity: number;
+    notes: string;
+    activity_id: number | null; // Linked activity ID or null
+    link: string;
+    budget_id: number | null; // Linked budget item ID
+    status: 'pending' | 'ordered' | 'received' | 'cancelled';
 }
 
 export interface Task {
