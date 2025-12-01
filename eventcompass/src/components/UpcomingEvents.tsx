@@ -132,7 +132,7 @@ export default function UpcomingEvents({
     <section className="relative rounded-[10px] border border-[#d6d9e7] bg-[white] p-4">
       {/* Header */}
       <div className="flex items-center gap-3 mb-3">
-        <span className="scale-98 text-xs font-semibold tracking-widest text-[#2b3a55]">
+        <span className="scale-98 text-xs font-bold tracking-widest text-[#2b3a55]">
           UPCOMING EVENTS
         </span>
 
