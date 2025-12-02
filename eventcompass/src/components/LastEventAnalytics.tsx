@@ -1,74 +1,258 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
-import BaseChart, { doughnutCenterText } from "./charts/BaseChart";
-import type { ChartConfiguration, ChartOptions } from "chart.js";
 
-type ApiPayload = {
-  event: {
-    id: string;
-    name: string;
-    location: string | null;
-    startDate: string; // YYYY-MM-DD
-    startTime: string | null; // HH:MM:SS
-    budget: number | null;
-    spending: number | null;
-  };
-  metrics: {
-    registered: number;
-    attended: number;
-    walkins: number;
-    noShow: number;
-    attendancePct: number; // 0..100
-    ratingAvg: number | null;
-    ratingCount: number;
-  };
-  feedback: {
-    pros: string[];
-    cons: string[];
-  };
+import React, { useEffect, useMemo, useState } from "react";
+import { createBrowserClient } from "@supabase/ssr";
+import BaseChart from "./charts/BaseChart";
+import type { ChartConfiguration, ChartOptions, TooltipItem } from "chart.js";
+
+// If you have a typed Database, you can do:
+// const supabase = createBrowserClient<Database>(..., ...);
+function useSupabaseClient() {
+  const client = useMemo(
+    () =>
+      createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      ),
+    []
+  );
+  return client;
+}
+
+type PastEvent = {
+  id: string;
+  registered_count: number | null;
+  attended_count: number | null;
+  walkins_count: number | null;
+  rating_avg: number | null;
+  rating_count: number | null;
+  start_date: string | null; // 'YYYY-MM-DD'
+  food_provided: boolean | null;
+  name: string | null;
+  location: string | null;
+  spent: number | null;
 };
 
+function computeAttendanceRate(e: PastEvent): number | null {
+  const registered = e.registered_count ?? 0;
+  const attended = e.attended_count ?? 0;
+  if (registered <= 0) return null;
+  return (attended / registered) * 100;
+}
+
 export default function LastEventAnalytics() {
-  const [data, setData] = useState<ApiPayload | null>(null);
+  const supabase = useSupabaseClient();
+
+  const [events, setEvents] = useState<PastEvent[]>([]);
   const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/analytics/last-analytics")
-      .then(async (r) => {
-        if (!r.ok) throw new Error((await r.json()).error ?? r.statusText);
-        return r.json();
-      })
-      .then(setData)
-      .catch((e) => setErr(e.message || "Failed to load last event"));
-  }, []);
+    const load = async () => {
+      try {
+        setLoading(true);
+        setErr(null);
 
-  const donutCfg: ChartConfiguration<"doughnut"> | null = useMemo(() => {
-    if (!data) return null;
-    const { attended, walkins, noShow, attendancePct } = data.metrics;
-    const total = attended + noShow;
+        const { data, error } = await supabase
+          .from("past_events")
+          .select(
+            `
+            id,
+            registered_count,
+            attended_count,
+            walkins_count,
+            rating_avg,
+            rating_count,
+            start_date,
+            food_provided,
+            name,
+            location,
+            spent
+          `
+          )
+          .gte("start_date", "2025-01-01")
+          .lte("start_date", "2025-04-30");
 
-    const options: ChartOptions<"doughnut"> = {
-      cutout: "75%",
-      plugins: { doughnutCenterText: { text: `${attendancePct}%\nTotal: ${total}\nAttendance` } },
+        if (error) throw error;
+        setEvents((data ?? []) as PastEvent[]);
+      } catch (e: any) {
+        console.error(e);
+        setErr(e.message ?? "Failed to load event analytics");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [supabase]);
+
+  // === 1) Attendance by weekday ===
+  const weekdayBarCfg: ChartConfiguration<"bar"> | null = useMemo(() => {
+    if (!events.length) return null;
+
+    const labels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const sums = new Array(7).fill(0);
+    const counts = new Array(7).fill(0);
+
+    for (const e of events) {
+      if (!e.start_date) continue;
+      const rate = computeAttendanceRate(e);
+      if (rate == null) continue;
+
+      const d = new Date(e.start_date); // assumes YYYY-MM-DD
+      const weekday = d.getDay(); // 0=Sun...6=Sat
+
+      sums[weekday] += rate;
+      counts[weekday] += 1;
+    }
+
+    const avgs = sums.map((s, i) => (counts[i] ? s / counts[i] : 0));
+
+    const options: ChartOptions<"bar"> = {
+      responsive: true,
+      maintainAspectRatio: false, // 👈 important for fixed-height wrapper
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx: TooltipItem<"bar">) => {
+              const value = Number(ctx.raw ?? 0);
+              return `${value.toFixed(1)}%`;
+            },
+          },
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          suggestedMax: 100,
+          ticks: {
+            callback: (value) => `${value}%`,
+          },
+          title: {
+            display: true,
+            text: "Avg attendance (%)",
+          },
+        },
+        x: {
+          title: {
+            display: true,
+            text: "Day of week",
+          },
+        },
+      },
     };
 
     return {
-      type: "doughnut",
+      type: "bar",
       data: {
-        labels: ["Attended", "Walk-ins", "No Show"],
+        labels,
         datasets: [
           {
-            data: [attended, walkins, noShow],
-            backgroundColor: ["#3B82F6", "#93C5FD", "#E5E7EB"],
-            borderWidth: 0,
+            label: "Avg attendance (%)",
+            data: avgs,
+            backgroundColor: "#3B82F6",
+            borderRadius: 8,
           },
         ],
       },
       options,
-      plugins: [doughnutCenterText],
     };
-  }, [data]);
+  }, [events]);
 
+  // === 2) Attendance: food vs no food ===
+  const foodBarCfg: ChartConfiguration<"bar"> | null = useMemo(() => {
+    if (!events.length) return null;
+
+    let sumWithFood = 0;
+    let cntWithFood = 0;
+    let sumWithoutFood = 0;
+    let cntWithoutFood = 0;
+
+    for (const e of events) {
+      const rate = computeAttendanceRate(e);
+      if (rate == null) continue;
+
+      if (e.food_provided) {
+        sumWithFood += rate;
+        cntWithFood += 1;
+      } else {
+        sumWithoutFood += rate;
+        cntWithoutFood += 1;
+      }
+    }
+
+    const avgWithFood = cntWithFood ? sumWithFood / cntWithFood : 0;
+    const avgWithoutFood = cntWithoutFood ? sumWithoutFood / cntWithoutFood : 0;
+
+    const options: ChartOptions<"bar"> = {
+      responsive: true,
+      maintainAspectRatio: false, // 👈 same here
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx: TooltipItem<"bar">) => {
+              const value = Number(ctx.raw ?? 0);
+              return `${value.toFixed(1)}%`;
+            },
+          },
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          suggestedMax: 100,
+          ticks: {
+            callback: (value) => `${value}%`,
+          },
+          title: {
+            display: true,
+            text: "Avg attendance (%)",
+          },
+        },
+        x: {
+          title: {
+            display: true,
+            text: "Food availability",
+          },
+        },
+      },
+    };
+
+    return {
+      type: "bar",
+      data: {
+        labels: ["Food provided", "No food"],
+        datasets: [
+          {
+            label: "Avg attendance (%)",
+            data: [avgWithFood, avgWithoutFood],
+            backgroundColor: ["#22C55E", "#EF4444"],
+            borderRadius: 8,
+          },
+        ],
+      },
+      options,
+    };
+  }, [events]);
+
+  // === Summary stats for the header ===
+  const totalEvents = events.length;
+  const avgAttendanceOverall = useMemo(() => {
+    if (!events.length) return 0;
+    let s = 0;
+    let c = 0;
+    for (const e of events) {
+      const r = computeAttendanceRate(e);
+      if (r == null) continue;
+      s += r;
+      c += 1;
+    }
+    return c ? s / c : 0;
+  }, [events]);
+
+  // === UI states ===
   if (err) {
     return (
       <div className="lg:col-span-3 bg-white p-8 rounded-lg shadow-sm">
@@ -78,8 +262,7 @@ export default function LastEventAnalytics() {
     );
   }
 
-  if (!data) {
-    // skeleton
+  if (loading) {
     return (
       <div className="lg:col-span-3 bg-white p-8 rounded-lg shadow-sm animate-pulse">
         <div className="h-6 w-56 bg-gray-200 rounded mb-6" />
@@ -91,71 +274,60 @@ export default function LastEventAnalytics() {
     );
   }
 
-  const { event, metrics, feedback } = data;
-  const start = new Date(`${event.startDate}T${event.startTime ?? "00:00:00"}`);
+  if (!events.length) {
+    return (
+      <div className="lg:col-span-3 bg-white p-8 rounded-lg shadow-sm">
+        <h2 className="text-2xl font-bold mb-4">Last Event Analytics</h2>
+        <p className="text-gray-500 text-sm">
+          No events found between Jan 2025 and Apr 2025.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="lg:col-span-3 bg-white p-8 rounded-lg shadow-sm">
-      <h2 className="text-2xl font-bold mb-4">Last Event Analytics</h2>
-      <h3 className="bg-[white] rounded-[10px] border border-[#d6d9e7] scale-99">
-        <h4 className= "scale-98">
-      <div className="text-left rounded-[10px]">
-        <h3 className="text-[30px] font-bold tracking-wide">{event.name}</h3>
-        <div className="flex justify-left items-left my-2 text-[text-[#ffb901]">
-          {/* star fill based on ratingAvg if available */}
-          {Array.from({ length: 5 }).map((_, i) => {
-            const filled = (metrics.ratingAvg ?? 0) >= i + 1;
-            return (
-              <span key={i} className={filled ? "text-[#ffb901]" : "text-gray-300"}>
-                ★
-              </span>
-            );
-          })}
-          <span className="text-gray-500 font-medium ml-2">
-            ({metrics.ratingCount})
-          </span>
+      <h2 className="text-2xl font-bold mb-2">Last Event Analytics</h2>
+      <p className="text-sm text-gray-500 mb-6">
+        Based on {totalEvents} events between{" "}
+        <span className="font-medium">Jan 2025</span> and{" "}
+        <span className="font-medium">Apr 2025</span>; Overall average
+        attendance:{" "}
+        <span className="font-semibold">
+          {avgAttendanceOverall.toFixed(1)}%
+        </span>
+        .
+      </p>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Attendance by weekday */}
+        <div>
+          <h3 className="text-lg font-semibold mb-2">
+            Attendance by Day of Week
+          </h3>
+          <div className="w-full h-[260px] mx-auto">
+            {weekdayBarCfg ? (
+              <BaseChart config={weekdayBarCfg} height={260} />
+            ) : (
+              <p className="text-gray-400 text-sm">Not enough data.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Attendance: food vs no food */}
+        <div>
+          <h3 className="text-lg font-semibold mb-2">
+            Attendance: Food vs No Food
+          </h3>
+          <div className="w-full h-[260px] mx-auto">
+            {foodBarCfg ? (
+              <BaseChart config={foodBarCfg} height={260} />
+            ) : (
+              <p className="text-gray-400 text-sm">Not enough data.</p>
+            )}
+          </div>
         </div>
       </div>
-      
-
-      <div className="my-6">{donutCfg && <BaseChart config={donutCfg} height={320} />}</div>
-
-      <div className="text-center my-6">
-        <p className="text-3xl font-bold">
-          {start.toLocaleDateString(undefined, {
-            weekday: "short",
-            month: "numeric",
-            day: "numeric",
-          })}{" "}
-          ({start.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })})
-        </p>
-        <p className="text-gray-500 text-xl">
-          {event.location || "TBD"}{" "}
-          {event.spending != null ? `( $${Number(event.spending).toFixed(0)} )` : ""}
-        </p>
-      </div>
-
-      <div>
-        <h4 className="font-semibold text-lg mb-2">Feedback</h4>
-        <div className="text-sm space-y-2">
-          {feedback.pros.slice(0, 2).map((t, i) => (
-            <p key={`pro-${i}`}>
-              <span className="font-semibold">Pro:</span> {t}
-            </p>
-          ))}
-          {feedback.cons.slice(0, 2).map((t, i) => (
-            <p key={`con-${i}`}>
-              <span className="font-semibold">Con:</span> {t}
-            </p>
-          ))}
-          {feedback.pros.length === 0 && feedback.cons.length === 0 && (
-            <p className="text-gray-500">No feedback yet.</p>
-          )}
-        </div>
-      </div>
-      </h4>
-      </h3>
     </div>
-    
   );
 }

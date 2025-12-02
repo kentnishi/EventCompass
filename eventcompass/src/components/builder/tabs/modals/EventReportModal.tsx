@@ -53,7 +53,7 @@ const EventReportModal: React.FC<EventReportModalProps> = ({ open, onClose, even
     if (!printWindow) return;
 
     const content = contentRef.current?.innerHTML || '';
-    
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -172,7 +172,7 @@ const EventReportModal: React.FC<EventReportModalProps> = ({ open, onClose, even
         </body>
       </html>
     `);
-    
+
     printWindow.document.close();
     printWindow.onload = () => {
       printWindow.focus();
@@ -203,10 +203,10 @@ const EventReportModal: React.FC<EventReportModalProps> = ({ open, onClose, even
   const totalShoppingCost = shopping_items.reduce((sum, item) => sum + item.unit_cost * item.quantity, 0);
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="md" 
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
       fullWidth
       PaperProps={{
         sx: { maxHeight: "90vh" }
@@ -293,7 +293,7 @@ const EventReportModal: React.FC<EventReportModalProps> = ({ open, onClose, even
                 Event Overview
               </Typography>
               <Divider sx={{ mb: 2 }} />
-              
+
               <Box className="grid" sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
                 <Box className="grid-item">
                   <Box className="label" sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}>
@@ -356,7 +356,7 @@ const EventReportModal: React.FC<EventReportModalProps> = ({ open, onClose, even
                 Event Schedule
               </Typography>
               <Divider sx={{ mb: 2 }} />
-              
+
               <TableContainer>
                 <Table size="small">
                   <TableHead>
@@ -407,7 +407,7 @@ const EventReportModal: React.FC<EventReportModalProps> = ({ open, onClose, even
                 Activity Details
               </Typography>
               <Divider sx={{ mb: 2 }} />
-              
+
               {activities.map((activity) => (
                 <Box key={activity.id} className="activity-box" sx={{ mb: 3, p: 2, bgcolor: "#F9FAFB", borderRadius: 1 }}>
                   <Typography variant="h6" component="h3" fontWeight={600} gutterBottom>
@@ -452,7 +452,7 @@ const EventReportModal: React.FC<EventReportModalProps> = ({ open, onClose, even
                 Budget Breakdown
               </Typography>
               <Divider sx={{ mb: 2 }} />
-              
+
               <TableContainer>
                 <Table size="small">
                   <TableHead>
@@ -495,7 +495,7 @@ const EventReportModal: React.FC<EventReportModalProps> = ({ open, onClose, even
                 Shopping List
               </Typography>
               <Divider sx={{ mb: 2 }} />
-              
+
               <TableContainer>
                 <Table size="small">
                   <TableHead>
@@ -545,7 +545,7 @@ const EventReportModal: React.FC<EventReportModalProps> = ({ open, onClose, even
                 Task List
               </Typography>
               <Divider sx={{ mb: 2 }} />
-              
+
               <TableContainer>
                 <Table size="small">
                   <TableHead>
@@ -595,19 +595,19 @@ const EventReportModal: React.FC<EventReportModalProps> = ({ open, onClose, even
           )}
 
           {/* Footer */}
-        <Box className="footer" sx={{ mt: 4, pt: 3, borderTop: "1px solid #E5E7EB", textAlign: "center" }}>
-        <Typography variant="caption" color="text.secondary">
-            Report generated on {new Date().toLocaleString("en-US", { 
-            month: "long", 
-            day: "numeric", 
-            year: "numeric", 
-            hour: "2-digit", 
-            minute: "2-digit", 
-            second: "2-digit", 
-            hour12: true // Use 12-hour format
-            })}
-        </Typography>
-        </Box>
+          <Box className="footer" sx={{ mt: 4, pt: 3, borderTop: "1px solid #E5E7EB", textAlign: "center" }}>
+            <Typography variant="caption" color="text.secondary">
+              Report generated on {new Date().toLocaleString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true // Use 12-hour format
+              })}
+            </Typography>
+          </Box>
         </Box>
       </DialogContent>
     </Dialog>
