@@ -1,5 +1,5 @@
 export interface EventPlan {
-    id: string;
+    id?: string;
 
     event_basics: EventBasics;
     // Subsections of the event plan

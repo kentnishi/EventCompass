@@ -12,6 +12,7 @@ import ScheduleTab from "@/components/builder/tabs/ScheduleTab";
 import TasksTab from "@/components/builder/tabs/TasksTab";
 import BudgetTab from "@/components/builder/tabs/BudgetTab";
 import ShoppingTab from "@/components/builder/tabs/ShoppingTab";
+import SummaryTab from "@/components/builder/tabs/SummaryTab";
 
 import { PLACEHOLDER_EVENT_BASICS, generatePlaceholderActivities, generatePlaceholderScheduleItems } from "@/app/utils/placeholderData";
 
@@ -20,7 +21,14 @@ import { EventPlan, EventBasics, Activity, ScheduleItem, Task, BudgetItem, Shopp
 const EventPlanningPage = ({ id }: { id: string }) => {
   console.log("Event ID in EventPlanningPage:", id);
 
-  // const [eventPlan, setEventPlan] = useState(PLACEHOLDER_EVENT_PLAN);
+  const [eventPlan, setEventPlan] = useState<EventPlan>({
+    event_basics: PLACEHOLDER_EVENT_BASICS,
+    activities: [],
+    schedule_items: [],
+    tasks: [],
+    budget_items: [],
+    shopping_items: []
+  });
   const [eventBasics, setEventBasics] = useState<EventBasics>(PLACEHOLDER_EVENT_BASICS);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
@@ -113,7 +121,18 @@ const EventPlanningPage = ({ id }: { id: string }) => {
     };
 
     fetchData();
+    
   }, [id]);
+
+  useEffect(() => {
+    setEventPlan({ 
+      event_basics: eventBasics, 
+      activities: activities, 
+      schedule_items: schedule, 
+      tasks: tasks, 
+      budget_items: budget, 
+      shopping_items: shopping});
+  }, [eventBasics, activities, schedule, tasks, budget, shopping]);
   
   
    // ✅ Updated updatePlan with auto-save
@@ -379,7 +398,8 @@ const EventPlanningPage = ({ id }: { id: string }) => {
     { id: 'schedule', label: 'Schedule' },
     { id: 'shopping', label: 'Shopping' },
     { id: 'tasks', label: 'Tasks' },
-    { id: 'budget', label: 'Budget' }
+    { id: 'budget', label: 'Budget' },
+    { id: 'summary', label: 'Summary' }
   ];
 
   const statusOptions = [
@@ -390,6 +410,8 @@ const EventPlanningPage = ({ id }: { id: string }) => {
   ];
 
   const currentStatus = statusOptions.find(s => s.value === status) || statusOptions[0];
+
+  
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#d5dcf1' }}>
@@ -578,6 +600,12 @@ const EventPlanningPage = ({ id }: { id: string }) => {
           isReadOnly={isReadOnly}
           // updateBudgetItem={updateBudgetItem}
           totalBudget={eventBasics.budget}
+        />
+      )}
+
+      {activeTab === "summary" && (
+        <SummaryTab
+          eventPlan={eventPlan}
         />
       )}
       </div>
