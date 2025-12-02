@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { client } from "../../../../../lib/supabase";
+import { createServer } from "@/lib/supabase/server";
 
 function nowPartsUTC() {
   const now = new Date();
@@ -15,7 +15,7 @@ export async function GET() {
     const { today, nowTime } = nowPartsUTC();
     const pastExpr = `start_date.lt.${today},and(start_date.eq.${today},start_time.lte.${nowTime})`;
 
-    const evRes = await client
+    const evRes = await createServer()
       .from("events")
       .select("id,name,location,start_date,start_time,attendees,budget,spending")
       .or(pastExpr)
@@ -35,7 +35,7 @@ export async function GET() {
     const ev = evRes.data;
 
     // Try to load stats (optional)
-    const stRes = await client
+    const stRes = await createServer()
       .from("event_stats")
       .select("*")
       .eq("event_id", ev.id)
@@ -44,10 +44,10 @@ export async function GET() {
 
     const reg = stRes.data?.registered_count ?? Math.max(ev.attendees ?? 0, 0);
     const attended = stRes.data?.attended_count ?? Math.max(ev.attendees ?? 0, 0);
-    const walkins  = stRes.data?.walkins_count  ?? Math.round(attended * 0.1);
-    const noShow   = Math.max(reg - attended, 0);
+    const walkins = stRes.data?.walkins_count ?? Math.round(attended * 0.1);
+    const noShow = Math.max(reg - attended, 0);
 
-    const ratingAvg   = stRes.data?.rating_avg ?? null;
+    const ratingAvg = stRes.data?.rating_avg ?? null;
     const ratingCount = stRes.data?.rating_count ?? 0;
 
     const fbRes = await client
@@ -83,7 +83,8 @@ export async function GET() {
       },
       feedback: { pros, cons },
     });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message ?? String(e) }, { status: 500 });
+  } catch (e: unknown) {
+    const error = e as Error;
+    return NextResponse.json({ error: error.message ?? String(e) }, { status: 500 });
   }
 }

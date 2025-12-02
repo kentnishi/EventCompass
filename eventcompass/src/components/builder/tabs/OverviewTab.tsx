@@ -7,15 +7,16 @@ import PeopleIcon from "@mui/icons-material/People";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import CloudQueueIcon from "@mui/icons-material/CloudQueue";
+import { EventBasics } from "@/types/eventPlan";
 
-const OverviewTab = ({ 
-  eventPlan, 
-  updatePlan, 
-  isReadOnly 
-}: { 
-  eventPlan: any; 
-  updatePlan: (field: string, value: any) => void; 
-  isReadOnly: boolean 
+const OverviewTab = ({
+  eventPlan,
+  updatePlan,
+  isReadOnly
+}: {
+  eventPlan: EventBasics;
+  updatePlan: (field: string, value: any) => void;
+  isReadOnly: boolean
 }) => {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -25,7 +26,6 @@ const OverviewTab = ({
 
   const handleFieldChange = (field: string, value: any) => {
     updatePlan(field, value);
-    
   };
 
   const addKeyword = () => {
@@ -63,10 +63,10 @@ const OverviewTab = ({
     };
   }, []);
 
-  const ClickToEditField = ({ 
-    field, 
+  const ClickToEditField = ({
+    field,
     label,
-    value, 
+    value,
     placeholder = "Click to add",
     type = "text",
     multiline = false,
@@ -124,14 +124,14 @@ const OverviewTab = ({
 
     return (
       <div>
-        <div style={{ 
-          fontSize: "0.85rem", 
-          color: "#666", 
-          marginBottom: "6px" 
+        <div style={{
+          fontSize: "0.85rem",
+          color: "#666",
+          marginBottom: "6px"
         }}>
           {label}
         </div>
-        
+
         {isEditing ? (
           multiline ? (
             <textarea
@@ -163,7 +163,7 @@ const OverviewTab = ({
               type={type}
               value={localValue || ""}
               onChange={(e) => {
-                const newValue = type === "number" 
+                const newValue = type === "number"
                   ? (parseFloat(e.target.value) || 0)
                   : e.target.value;
                 setLocalValue(newValue);
@@ -243,12 +243,12 @@ const OverviewTab = ({
               displayFormat={(v) => v || <span style={{ color: "#999", fontStyle: "italic" }}>Click to add event name</span>}
               displayStyle={{ fontSize: "1.5rem", fontWeight: 700, color: "#1a1a1a" }}
             />
-            
+
             <div>
               <div style={{ fontSize: "0.85rem", color: "#666", marginBottom: "6px" }}>
                 Keywords
               </div>
-              
+
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
                 {eventPlan.keywords && eventPlan.keywords.length > 0 && eventPlan.keywords.map((keyword: string, index: number) => (
                   <span
@@ -286,7 +286,7 @@ const OverviewTab = ({
                     )}
                   </span>
                 ))}
-                
+
                 {!isReadOnly && (
                   editingField === 'keywords' ? (
                     <input
@@ -397,10 +397,10 @@ const OverviewTab = ({
 
         {/* Date & Time Section */}
         <div style={{ paddingBottom: "32px", borderBottom: "1px solid #e5e7ff" }}>
-          <h3 style={{ 
-            fontSize: "1.2rem", 
-            fontWeight: 700, 
-            color: "#333", 
+          <h3 style={{
+            fontSize: "1.2rem",
+            fontWeight: 700,
+            color: "#333",
             marginBottom: "20px",
             display: "flex",
             alignItems: "center",
@@ -417,7 +417,7 @@ const OverviewTab = ({
               value={eventPlan.start_date}
               type="date"
               placeholder="Select date"
-              displayFormat={(v) => v 
+              displayFormat={(v) => v
                 ? new Date(v + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                 : <span style={{ color: "#999", fontStyle: "italic" }}>Click to set</span>
               }
@@ -440,7 +440,7 @@ const OverviewTab = ({
               value={eventPlan.end_date}
               type="date"
               placeholder="Select date"
-              displayFormat={(v) => v 
+              displayFormat={(v) => v
                 ? new Date(v + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                 : <span style={{ color: "#999", fontStyle: "italic" }}>Click to set</span>
               }
@@ -461,10 +461,10 @@ const OverviewTab = ({
 
         {/* Location & Logistics Section */}
         <div>
-          <h3 style={{ 
-            fontSize: "1.2rem", 
-            fontWeight: 700, 
-            color: "#333", 
+          <h3 style={{
+            fontSize: "1.2rem",
+            fontWeight: 700,
+            color: "#333",
             marginBottom: "20px",
             display: "flex",
             alignItems: "center",
@@ -501,21 +501,18 @@ const OverviewTab = ({
               <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "#1a1a1a", padding: "8px 12px" }}>
                 ${eventPlan.budget?.toFixed(2) || "0.00"}
               </div>
-              <div style={{ fontSize: "0.75rem", color: "#888", fontStyle: "italic", marginTop: "2px", paddingLeft: "12px" }}>
-                Auto-calculated
-              </div>
             </div>
 
             <div>
               <div style={{ fontSize: "0.85rem", color: "#666", marginBottom: "6px" }}>
                 Registration
               </div>
-              <label style={{ 
-                display: "flex", 
-                alignItems: "center", 
-                gap: "12px", 
-                fontSize: "0.95rem", 
-                fontWeight: 600, 
+              <label style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                fontSize: "0.95rem",
+                fontWeight: 600,
                 color: "#4a5676",
                 padding: "8px 12px",
                 backgroundColor: isReadOnly ? "transparent" : "transparent",
@@ -524,27 +521,27 @@ const OverviewTab = ({
                 cursor: isReadOnly ? "default" : "pointer",
                 transition: "all 0.2s ease",
               }}
-              onMouseEnter={(e) => {
-                if (!isReadOnly) {
-                  e.currentTarget.style.backgroundColor = "#f8f9fa";
-                  e.currentTarget.style.borderColor = "#e5e7eb";
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.borderColor = "transparent";
-              }}
+                onMouseEnter={(e) => {
+                  if (!isReadOnly) {
+                    e.currentTarget.style.backgroundColor = "#f8f9fa";
+                    e.currentTarget.style.borderColor = "#e5e7eb";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.borderColor = "transparent";
+                }}
               >
                 <input
                   type="checkbox"
                   checked={eventPlan.registration_required || false}
                   onChange={(e) => handleFieldChange("registration_required", e.target.checked)}
                   disabled={isReadOnly}
-                  style={{ 
-                    width: "20px", 
-                    height: "20px", 
+                  style={{
+                    width: "20px",
+                    height: "20px",
                     cursor: isReadOnly ? "not-allowed" : "pointer",
-                    accentColor: "#6B7FD7" 
+                    accentColor: "#6B7FD7"
                   }}
                 />
                 <span style={{ color: eventPlan.registration_required ? "#4caf50" : "#888" }}>
@@ -558,17 +555,17 @@ const OverviewTab = ({
 
       <style>
         {`
-          @keyframes slideIn {
-            from {
-              transform: translateY(100px);
-              opacity: 0;
+            @keyframes slideIn {
+              from {
+                transform: translateY(100px);
+                opacity: 0;
+              }
+              to {
+                transform: translateY(0);
+                opacity: 1;
+              }
             }
-            to {
-              transform: translateY(0);
-              opacity: 1;
-            }
-          }
-        `}
+          `}
       </style>
     </div>
   );

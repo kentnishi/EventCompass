@@ -1,3 +1,58 @@
+export interface IntakeFormData {
+    // Common fields
+    organizationName: string;
+    organizationMission?: string;
+    budgetRange?: string;
+    totalBudget?: number;
+    expectedAttendance: number;
+    locationType: 'on-campus' | 'off-campus' | 'flexible' | 'hybrid';
+    venue?: string;
+    
+    // Date fields (now consistent across all paths)
+    startDate?: string;
+    endDate?: string;  // Optional for multi-day events
+    
+    // No-idea specific
+    eventGoals?: string[];
+    eventVibe?: string[];
+    constraints?: string;
+    
+    // Rough-idea specific
+    eventType?: string;
+    roughIdea?: string;
+    duration?: string;
+    additionalContext?: string;
+    
+    // Solid-idea specific
+    eventName?: string;
+    eventDescription?: string;
+    keyActivities?: string;
+    startTime?: string;
+    endTime?: string;
+    specialRequirements?: string;
+}
+
+export interface Concept {
+    id?: number;
+    title: string;
+    tagline: string;
+    goal: string;
+    description: string;
+    budget: string;
+    estimatedBudget: string;
+    duration: string;
+    attendance: string;
+    venue: string;
+    vibe: string;
+    elements: string[];
+    preview: {
+        activities: string[];
+        schedule: string;
+        keyItems: string[];
+        tasks: string[];
+    }
+}
+
 export interface EventPlan {
     id?: string;
 
@@ -39,7 +94,7 @@ export interface Activity {
 }
 
 export interface StaffingNeed {
-    id: number;
+    id?: number;
     count: number | null;
     responsibility: string;
   }

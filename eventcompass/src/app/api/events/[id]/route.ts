@@ -6,7 +6,7 @@ export async function GET(request: Request, context: { params: { id: string } })
     const supabase = createServer();
 
     const { data: event, error: eventError } = await supabase
-        .from("events")
+        .from("past_events")
         .select("*")
         .eq("id", eventId)
         .single();

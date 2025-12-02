@@ -1,4 +1,5 @@
 /** @type {import('tailwindcss').Config} */
+// Force rebuild
 export default {
   content: [
     "./src/app/**/*.{ts,tsx}",
@@ -13,8 +14,13 @@ export default {
         slateBlue: "#5f7aa2",
       },
       borderRadius: { "2xl": "1rem" },
+      spacing: {
+        '128': '32rem',
+      }
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
   important: true
 };
