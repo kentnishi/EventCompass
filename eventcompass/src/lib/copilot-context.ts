@@ -73,7 +73,7 @@ export async function getEventContext(currentEventId: string): Promise<EventCont
         // Based on EventColumn.tsx, items have item_type. Let's assume 'schedule' isn't in event_items 
         // but we can infer detail from item count and categories)
 
-        const categories = new Set(items?.map((i: any) => i.category).filter(Boolean) as string[]);
+        const categories = new Set(items?.map((i: { category: string }) => i.category).filter(Boolean) as string[]);
 
         userStyleEvents.push({
             name: `Event ${ev.id.slice(0, 4)}...`, // Anonymize or use real name if available (wasn't selected above, let's fix select)
@@ -105,7 +105,7 @@ export async function getEventContext(currentEventId: string): Promise<EventCont
         const { data: fullEvent } = await supabase.from("events").select("name").eq("id", ev.id).single();
         const { data: items } = await supabase.from("event_items").select("category").eq("event_id", ev.id);
 
-        const categories = new Set(items?.map((i: any) => i.category).filter(Boolean) as string[]);
+        const categories = new Set(items?.map((i: { category: string }) => i.category).filter(Boolean) as string[]);
 
         refinedUserStyle.push({
             name: fullEvent?.name || "Unnamed Event",

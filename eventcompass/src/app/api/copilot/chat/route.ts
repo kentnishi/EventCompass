@@ -5,48 +5,56 @@ import { randomUUID } from "crypto";
 
 export async function POST(req: Request) {
     try {
-        const { message, eventContext, eventId } = await req.json();
+        const { message, eventContext, eventId, chatId: providedChatId } = await req.json();
 
         if (!message) {
             return NextResponse.json({ error: "Message is required" }, { status: 400 });
         }
 
         const supabase = createServer();
-        let chatId: string | number | null = null;
+        let chatId: string | number | null = providedChatId || null;
         let existingMessages: any[] = [];
 
-        // If eventId is provided, try to find or create a chat for this event
-        if (eventId) {
+        // If chatId is provided, verify it and load messages
+        if (chatId) {
+            const { data: chat } = await supabase
+                .from("chats")
+                .select("messages")
+                .eq("id", chatId)
+                .single();
+
+            if (chat) {
+                existingMessages = chat.messages || [];
+            } else {
+                // Invalid chatId provided
+                chatId = null;
+            }
+        }
+
+        // If no valid chatId but eventId is provided, try to find or create a chat for this event
+        if (!chatId && eventId) {
             const { data: { user } } = await supabase.auth.getUser();
 
             if (user) {
-                // Try to find existing chat for this event
-                const { data: chats } = await supabase
+                // Try to find existing chat for this event (Legacy behavior: find *any* chat for event if no specific ID)
+                // BUT for multi-chat support, if no ID is passed, we should probably create a NEW one or just pick the most recent?
+                // Let's stick to creating a new one if explicitly requested via the new API, 
+                // but here if just eventId is passed, maybe we default to the most recent one to be safe?
+                // actually, let's just create a new one if no chatId is passed to avoid confusion.
+
+                const { data: newChat } = await supabase
                     .from("chats")
-                    .select("id, messages")
-                    .eq("event_id", eventId)
-                    .eq("user", user.id)
-                    .limit(1);
+                    .insert({
+                        name: `Chat for ${eventContext.name || "Event"}`,
+                        user: user.id,
+                        event_id: eventId,
+                        messages: []
+                    })
+                    .select()
+                    .single();
 
-                if (chats && chats.length > 0) {
-                    chatId = chats[0].id;
-                    existingMessages = chats[0].messages || [];
-                } else {
-                    // Create new chat linked to event
-                    const { data: newChat } = await supabase
-                        .from("chats")
-                        .insert({
-                            name: `Chat for ${eventContext.name || "Event"}`,
-                            user: user.id,
-                            event_id: eventId,
-                            messages: []
-                        })
-                        .select()
-                        .single();
-
-                    if (newChat) {
-                        chatId = newChat.id;
-                    }
+                if (newChat) {
+                    chatId = newChat.id;
                 }
             }
         }
@@ -167,10 +175,10 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
     try {
         const { searchParams } = new URL(req.url);
-        const eventId = searchParams.get("eventId");
+        const chatId = searchParams.get("chatId");
 
-        if (!eventId) {
-            return NextResponse.json({ error: "Event ID is required" }, { status: 400 });
+        if (!chatId) {
+            return NextResponse.json({ error: "Chat ID is required" }, { status: 400 });
         }
 
         const supabase = createServer();
@@ -180,17 +188,14 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { data: chats } = await supabase
+        const { data: chat } = await supabase
             .from("chats")
             .select("messages")
-            .eq("event_id", eventId)
-            .eq("user", user.id)
-            .limit(1);
+            .eq("id", chatId)
+            .single();
 
-        if (chats && chats.length > 0) {
-            // Transform messages to match frontend interface if needed
-            // Assuming stored messages are { role: "USER"|"ASSISTANT", text: "..." }
-            const messages = (chats[0].messages || []).map((m: any) => ({
+        if (chat) {
+            const messages = (chat.messages || []).map((m: any) => ({
                 id: m.id || randomUUID(),
                 role: m.role.toLowerCase(),
                 content: m.text

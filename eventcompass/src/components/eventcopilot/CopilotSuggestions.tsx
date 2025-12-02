@@ -254,7 +254,7 @@ export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestion
                                 </h4>
                                 <Badge type={suggestion.type}>{suggestion.type}</Badge>
                             </div>
-                            <p className="text-slate-600 text-xs leading-relaxed mb-4">
+                            <p className="text-slate-600 text-xs leading-relaxed mb-4 break-words line-clamp-4">
                                 {suggestion.description}
                             </p>
                             <div className="flex items-center gap-3 pt-3 border-t border-slate-100">

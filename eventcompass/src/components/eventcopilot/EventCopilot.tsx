@@ -17,9 +17,59 @@ export default function EventCopilot({ eventPlan, updatePlan, eventId }: EventCo
     const [hasUnreadSuggestions, setHasUnreadSuggestions] = useState(false);
     const [mounted, setMounted] = useState(false);
 
+    // Chat Session State
+    const [chatSessions, setChatSessions] = useState<{ id: string, name: string }[]>([]);
+    const [activeChatId, setActiveChatId] = useState<string | null>(null);
+    const [isLoadingChats, setIsLoadingChats] = useState(false);
+
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // Fetch chat sessions on mount or when eventId changes
+    useEffect(() => {
+        if (eventId && isOpen) {
+            fetchChatSessions();
+        }
+    }, [eventId, isOpen]);
+
+    const fetchChatSessions = async () => {
+        if (!eventId) return;
+        setIsLoadingChats(true);
+        try {
+            const res = await fetch(`/api/copilot/chats?eventId=${eventId}`);
+            if (res.ok) {
+                const data = await res.json();
+                setChatSessions(data.chats || []);
+                // If no active chat, select the most recent one
+                if (!activeChatId && data.chats && data.chats.length > 0) {
+                    setActiveChatId(data.chats[0].id);
+                }
+            }
+        } catch (error) {
+            console.error("Failed to fetch chats:", error);
+        } finally {
+            setIsLoadingChats(false);
+        }
+    };
+
+    const handleCreateNewChat = async () => {
+        if (!eventId) return;
+        try {
+            const res = await fetch("/api/copilot/chats", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ eventId, name: `Chat ${chatSessions.length + 1}` })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setChatSessions(prev => [data.chat, ...prev]);
+                setActiveChatId(data.chat.id);
+            }
+        } catch (error) {
+            console.error("Failed to create new chat:", error);
+        }
+    };
 
     const handleTabChange = (tab: 'chat' | 'suggestions') => {
         setActiveTab(tab);
@@ -78,13 +128,54 @@ export default function EventCopilot({ eventPlan, updatePlan, eventId }: EventCo
                     </button>
                 </div>
 
+                {/* Chat History Header (Only visible in Chat tab) */}
+                {activeTab === 'chat' && (
+                    <div className="bg-slate-50 border-b border-slate-200 px-4 py-2 flex items-center justify-between">
+                        <select
+                            value={activeChatId || ""}
+                            onChange={(e) => setActiveChatId(e.target.value)}
+                            className="text-xs border border-slate-300 rounded px-2 py-1 max-w-[200px] bg-white"
+                        >
+                            <option value="" disabled>Select a chat...</option>
+                            {chatSessions.map(chat => (
+                                <option key={chat.id} value={chat.id}>{chat.name}</option>
+                            ))}
+                        </select>
+                        <button
+                            onClick={handleCreateNewChat}
+                            className="text-xs bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700"
+                        >
+                            New Chat
+                        </button>
+                    </div>
+                )}
+
                 {/* Content Area */}
                 <div className="flex-1 overflow-hidden relative bg-white">
                     <div
                         className={`absolute inset-0 transition-opacity duration-300 ${activeTab === 'chat' ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
                         style={{ visibility: activeTab === 'chat' ? 'visible' : 'hidden' }}
                     >
-                        <CopilotChat eventPlan={eventPlan} eventId={eventId} updatePlan={updatePlan} />
+                        {activeChatId ? (
+                            <CopilotChat
+                                key={activeChatId} // Force re-mount on chat switch
+                                eventPlan={eventPlan}
+                                eventId={eventId}
+                                updatePlan={updatePlan}
+                                chatId={activeChatId}
+                            />
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8 text-center">
+                                <MessageSquare size={48} className="mb-4 opacity-20" />
+                                <p className="text-sm">Select a chat session or start a new one.</p>
+                                <button
+                                    onClick={handleCreateNewChat}
+                                    className="mt-4 text-sm bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+                                >
+                                    Start New Chat
+                                </button>
+                            </div>
+                        )}
                     </div>
                     <div
                         className={`absolute inset-0 transition-opacity duration-300 ${activeTab === 'suggestions' ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}

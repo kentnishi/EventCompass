@@ -16,6 +16,7 @@ interface CopilotChatProps {
     eventPlan: any;
     eventId?: string;
     updatePlan: (field: string, value: any) => void;
+    chatId: string;
 }
 
 const Badge = ({ type, children }: { type: string, children: React.ReactNode }) => {
@@ -37,14 +38,8 @@ const Badge = ({ type, children }: { type: string, children: React.ReactNode }) 
     );
 };
 
-export default function CopilotChat({ eventPlan, eventId, updatePlan }: CopilotChatProps) {
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            id: "welcome",
-            role: "assistant",
-            content: "Hi! I'm your event planning assistant. I can help you with ideas, budget, or tasks based on your current plan. What's on your mind?"
-        }
-    ]);
+export default function CopilotChat({ eventPlan, eventId, updatePlan, chatId }: CopilotChatProps) {
+    const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -56,6 +51,38 @@ export default function CopilotChat({ eventPlan, eventId, updatePlan }: CopilotC
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
+
+    // Fetch messages when chatId changes
+    useEffect(() => {
+        const fetchMessages = async () => {
+            if (!chatId) return;
+            setIsLoading(true);
+            try {
+                const res = await fetch(`/api/copilot/chat?chatId=${chatId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.messages && data.messages.length > 0) {
+                        setMessages(data.messages);
+                    } else {
+                        // Default welcome message if empty
+                        setMessages([
+                            {
+                                id: "welcome",
+                                role: "assistant",
+                                content: "Hi! I'm your event planning assistant. I can help you with ideas, budget, or tasks based on your current plan. What's on your mind?"
+                            }
+                        ]);
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to load messages:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchMessages();
+    }, [chatId]);
 
     const handleApplySuggestion = (suggestion: any) => {
         try {
@@ -161,7 +188,7 @@ export default function CopilotChat({ eventPlan, eventId, updatePlan }: CopilotC
                                     onClick={() => handleApplySuggestion(suggestion)}
                                     className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2 rounded shadow-sm transition-colors flex items-center justify-center gap-2"
                                 >
-                                                                         <span>APPLY TO PLAN</span> <ArrowRight size={12} />                                </button>
+                                    <span>APPLY TO PLAN</span> <ArrowRight size={12} />                                </button>
                             </div>
                         </div>
                     );
@@ -194,7 +221,8 @@ export default function CopilotChat({ eventPlan, eventId, updatePlan }: CopilotC
                 body: JSON.stringify({
                     message: userMessage.content,
                     eventContext: eventPlan,
-                    eventId
+                    eventId,
+                    chatId // Send chatId for persistence
                 })
             });
 
@@ -255,7 +283,22 @@ export default function CopilotChat({ eventPlan, eventId, updatePlan }: CopilotC
                                     : 'bg-indigo-600 border-indigo-600 text-white rounded-lg rounded-tr-none shadow-sm'
                                     }`}>
                                     <div className={`prose prose-sm max-w-none ${isBot ? 'prose-slate' : 'prose-invert'} prose-p:leading-relaxed prose-pre:bg-gray-800 prose-pre:p-2 prose-pre:rounded-md`}>
-                                        <ReactMarkdown components={renderers}>{msg.content}</ReactMarkdown>
+                                        <ReactMarkdown
+                                            components={{
+                                                ...renderers,
+                                                ul: ({ node, ...props }) => <ul className="list-disc pl-4 my-2 space-y-1" {...props} />,
+                                                ol: ({ node, ...props }) => <ol className="list-decimal pl-4 my-2 space-y-1" {...props} />,
+                                                li: ({ node, ...props }) => <li className="my-0.5" {...props} />,
+                                                p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                                                a: ({ node, ...props }) => <a className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
+                                                h1: ({ node, ...props }) => <h1 className="text-lg font-bold my-2" {...props} />,
+                                                h2: ({ node, ...props }) => <h2 className="text-base font-bold my-2" {...props} />,
+                                                h3: ({ node, ...props }) => <h3 className="text-sm font-bold my-1" {...props} />,
+                                                strong: ({ node, ...props }) => <strong className="font-semibold" {...props} />,
+                                            }}
+                                        >
+                                            {msg.content}
+                                        </ReactMarkdown>
                                     </div>
                                 </div>
                             </div>
