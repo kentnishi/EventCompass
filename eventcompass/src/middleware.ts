@@ -38,5 +38,5 @@ export async function middleware(req: NextRequest) {
 
 // Run middleware for all protected routes
 export const config = {
-  matcher: ["//:path*", "/tasks/:path*", "/home/:path*", "/event-manager/:path*", "/chat/:path*", "/events/:path*"],
+  matcher: ["//:path*", "/tasks/:path*", "/home/:path*", "/event-plans/:path*", "/chat/:path*", "/events/:path*"],
 };
