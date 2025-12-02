@@ -4,7 +4,7 @@ import React from "react";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
 const OverviewTab = ({ eventPlan, updatePlan, isReadOnly }: { eventPlan: any; updatePlan: (field: string, value: any) => void; isReadOnly: boolean }) => {
-    console.log(isReadOnly);
+
   return (
     <div
       style={{

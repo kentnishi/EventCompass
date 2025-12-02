@@ -1,4 +1,5 @@
 /** @type {import('tailwindcss').Config} */
+// Force rebuild
 export default {
   content: [
     "./src/app/**/*.{ts,tsx}",
@@ -15,6 +16,8 @@ export default {
       borderRadius: { "2xl": "1rem" },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
   important: true
 };
