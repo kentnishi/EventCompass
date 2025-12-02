@@ -9,6 +9,8 @@ const ConceptsScreen = ({ selectedPath, concepts, selectedConcept, onSelectConce
     setView('generating');
   };
 
+  
+
   // Selection View
     return (
       <div style={{ minHeight: '100vh', backgroundColor: '#d5dcf1', padding: '30px' }}>

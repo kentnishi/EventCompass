@@ -94,7 +94,7 @@ export interface Activity {
 }
 
 export interface StaffingNeed {
-    id: number;
+    id?: number;
     count: number | null;
     responsibility: string;
   }

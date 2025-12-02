@@ -2,15 +2,14 @@ import React from 'react';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
-// const PreviewScreen = ({ eventPlan, keepSections, onToggleSection, onProceed, onBack }) => {
-
-const PreviewScreen = ({ 
+const ConceptCustomization = ({ 
   selectedConcept, 
   customizations, 
   setCustomizations, 
   onBack, 
   onGenerate 
 }) => {
+  console.log("Selected Concept:", selectedConcept);
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#d5dcf1', padding: '30px' }}>
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
@@ -91,48 +90,6 @@ const PreviewScreen = ({
             </div>
           </div>
 
-          <div style={{ marginBottom: '32px' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#333', marginBottom: '16px' }}>
-              Level of Detail
-            </h3>
-            
-            <div style={{ display: 'flex', gap: '12px' }}>
-              {[
-                { value: 'basic', label: 'Basic', desc: 'High-level overview' },
-                { value: 'detailed', label: 'Detailed', desc: 'Standard planning info' },
-                { value: 'comprehensive', label: 'Comprehensive', desc: 'Everything you need' }
-              ].map(level => (
-                <button
-                  key={level.value}
-                  onClick={() => setCustomizations({ ...customizations, detailLevel: level.value })}
-                  style={{
-                    flex: 1,
-                    padding: '16px',
-                    backgroundColor: customizations.detailLevel === level.value ? '#6B7FD7' : '#FFF',
-                    color: customizations.detailLevel === level.value ? '#FFF' : '#333',
-                    border: customizations.detailLevel === level.value ? 'none' : '2px solid #e0e0e0',
-                    borderRadius: '12px',
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    textAlign: 'center'
-                  }}
-                >
-                  <div>{level.label}</div>
-                  <div style={{ 
-                    fontSize: '0.8rem', 
-                    fontWeight: 400, 
-                    marginTop: '4px',
-                    opacity: 0.8
-                  }}>
-                    {level.desc}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
           <div style={{
             padding: '20px',
             backgroundColor: '#fff8e6',
@@ -173,5 +130,4 @@ const PreviewScreen = ({
   );
 };
 
-export default PreviewScreen;
-
+export default ConceptCustomization;

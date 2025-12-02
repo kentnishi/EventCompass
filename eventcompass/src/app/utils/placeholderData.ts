@@ -19,7 +19,7 @@ export const PLACEHOLDER_EVENT_BASICS = {
 }
 
 
-  // Function to generate placeholder activities with dynamic input
+// Function to generate placeholder activities with dynamic input
 export const generatePlaceholderActivities = (eventId: string): Activity[] => [
     {
       id: 11,

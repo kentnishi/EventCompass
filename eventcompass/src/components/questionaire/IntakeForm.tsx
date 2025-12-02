@@ -785,12 +785,12 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '8px' }}>
-                  {selectedPath === 'solid-idea' ? 'Total Budget*' : 'Budget Range*'}
+                  Total Budget*
                 </label>
-                {selectedPath === 'solid-idea' ? (
+                
                   <input
                     type="number"
-                    value={formData.totalBudget || ''}
+                    value={formData.totalBudget || 0}
                     onChange={(e) => setFormData({ ...formData, totalBudget: e.target.value })}
                     style={{
                       width: '100%',
@@ -802,30 +802,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
                       fontWeight: 500,
                     }}
                     placeholder="e.g., 2500"
-                  />
-                ) : (
-                  <select
-                    value={formData.budgetRange || '$500 - $1000'}
-                    onChange={(e) => setFormData({ ...formData, budgetRange: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      fontSize: '1rem',
-                      border: '1px solid #ddd',
-                      borderRadius: '8px',
-                      color: '#4a5676',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <option>Under $250</option>
-                    <option>$250 - $500</option>
-                    <option>$500 - $1000</option>
-                    <option>$1000 - $2000</option>
-                    <option>$2000 - $5000</option>
-                    <option>$5000+</option>
-                  </select>
-                )}
+                  />      
               </div>
 
               <div>
