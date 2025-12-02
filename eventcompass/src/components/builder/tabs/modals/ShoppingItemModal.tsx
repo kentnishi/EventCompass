@@ -7,15 +7,7 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import InventoryIcon from "@mui/icons-material/Inventory";
 
-import { ShoppingItem, Activity } from "@/types/eventPlan";
-
-interface BudgetItem {
-  id: number;
-  category: string;
-  description: string;
-  allocated: number;
-  spent: number;
-}
+import { ShoppingItem, Activity, BudgetItem } from "@/types/eventPlan";
 
 interface ShoppingItemModalProps {
   item: ShoppingItem;
@@ -25,6 +17,7 @@ interface ShoppingItemModalProps {
   isCreating: boolean;
   onClose: () => void;
   fetchShoppingItems: () => void;
+  onBudgetChange: () => {};
 }
 
 const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
@@ -35,6 +28,7 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
   isCreating,
   onClose,
   fetchShoppingItems,
+  onBudgetChange,
 }) => {
   const [localItem, setLocalItem] = useState<ShoppingItem>(item);
   const [isSaving, setIsSaving] = useState(false);
@@ -45,12 +39,18 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
   };
 
   // Calculate total cost
-  const totalCost = localItem.unitCost * localItem.quantity;
+  const totalCost = localItem.unit_cost * localItem.quantity;
 
   // Save changes to the backend
   const handleSave = async () => {
     try {
       setIsSaving(true);
+
+      // Ensure unit_cost is a number
+      if (typeof localItem.unit_cost !== "number") {
+        localItem.unit_cost = parseFloat(localItem.unit_cost) || 0; // Convert to number or default to 0
+      }
+
 
       const url = isCreating
         ? `/api/event-plans/${localItem.event_id}/shopping`
@@ -72,6 +72,7 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
 
       console.log(`Shopping item ${isCreating ? "created" : "updated"} successfully`);
       fetchShoppingItems(); // Refresh items after saving
+      onBudgetChange();
       onClose(); // Close the modal
     } catch (error) {
       console.error("Error saving shopping item:", error);
@@ -96,6 +97,7 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
 
       console.log("Shopping item deleted successfully");
       fetchShoppingItems(); // Refresh items after deletion
+      onBudgetChange();
       onClose(); // Close the modal
     } catch (error) {
       console.error("Error deleting shopping item:", error);
@@ -336,15 +338,15 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
                     type="number"
                     step="0.01"
                     min="0"
-                    value={localItem.unitCost || ""}
+                    value={localItem.unit_cost === 0 ? "" : localItem.unit_cost} // Allow empty string while editing
                     onChange={(e) => {
                         const value = e.target.value;
-                        handleFieldChange("unitCost", value === "" ? "" : parseFloat(value));
+                        handleFieldChange("unit_cost", value === "" ? 0 : parseFloat(value));
                     }}
                     onBlur={(e) => {
                         // Convert empty input to 0 on blur
                         if (e.target.value === "") {
-                        handleFieldChange("unitCost", 0);
+                            handleFieldChange("unit_cost", 0);
                         }
                     }}
                     disabled={isReadOnly}

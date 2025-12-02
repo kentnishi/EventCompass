@@ -38,14 +38,7 @@ import {
   Add,
 } from "@mui/icons-material";
 
-interface BudgetItem {
-  id?: number;
-  event_id: string;
-  category: string; // Budget category (e.g., "Food & Beverages") -> linked to shopping
-  allocated: number; // Allocated budget
-  description: string; // Description of the budget category
-  spent: number; // Amount spent per category
-}
+import { BudgetItem } from "@/types/eventPlan";
 
 interface BudgetTabProps {
   event_id: string;
@@ -61,7 +54,6 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
   budgetItems,
   isReadOnly,
   totalBudget,
-  
   onBudgetChange,
 }) => {
   const [editingAllocated, setEditingAllocated] = useState<number | null>(null);

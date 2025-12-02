@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServer } from "@/lib/supabase/server";
+import { BudgetItem } from "@/types/eventPlan";
 
 /*
 /api/event-plans/shopping/[id]/route.ts - Operations on a specific shopping item:
@@ -60,13 +61,13 @@ export async function PATCH(
 
 
     const body = await request.json();
-    const { item, vendor, unitCost, quantity, notes, activity_id, link, budget_id, status } = body;
+    const { item, vendor, unit_cost, quantity, notes, activity_id, link, budget_id, status } = body;
 
     // Build update object with only provided fields
     const updateData: any = {};
     if (item !== undefined) updateData.item = item;
     if (vendor !== undefined) updateData.vendor = vendor;
-    if (unitCost !== undefined) updateData.unitCost = unitCost;
+    if (unit_cost !== undefined) updateData.unit_cost = unit_cost;
     if (quantity !== undefined) updateData.quantity = quantity;
     if (notes !== undefined) updateData.notes = notes;
     if (activity_id !== undefined) updateData.activity_id = activity_id;
@@ -89,9 +90,9 @@ export async function PATCH(
       );
     }
 
-    if (unitCost !== undefined && (typeof unitCost !== "number" || unitCost < 0)) {
+    if (unit_cost !== undefined && (typeof unit_cost !== "number" || unit_cost < 0)) {
       return NextResponse.json(
-        { error: "unitCost must be a non-negative number" },
+        { error: "unit_cost must be a non-negative number" },
         { status: 400 }
       );
     }
@@ -226,10 +227,11 @@ export async function PATCH(
 // PUT /api/event-plans/shopping/[id] - Full update of a shopping item
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     const supabase = await createServer();
+    const params = await context.params;
     const shoppingItemId = (params.id);
 
     const body = await request.json();
@@ -249,9 +251,9 @@ export async function PUT(
       );
     }
 
-    if (typeof body.unitCost !== "number" || body.unitCost < 0) {
+    if (typeof body.unit_cost !== "number" || body.unit_cost < 0) {
       return NextResponse.json(
-        { error: "unitCost must be a non-negative number" },
+        { error: "unit_cost must be a non-negative number" },
         { status: 400 }
       );
     }
@@ -335,7 +337,7 @@ export async function PUT(
     const updateData = {
       item: body.item,
       vendor: body.vendor,
-      unitCost: body.unitCost,
+      unit_cost: body.unit_cost,
       quantity: body.quantity,
       notes: body.notes || "",
       activity_id: body.activity_id || null,
@@ -381,7 +383,7 @@ export async function DELETE(
     // First check if shopping item exists
     const { data: existingShoppingItem, error: fetchError } = await supabase
       .from("shopping_items")
-      .select("id")
+      .select("id, budget_id")
       .eq("id", shoppingItemId)
       .single();
 

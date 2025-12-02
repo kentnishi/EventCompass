@@ -38,6 +38,7 @@ interface ShoppingTabProps {
   budgetItems: BudgetItem[];
   activities: Activity[];
   isReadOnly: boolean;
+  onBudgetChange: () => {};
 }
 
 const ShoppingTab: React.FC<ShoppingTabProps> = ({
@@ -45,6 +46,7 @@ const ShoppingTab: React.FC<ShoppingTabProps> = ({
   budgetItems,
   activities,
   isReadOnly,
+  onBudgetChange
 }) => {
   const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
@@ -86,7 +88,7 @@ const ShoppingTab: React.FC<ShoppingTabProps> = ({
       event_id,
       item: "",
       vendor: "",
-      unitCost: 0,
+      unit_cost: 0,
       quantity: 1,
       notes: "",
       activity_id: null,
@@ -119,10 +121,10 @@ const ShoppingTab: React.FC<ShoppingTabProps> = ({
   // Group items by budget category
   const itemsByCategory = budgetItems.map((budget) => {
     const items = shoppingItems.filter((item) => item.budget_id === budget.id);
-    const total = items.reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
+    const total = items.reduce((sum, item) => sum + item.unit_cost * item.quantity, 0);
     const spent = items
       .filter((item) => item.status === "ordered" || item.status === "received")
-      .reduce((sum, item) => sum + item.unitCost * item.quantity, 0);
+      .reduce((sum, item) => sum + item.unit_cost * item.quantity, 0);
     const pendingCount = items.filter((item) => item.status === "pending").length;
     const orderedCount = items.filter((item) => item.status === "ordered").length;
     const receivedCount = items.filter((item) => item.status === "received").length;
@@ -349,7 +351,7 @@ const ShoppingTab: React.FC<ShoppingTabProps> = ({
                       {items.map((item) => {
                         const statusConfig = getStatusConfig(item.status);
                         const linkedActivity = activities.find((a) => a.id === item.activity_id);
-                        const itemTotal = item.unitCost * item.quantity;
+                        const itemTotal = item.unit_cost * item.quantity;
 
                         return (
                           <TableRow key={item.id} hover>
@@ -388,7 +390,7 @@ const ShoppingTab: React.FC<ShoppingTabProps> = ({
                                     {new Intl.NumberFormat("en-US", {
                                         style: "currency",
                                         currency: "USD",
-                                    }).format(item.unitCost)}
+                                    }).format(item.unit_cost || 0)}
                                 </Typography>
                             </TableCell>
                             <TableCell align="center">
@@ -463,6 +465,7 @@ const ShoppingTab: React.FC<ShoppingTabProps> = ({
           isCreating={isCreating}
           onClose={handleCloseModal}
           fetchShoppingItems={fetchShoppingItems}
+          onBudgetChange={onBudgetChange}
         />
       )}
     </Box>

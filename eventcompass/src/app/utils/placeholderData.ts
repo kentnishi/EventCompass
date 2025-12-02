@@ -138,21 +138,21 @@ export const generatePlaceholderBudgetItems = (eventId: string,): BudgetItem[] =
         category: "Catering",
         allocated: 3000,
         description: "Initial quote received from Gourmet Catering for $3200. Negotiating for a better price.",
-        spent: 200
+        spent: 0
     },
     {
         event_id: eventId,
         category: "Venue Rental",
         allocated: 3000,
         description: "Deposit of $500 paid. Remaining balance due one week before event.",
-        spent: 200
+        spent: 0
     },
     {
         event_id: eventId,
         category: "Photography",
         allocated: 800,
         description: "Waiting on final quote from preferred photographer.",
-        spent: 200
+        spent: 0
     }
 ];
   
@@ -161,7 +161,7 @@ export const generatePlaceholderShoppingItems = (eventId: string, activities: Ac
         event_id: eventId,
         item: "Champagne Bottles",
         vendor: "Fine Wines Co.",
-        unitCost: 10.99,
+        unit_cost: 10.99,
         quantity: 10,
         notes: "Must be sparkling",
         activity_id: activities[0].id,
@@ -173,7 +173,7 @@ export const generatePlaceholderShoppingItems = (eventId: string, activities: Ac
         event_id: eventId,
         item: "Appetizer Platters",
         vendor: "Gourmet Catering Supplies",
-        unitCost: 50.14,
+        unit_cost: 50.14,
         quantity: 4,
         notes: "Vegetarian options included",
         activity_id: activities[1].id,

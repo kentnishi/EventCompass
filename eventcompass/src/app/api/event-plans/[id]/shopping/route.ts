@@ -109,9 +109,9 @@ export async function POST(
         );
       }
 
-      if (typeof item.unitCost !== "number" || item.unitCost < 0) {
+      if (typeof item.unit_cost !== "number" || item.unit_cost < 0) {
         return NextResponse.json(
-          { error: `Shopping item at index ${i}: unitCost must be a non-negative number` },
+          { error: `Shopping item at index ${i}: unit_cost must be a non-negative number` },
           { status: 400 }
         );
       }
@@ -191,7 +191,7 @@ export async function POST(
       event_id: eventId,
       item: item.item,
       vendor: item.vendor,
-      unitCost: item.unitCost,
+      unit_cost: item.unit_cost,
       quantity: item.quantity,
       notes: item.notes || "",
       activity_id: item.activity_id || null,

@@ -60,7 +60,7 @@ export interface ShoppingItem {
     event_id: string;
     item: string;
     vendor: string;
-    unitCost: number;
+    unit_cost: number;
     quantity: number;
     notes: string;
     activity_id: number | null; // Linked activity ID or null

@@ -15,7 +15,7 @@ import ShoppingTab from "@/components/builder/tabs/ShoppingTab";
 
 import { PLACEHOLDER_EVENT_BASICS, generatePlaceholderActivities, generatePlaceholderScheduleItems } from "@/app/utils/placeholderData";
 
-import { EventPlan, EventBasics, Activity, ScheduleItem, Task, BudgetItem } from "@/types/eventPlan";
+import { EventPlan, EventBasics, Activity, ScheduleItem, Task, BudgetItem, ShoppingItem } from "@/types/eventPlan";
 
 const EventPlanningPage = ({ id }: { id: string }) => {
   console.log("Event ID in EventPlanningPage:", id);
@@ -26,6 +26,7 @@ const EventPlanningPage = ({ id }: { id: string }) => {
   const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [budget, setBudget] = useState<BudgetItem[]>([]);
+  const [shopping, setShopping] = useState<ShoppingItem[]>([]);
 
   const [activeTab, setActiveTab] = useState("overview");
   const [status, setStatus] = useState("planning");
@@ -46,13 +47,15 @@ const EventPlanningPage = ({ id }: { id: string }) => {
           eventActivitiesResponse,
           eventScheduleResponse,
           eventTasksResponse,
-          eventBudgetResponse
+          eventBudgetResponse,
+          eventShoppingResponse
         ] = await Promise.all([
           fetch(`/api/event-plans/${id}`),
           fetch(`/api/event-plans/${id}/activities`),
           fetch(`/api/event-plans/${id}/schedule`),
           fetch(`/api/event-plans/${id}/tasks`),
           fetch(`/api/event-plans/${id}/budget`),
+          fetch(`/api/event-plans/${id}/shopping`),
         ])
 
         // Event Basics: Name, Description, etc.
@@ -96,6 +99,11 @@ const EventPlanningPage = ({ id }: { id: string }) => {
         const budget_response = await eventBudgetResponse.json()
         console.log("Budget response from API: ", budget_response);
         setBudget(budget_response || []);
+
+        // Shopping: List of shopping items
+        const shopping_response = await eventShoppingResponse.json()
+        console.log("Shopping response from API: ", shopping_response);
+        setShopping(shopping_response || []);
 
 
         // setEventPlan(data.eventPlan);
@@ -311,11 +319,10 @@ const EventPlanningPage = ({ id }: { id: string }) => {
     fetchBudgetItems();
   };
 
-  
-  // useEffect(() => {
-  //   const totalBudget = eventBasics.budget;
-  //   console.log("total budget: ", totalBudget);
-  // }, [eventBasics]);
+  // Recalculate spending whenever shopping changes
+  useEffect(() => {
+    fetchBudgetItems();
+  }, [shopping]);
   
   const isReadOnly = status !== "planning";
 
@@ -502,6 +509,7 @@ const EventPlanningPage = ({ id }: { id: string }) => {
             budgetItems={budget}
             activities={activities}
             isReadOnly={isReadOnly}
+            onBudgetChange={onBudgetChange}
           />
         )}
 
