@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServer } from "@/lib/supabase/server";
+import { supabase } from "@/lib/supabase/client"; 
 
 function nowPartsUTC() {
   const now = new Date();

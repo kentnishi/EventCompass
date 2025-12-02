@@ -4,14 +4,14 @@ import { useRouter } from "next/navigation";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { CheckCircle as CheckCircleIcon, CloudQueue as CloudQueueIcon, CloudDone as CloudDoneIcon } from "@mui/icons-material";
 
-// Components
-import OverviewTab from "./builder/tabs/OverviewTab";
-import ActivitiesTab from "./builder/tabs/ActivitiesTab";
-import ScheduleTab from "./builder/tabs/ScheduleTab";
-import ShoppingTab from "./builder/tabs/ShoppingTab";
-import TasksTab from "./builder/tabs/TasksTab";
-import BudgetTab from "./builder/tabs/BudgetTab";
-import SummaryTab from "./builder/tabs/SummaryTab";
+import OverviewTab from '@/components/builder/tabs/OverviewTab';
+import ActivitiesTab from "@/components/builder/tabs/ActivitiesTab";
+import ScheduleTab from "@/components/builder/tabs/ScheduleTab";
+import TasksTab from "@/components/builder/tabs/TasksTab";
+import BudgetTab from "@/components/builder/tabs/BudgetTab";
+import ShoppingTab from "@/components/builder/tabs/ShoppingTab";
+import SummaryTab from "@/components/builder/tabs/SummaryTab";
+import ForecastTab from "@/components/builder/tabs/ForecastTab";
 import EventCopilot from "./eventcopilot/EventCopilot";
 
 // Types & Utils
@@ -37,6 +37,7 @@ const tabs = [
   { id: "budget", label: "Budget" },
   { id: "shopping", label: "Shopping" },
   { id: "summary", label: "Summary" },
+  { id: "forecast", label: "Forecast" },
 ];
 
 const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
@@ -545,6 +546,14 @@ const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
         {activeTab === "summary" && (
           <SummaryTab
             eventPlan={eventPlan}
+          />
+        )}
+
+        {activeTab === "forecast" && (
+          <ForecastTab
+            eventId={id}
+            attendees={eventBasics.attendees} 
+
           />
         )}
       </div>
