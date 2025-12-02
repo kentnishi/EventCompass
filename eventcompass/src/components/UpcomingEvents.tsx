@@ -251,7 +251,7 @@ export default function UpcomingEvents({
             Array.from({ length: 2 }).map((_, i) => (
               <li
                 key={`s-${i}`}
-                className="snap-start shrink-0 w-72 h-32 rounded-2xl border border-[#d6d9e7] bg-[#e3e9f8] animate-pulse"
+                className="snap-start shrink-0 w-100 h-32 rounded-2xl border border-[#d6d9e7] bg-[#e3e9f8] animate-pulse"
               />
             ))}
 
@@ -259,7 +259,7 @@ export default function UpcomingEvents({
             items?.map((e) => (
               <li
                 key={e.id}
-                className="snap-start rounded-[10px] shrink-0 w-[250px] h-[100px] text-center rounded-2xl border border-[#f3f4f6] bg-[#e3e9f8] flex justify-center"
+                className="snap-start rounded-[10px] shrink-0 w-[350px] h-[150px] text-center rounded-2xl border border-[#f3f4f6] bg-[#e3e9f8] flex justify-center"
               >
                 <div className="text-[18px] text-center justify-center m-auto p-4">
                   <div className="font-medium font-[700] text-[#2b3a55] truncate">
