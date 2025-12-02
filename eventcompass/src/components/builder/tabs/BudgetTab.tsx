@@ -45,7 +45,7 @@ interface BudgetTabProps {
   budgetItems: BudgetItem[];
   isReadOnly: boolean;
   totalBudget: number;
-//   shoppingCategories: string[];
+  //   shoppingCategories: string[];
   onBudgetChange: () => void; // Callback to refresh budget data
 }
 
@@ -108,7 +108,7 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
         });
 
         if (!response.ok) throw new Error("Failed to update budget item");
-        
+
         onBudgetChange(); // Refresh data
       } catch (error) {
         console.error("Error updating allocated amount:", error);
@@ -163,7 +163,7 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
 
   const handleSaveModal = async () => {
     setIsSaving(true);
-    
+
     try {
       const newAllocated = parseFloat(modalAllocated);
       if (isNaN(newAllocated) || newAllocated < 0) {
@@ -219,7 +219,7 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
 
   const handleDelete = async (itemId: number) => {
     if (isReadOnly) return;
-    
+
     if (!confirm("Are you sure you want to delete this budget item?")) return;
 
     try {
@@ -228,7 +228,7 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
       });
 
       if (!response.ok) throw new Error("Failed to delete budget item");
-      
+
       onBudgetChange(); // Refresh data
     } catch (error) {
       console.error("Error deleting budget item:", error);
@@ -328,13 +328,13 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
         </Grid>
 
         {unallocated !== 0 && (
-          <Alert 
-            severity={unallocated > 0 ? "warning" : "error"} 
+          <Alert
+            severity={unallocated > 0 ? "warning" : "error"}
             icon={<Warning />}
             sx={{ mt: 2 }}
           >
-            {unallocated > 0 
-              ? `$${unallocated.toLocaleString()} unallocated` 
+            {unallocated > 0
+              ? `$${unallocated.toLocaleString()} unallocated`
               : `Over-allocated by $${Math.abs(unallocated).toLocaleString()}`}
           </Alert>
         )}
@@ -431,7 +431,7 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
                         <Typography
                           variant="body2"
                           onClick={() => handleStartEditAllocated(item.id!, item.allocated)}
-                          sx={{ 
+                          sx={{
                             cursor: isReadOnly ? "default" : "pointer",
                             "&:hover": !isReadOnly ? { color: "primary.main" } : {},
                           }}
@@ -556,17 +556,17 @@ const BudgetTab: React.FC<BudgetTabProps> = ({
         <DialogTitle>{isCreating ? "Add Budget Category" : "Edit Budget Category"}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: "flex", flexDirection: "column", gap: 3 }}>
-          <FormControl fullWidth>
-                <TextField
-                    label="Shopping Category"
-                    value={modalCategory}
-                    onChange={(e) => setModalCategory(e.target.value)}
-                    placeholder="Enter a category"
-                    fullWidth
-                />
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-                    Enter the shopping category this budget item tracks
-                </Typography>
+            <FormControl fullWidth>
+              <TextField
+                label="Shopping Category"
+                value={modalCategory}
+                onChange={(e) => setModalCategory(e.target.value)}
+                placeholder="Enter a category"
+                fullWidth
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                Enter the shopping category this budget item tracks
+              </Typography>
             </FormControl>
 
             <TextField
