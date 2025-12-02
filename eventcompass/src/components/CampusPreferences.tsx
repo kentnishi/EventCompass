@@ -207,23 +207,7 @@ export default function CampusPreferences() {
           </div>
         </div>
 
-        {/* Themes */}
-        <div className="bg-white p-4 rounded-lg">
-          <h3 className="font-semibold mb-3">Popular Themes</h3>
-
-          <div className="flex flex-wrap gap-10">
-            {themeChips.map((raw, i) => {
-              const label = raw.replace(/\n+/g, " ").trim();
-              return(
-              <span
-                key={`${label}-${i}`}
-                className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-medium"
-              >
-                {label}
-              </span>)
-              })}
-          </div>
-        </div>
+        
       </div>
     </div>
   );

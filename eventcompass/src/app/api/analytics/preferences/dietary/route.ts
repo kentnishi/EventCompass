@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
-import { supabase } from "../../../../../../lib/supabase";
+import { createServer } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-type Row = { response_id: string; value_json: any; value_text: string | null };
+type Row = { response_id: string; value_json: unknown; value_text: string | null };
 
 export async function GET() {
   try {
     // 1) latest survey
-    const s = await supabase
+    const s = await createServer()
       .from("survey")
       .select("id")
       .order("created_at", { ascending: false })
@@ -18,7 +18,7 @@ export async function GET() {
     const surveyId = s.data.id;
 
     // 2) find qids for this survey
-    const qs = await supabase
+    const qs = await createServer()
       .from("survey_question")
       .select("id, code")
       .eq("survey_id", surveyId)
@@ -37,23 +37,23 @@ export async function GET() {
 
     // 3) fetch answers for both
     const [multiRes, otherRes] = await Promise.all([
-      supabase
+      createServer()
         .from("survey_answer")
         .select("response_id,value_json,value_text")
         .eq("question_id", qid52),
       qid52Other
-        ? supabase
-            .from("survey_answer")
-            .select("response_id,value_text")
-            .eq("question_id", qid52Other)
+        ? createServer()
+          .from("survey_answer")
+          .select("response_id,value_text")
+          .eq("question_id", qid52Other)
         : Promise.resolve({ data: [] as any[], error: null }),
     ]);
 
     if (multiRes.error) throw multiRes.error;
-    if ((otherRes as any).error) throw (otherRes as any).error;
+    if ((otherRes as { error: unknown }).error) throw (otherRes as { error: unknown }).error;
 
     const multi: Row[] = (multiRes.data ?? []) as Row[];
-    const other = ((otherRes as any).data ?? []) as {
+    const other = ((otherRes as { data: unknown }).data ?? []) as {
       response_id: string;
       value_text: string | null;
     }[];
@@ -77,11 +77,11 @@ export async function GET() {
       const toks: string[] = Array.isArray(row.value_json)
         ? (row.value_json as string[])
         : row.value_text
-        ? String(row.value_text)
+          ? String(row.value_text)
             .split(/[;,|]/)
             .map((s) => s.trim())
             .filter(Boolean)
-        : [];
+          : [];
       for (const t of toks) add(row.response_id, t);
     }
 
@@ -117,9 +117,10 @@ export async function GET() {
       });
 
     return NextResponse.json(out, { status: 200 });
-  } catch (e: any) {
+  } catch (e: unknown) {
+    const error = e as Error;
     return NextResponse.json(
-      { error: e?.message ?? String(e) },
+      { error: error?.message ?? String(e) },
       { status: 500 }
     );
   }
