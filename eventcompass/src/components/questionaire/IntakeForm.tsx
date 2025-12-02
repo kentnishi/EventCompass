@@ -875,7 +875,9 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
             `}</style>
           </div>
         </div>
-    );
+      </div>
+    </div>
+  );
 };
 
 export default IntakeForm;
