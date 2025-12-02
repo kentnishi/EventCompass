@@ -24,6 +24,8 @@
     "@supabase/supabase-js": "^2.86.0",
     "chart.js": "^4.5.0",
     "clsx": "^2.1.1",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.4",
     "next": "15.5.3",
     "openai": "^5.22.0",
     "phosphor-react": "^1.4.1",

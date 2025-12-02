@@ -6,8 +6,8 @@ import StartScreen from './questionaire/StartScreen';
 import IntakeForm from './questionaire/IntakeForm';
 import ConceptsScreen from './questionaire/ConceptsScreen';
 import PreviewScreen from './questionaire/PreviewScreen';
-import EditorScreen from './builder/EditorScreen';
 
+import { PLACEHOLDER_EVENT_BASICS, generatePlaceholderActivities, generatePlaceholderScheduleItems, generatePlaceholderTasks, generatePlaceholderBudgetItems, generatePlaceholderShoppingItems } from "@/app/utils/placeholderData";
 
 
 // Main App Component
@@ -163,155 +163,7 @@ const EventQuestionaire = () => {
     }
   };
 
-  const placeholder_name = `TEST EVENT ${new Date().toISOString()}`;
-
-  const PLACEHOLDER_EVENT_PLAN = {
-    name: placeholder_name,
-    org: "Alzheimer's Awareness Group",
-    description: "An intimate evening where students write heartfelt letters to nursing home residents while learning about Alzheimer's disease and memory care.",
-    goals: ["Awareness/education", "Community bonding"],
-    attendance: 60,
-    date: null,
-    activities: [
-      { 
-        name: "Check-in & Welcome", 
-        description: "Greet attendees, distribute writing materials and name tags" 
-      },
-      { 
-        name: "Educational Introduction", 
-        description: "Guest speaker shares about Alzheimer's disease and the impact of letters on residents" 
-      },
-      { 
-        name: "Letter Writing Session", 
-        description: "Guided letter writing with prompts and examples provided at each table" 
-      },
-      { 
-        name: "Reflection & Sharing", 
-        description: "Optional sharing at reflection board with light refreshments" 
-      },
-      { 
-        name: "Wrap-up & Clean-up", 
-        description: "Collect letters, thank attendees, and coordinate cleanup" 
-      }
-    ],
-    schedule: [
-      { time: "6:00 PM", duration: 15, activityId: null, notes: "" },
-      { time: "6:15 PM", duration: 20, activityId: null, notes: "" },
-      { time: "6:35 PM", duration: 45, activityId: null, notes: "" },
-      { time: "7:20 PM", duration: 20, activityId: null, notes: "" },
-      { time: "7:40 PM", duration: 20, activityId: null, notes: "" }
-    ],
-    shopping: [
-      { 
-        item: "Stationery sets", 
-        quantity: 60, 
-        group: "Materials", 
-        linkedTo: null, 
-        purchased: false 
-      },
-      { 
-        item: "Writing prompts cards", 
-        quantity: 60, 
-        group: "Materials", 
-        linkedTo: null, 
-        purchased: false 
-      },
-      { 
-        item: "Tea & Coffee", 
-        quantity: 60, 
-        group: "Food", 
-        linkedTo: null,
-        purchased: false 
-      },
-      { 
-        item: "Cookies", 
-        quantity: 5, 
-        group: "Food", 
-        linkedTo: null, 
-        purchased: false 
-      },
-      { 
-        item: "Display boards", 
-        quantity: 2, 
-        group: "Equipment", 
-        linkedTo: null, 
-        purchased: false 
-      },
-      { 
-        item: "Name tags", 
-        quantity: 60, 
-        group: "Materials", 
-        linkedTo: null, 
-        purchased: false 
-      },
-      { 
-        item: "Envelopes", 
-        quantity: 60, 
-        group: "Materials", 
-        linkedTo: null, 
-        purchased: false 
-      }
-    ],
-    tasks: [
-      { 
-        task: "Book guest speaker", 
-        assignedTo: "", 
-        deadline: "2025-10-03", 
-        status: "pending", 
-        linkedTo: null
-      },
-      { 
-        task: "Order stationery supplies", 
-        assignedTo: "", 
-        deadline: "2025-10-03", 
-        status: "pending", 
-        linkedTo: null
-      },
-      { 
-        task: "Create letter writing prompts", 
-        assignedTo: "", 
-        deadline: "2025-10-03", 
-        status: "pending", 
-        linkedTo: "activity-3" 
-      },
-      { 
-        task: "Set up reflection board", 
-        assignedTo: "", 
-        deadline: "2025-10-03", 
-        status: "pending", 
-        linkedTo: "activity-4" 
-      },
-      { 
-        task: "Coordinate with nursing home", 
-        assignedTo: "", 
-        deadline: "2025-10-03", 
-        status: "pending", 
-        linkedTo: null 
-      },
-      { 
-        task: "Reserve venue", 
-        assignedTo: "", 
-        deadline: "2025-10-03", 
-        status: "pending", 
-        linkedTo: null 
-      },
-      { 
-        task: "Purchase refreshments", 
-        assignedTo: "", 
-        deadline: "2025-10-03", 
-        status: "pending", 
-        linkedTo: "activity-4" 
-      }
-    ],
-    budget: [
-      { category: "Food & Beverages", estimated: 200, actual: 0 },
-      { category: "Stationery & Materials", estimated: 150, actual: 0 },
-      { category: "Guest Speaker", estimated: 0, actual: 0 },
-      { category: "Decorations", estimated: 75, actual: 0 },
-      { category: "Printing & Signage", estimated: 50, actual: 0 },
-      { category: "Miscellaneous", estimated: 25, actual: 0 }
-    ]
-  };
+  
 
   const handleStartPath = (path) => {
     setSelectedPath(path);
@@ -336,209 +188,159 @@ const EventQuestionaire = () => {
     setKeepSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  // const proceedToEditor = async () => {
-
-  //   const customizedPlan = { ...eventPlan };
-  //   if (!keepSections.activities) customizedPlan.activities = [];
-  //   if (!keepSections.schedule) customizedPlan.schedule = [];
-  //   if (!keepSections.shopping) customizedPlan.shopping = [];
-  //   if (!keepSections.tasks) customizedPlan.tasks = [];
-  //   if (!keepSections.budget)
-  //     customizedPlan.budget = [
-  //       { category: "Food & Beverages", estimated: 0, actual: 0 },
-  //       { category: "Miscellaneous", estimated: 0, actual: 0 },
-  //     ];
-  
-  //   try {
-  //     // Create the event in the database
-  //     const response = await fetch("/api/event-plans", {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({
-  //         name: customizedPlan.name,
-  //         description: customizedPlan.description,
-  //         attendees: customizedPlan.attendance || 0,
-  //         start_date: "2023-11-15", // Replace with actual start_date
-  //         end_date: "2023-11-16", // Replace with actual end_date
-  //         start_time: "18:00:00", // Replace with actual start_time
-  //         end_time: "20:00:00", // Replace with actual end_time
-  //         budget: 200,
-  //         spending: 0,
-  //         location: "Main Quad",
-  //         committee: null,
-  //         status: "planning",
-  //         food_provided: true,
-  //         giveaways: false,
-  //         registration_required: true,
-  //         event_type: "Social",
-  //       }),
-  //     });
-  
-  //     if (!response.ok) {
-  //       const errorText = await response.text();
-  //       console.error("Failed to create event:", errorText);
-  //       throw new Error(`Failed to create event: ${errorText}`);
-  //     }
-  
-  //     const result = await response.json();
-  
-  //     // Navigate to the event page
-  //     router.push(`/event-plans/${result.event.id}?eventPlan=${encodeURIComponent(JSON.stringify(customizedPlan))}`);
-
-  //   } catch (error) {
-  //     console.error("Error creating event:", error);
-  //     alert("An error occurred while creating the event. Please try again.");
-  //   }
-  
-  //   setEventPlan(customizedPlan);
-  //   setStep("editor");
-  // };
 
   const proceedToEditor = async () => {
-    const customizedPlan = PLACEHOLDER_EVENT_PLAN;
-    
-    if (!keepSections.activities) customizedPlan.activities = [];
-    if (!keepSections.schedule) customizedPlan.schedule = [];
-    if (!keepSections.shopping) customizedPlan.shopping = [];
-    if (!keepSections.tasks) customizedPlan.tasks = [];
-    if (!keepSections.budget) {
-      customizedPlan.budget = [
-        { category: "Food & Beverages", estimated: 0, actual: 0 },
-        { category: "Miscellaneous", estimated: 0, actual: 0 },
-      ];
-    }
+    // const customizedPlan = PLACEHOLDER_EVENT_PLAN;
+
+    // if (!keepSections.activities) PLACEHOLDER_ACTIVITIES.activities = [];
+    // if (!keepSections.schedule) customizedPlan.schedule = [];
+    // if (!keepSections.shopping) customizedPlan.shopping = [];
+    // if (!keepSections.tasks) customizedPlan.tasks = [];
+    // if (!keepSections.budget) {
+    //   customizedPlan.budget = [
+    //     { category: "Food & Beverages", estimated: 0, actual: 0 },
+    //     { category: "Miscellaneous", estimated: 0, actual: 0 },
+    //   ];
+    // }
   
     try {
       // Create the event in the database with all related data
-      const response = await fetch("/api/event-plans", {
+      const eventResponse = await fetch("/api/event-plans", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          // Main event data
-          name: customizedPlan.name || "Untitled Event",
-          description: customizedPlan.description || "",
-          organization: customizedPlan.org || "",
-          goals: customizedPlan.goals || [],
-          attendees: customizedPlan.attendance || 0,
-          start_date: customizedPlan.date !== "TBD" ? customizedPlan.date : null,
-          end_date: customizedPlan.date !== "TBD" ? customizedPlan.date : null,
-          start_time: null,
-          end_time: null,
-          location: "TBD",
-          committee: null,
-          status: "planning",
-          food_provided: false,
-          giveaways: false,
-          registration_required: false,
-          event_type: null,
-          
-          // Related data
-          activities: customizedPlan.activities,
-          schedule: customizedPlan.schedule,
-          shopping: customizedPlan.shopping,
-          tasks: customizedPlan.tasks,
-          budget: customizedPlan.budget,
+          ...PLACEHOLDER_EVENT_BASICS, 
         }),
       });
   
-      if (!response.ok) {
-        const errorText = await response.text();
+      if (!eventResponse.ok) {
+        const errorText = await eventResponse.text();
         console.error("Failed to create event:", errorText);
         throw new Error(`Failed to create event: ${errorText}`);
       }
   
-      const result = await response.json();
+      // const result = await response.json();
+      const { event } = await eventResponse.json();
+      const id = event.id;
+
+
+      const PLACEHOLDER_ACTIVITIES = generatePlaceholderActivities(id);
+
+      // Add activities
+
+
+      if (PLACEHOLDER_ACTIVITIES.length > 0) { //Replace with whether activities is being kept
+        const activitiesResponse = await fetch(`/api/event-plans/${id}/activities`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(PLACEHOLDER_ACTIVITIES),
+        });
+
+        if (!activitiesResponse.ok) {
+          const errorText = await activitiesResponse.text();
+          console.error("Failed to add activities:", errorText);
+          throw new Error(`Failed to add activities: ${errorText}`);
+        }
+
+        const activities = await activitiesResponse.json();
+        console.log("Activities added:", activities);
+
+        // Activities must exist for schedule to work
+        const PLACEHOLDER_SCHEDULE = generatePlaceholderScheduleItems(id, activities);
+        if (PLACEHOLDER_SCHEDULE.length > 0) { // Replace with logic about whether schedule is being kept
+          const scheduleResponse = await fetch(`/api/event-plans/${id}/schedule`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(PLACEHOLDER_SCHEDULE),
+            })
+
+            const schedule = await scheduleResponse.json();
+
+            if (!scheduleResponse.ok) {
+              const errorText = await scheduleResponse.text();
+              console.error("Failed to add schedule:", errorText);
+              throw new Error(`Failed to add schedule: ${errorText}`);
+            }
+
+            console.log("Schedule added:", schedule);
+        }
+
+        const PLACEHOLDER_TASKS = generatePlaceholderTasks(id, activities);
+        if (PLACEHOLDER_TASKS.length > 0) { // Replace with logic about whether tasks is being kept
+          const tasksResponse = await fetch(`/api/event-plans/${id}/tasks`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(PLACEHOLDER_TASKS),
+            })
+
+            const tasks = await tasksResponse.json();
+
+            if (!tasksResponse.ok) {
+              const errorText = await tasksResponse.text();
+              console.error("Failed to add tasks:", errorText);
+              throw new Error(`Failed to add tasks: ${errorText}`);
+            }
+
+            console.log("Tasks added:", tasks);
+        }
+
+        const PLACEHOLDER_BUDGET = generatePlaceholderBudgetItems(id);
+        if (PLACEHOLDER_BUDGET.length > 0) { // Replace with logic about whether budget is being kept
+          const budgetResponse = await fetch(`/api/event-plans/${id}/budget`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(PLACEHOLDER_BUDGET),
+            })
+
+            const budget = await budgetResponse.json();
+
+            if (!budgetResponse.ok) {
+              const errorText = await budgetResponse.text();
+              console.error("Failed to add budget items:", errorText);
+              throw new Error(`Failed to add budget items: ${errorText}`);
+            }
+
+            console.log("Budget items added:", budget);
+
+            // Shopping depends on activities for linking (and also activity but that can be null)
+            const PLACEHOLDER_SHOPPING = generatePlaceholderShoppingItems(id, activities, budget);
+
+            if (PLACEHOLDER_SHOPPING.length > 0) { // Replace with logic about whether shopping is being kept
+              const shoppingResponse = await fetch(`/api/event-plans/${id}/shopping`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(PLACEHOLDER_SHOPPING),
+                })
+  
+                const shopping = await shoppingResponse.json();
+  
+                if (!shoppingResponse.ok) {
+                  const errorText = await shoppingResponse.text();
+                  console.error("Failed to add shopping items:", errorText);
+                  throw new Error(`Failed to add shopping items: ${errorText}`);
+                }
+  
+                console.log("Shopping items added:", shopping);
+            }
+          }
+
+
+      }
+
+
       
       // Navigate to the event editor page
-      router.push(`/event-plans/${result.event.id}`);
+      router.push(`/event-plans/${id}`);
     } catch (error) {
       console.error("Error creating event:", error);
       alert("An error occurred while creating the event. Please try again.");
     }
   };
 
-  const updatePlan = (field, value) => {
-    setEventPlan(prev => ({ ...prev, [field]: value }));
-  };
-
-  const updateActivity = (index, field, value) => {
-    const newActivities = [...eventPlan.activities];
-    newActivities[index][field] = value;
-    updatePlan('activities', newActivities);
-  };
-
-  const addActivity = () => {
-    const newId = Math.max(0, ...eventPlan.activities.map(a => a.id)) + 1;
-    const newActivities = [...eventPlan.activities, { id: newId, name: "", description: "" }];
-    updatePlan('activities', newActivities);
-  };
-
-  const deleteActivity = (index) => {
-    const newActivities = eventPlan.activities.filter((_, i) => i !== index);
-    updatePlan('activities', newActivities);
-  };
-
-  const updateSchedule = (index, field, value) => {
-    const newSchedule = [...eventPlan.schedule];
-    newSchedule[index][field] = value;
-    updatePlan('schedule', newSchedule);
-  };
-
-  const addScheduleItem = () => {
-    const newSchedule = [...eventPlan.schedule, { time: "", duration: "", activityId: null, notes: "" }];
-    updatePlan('schedule', newSchedule);
-  };
-
-  const deleteScheduleItem = (index) => {
-    const newSchedule = eventPlan.schedule.filter((_, i) => i !== index);
-    updatePlan('schedule', newSchedule);
-  };
-
-  const updateShoppingItem = (index, field, value) => {
-    const newShopping = [...eventPlan.shopping];
-    newShopping[index][field] = value;
-    updatePlan('shopping', newShopping);
-  };
-
-  const addShoppingItem = () => {
-    const newId = Math.max(0, ...eventPlan.shopping.map(s => s.id)) + 1;
-    const newShopping = [...eventPlan.shopping, { id: newId, item: "", quantity: "", category: "", linkedTo: null, purchased: false }];
-    updatePlan('shopping', newShopping);
-  };
-
-  const deleteShoppingItem = (index) => {
-    const newShopping = eventPlan.shopping.filter((_, i) => i !== index);
-    updatePlan('shopping', newShopping);
-  };
-
-  const updateTask = (index, field, value) => {
-    const newTasks = [...eventPlan.tasks];
-    newTasks[index][field] = value;
-    updatePlan('tasks', newTasks);
-  };
-
-  const addTask = () => {
-    const newId = Math.max(0, ...eventPlan.tasks.map(t => t.id)) + 1;
-    const newTasks = [...eventPlan.tasks, { id: newId, task: "", assignedTo: "", deadline: "", status: "pending", linkedTo: null }];
-    updatePlan('tasks', newTasks);
-  };
-
-  const deleteTask = (index) => {
-    const newTasks = eventPlan.tasks.filter((_, i) => i !== index);
-    updatePlan('tasks', newTasks);
-  };
-
-  const updateBudgetItem = (index, field, value) => {
-    const newBudget = [...eventPlan.budget];
-    newBudget[index][field] = value;
-    updatePlan('budget', newBudget);
-  };
-
-  const totalBudget = eventPlan?.budget.reduce((sum, item) => sum + item.estimated, 0) || 0;
 
   // Render appropriate screen based on step
   if (step === 'start') {
