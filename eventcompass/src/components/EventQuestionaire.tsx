@@ -225,7 +225,6 @@ const EventQuestionaire = () => {
       const { event } = await eventResponse.json();
       const id = event.id;
 
-      const insertPromises = [];
 
       const PLACEHOLDER_ACTIVITIES = generatePlaceholderActivities(id);
 
@@ -342,84 +341,6 @@ const EventQuestionaire = () => {
     }
   };
 
-  const updatePlan = (field, value) => {
-    setEventPlan(prev => ({ ...prev, [field]: value }));
-  };
-
-  const updateActivity = (index, field, value) => {
-    const newActivities = [...eventPlan.activities];
-    newActivities[index][field] = value;
-    updatePlan('activities', newActivities);
-  };
-
-  const addActivity = () => {
-    const newId = Math.max(0, ...eventPlan.activities.map(a => a.id)) + 1;
-    const newActivities = [...eventPlan.activities, { id: newId, name: "", description: "" }];
-    updatePlan('activities', newActivities);
-  };
-
-  const deleteActivity = (index) => {
-    const newActivities = eventPlan.activities.filter((_, i) => i !== index);
-    updatePlan('activities', newActivities);
-  };
-
-  const updateSchedule = (index, field, value) => {
-    const newSchedule = [...eventPlan.schedule];
-    newSchedule[index][field] = value;
-    updatePlan('schedule', newSchedule);
-  };
-
-  const addScheduleItem = () => {
-    const newSchedule = [...eventPlan.schedule, { time: "", duration: "", activityId: null, notes: "" }];
-    updatePlan('schedule', newSchedule);
-  };
-
-  const deleteScheduleItem = (index) => {
-    const newSchedule = eventPlan.schedule.filter((_, i) => i !== index);
-    updatePlan('schedule', newSchedule);
-  };
-
-  const updateShoppingItem = (index, field, value) => {
-    const newShopping = [...eventPlan.shopping];
-    newShopping[index][field] = value;
-    updatePlan('shopping', newShopping);
-  };
-
-  const addShoppingItem = () => {
-    const newId = Math.max(0, ...eventPlan.shopping.map(s => s.id)) + 1;
-    const newShopping = [...eventPlan.shopping, { id: newId, item: "", quantity: "", category: "", linkedTo: null, purchased: false }];
-    updatePlan('shopping', newShopping);
-  };
-
-  const deleteShoppingItem = (index) => {
-    const newShopping = eventPlan.shopping.filter((_, i) => i !== index);
-    updatePlan('shopping', newShopping);
-  };
-
-  const updateTask = (index, field, value) => {
-    const newTasks = [...eventPlan.tasks];
-    newTasks[index][field] = value;
-    updatePlan('tasks', newTasks);
-  };
-
-  const addTask = () => {
-    const newId = Math.max(0, ...eventPlan.tasks.map(t => t.id)) + 1;
-    const newTasks = [...eventPlan.tasks, { id: newId, task: "", assignedTo: "", deadline: "", status: "pending", linkedTo: null }];
-    updatePlan('tasks', newTasks);
-  };
-
-  const deleteTask = (index) => {
-    const newTasks = eventPlan.tasks.filter((_, i) => i !== index);
-    updatePlan('tasks', newTasks);
-  };
-
-  const updateBudgetItem = (index, field, value) => {
-    const newBudget = [...eventPlan.budget];
-    newBudget[index][field] = value;
-    updatePlan('budget', newBudget);
-  };
-
-  const totalBudget = eventPlan?.budget.reduce((sum, item) => sum + item.estimated, 0) || 0;
 
   // Render appropriate screen based on step
   if (step === 'start') {
