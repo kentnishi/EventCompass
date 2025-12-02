@@ -7,7 +7,6 @@ import type { ChartConfiguration, ChartOptions, TooltipItem } from "chart.js";
 
 // If you have a typed Database, you can do:
 // const supabase = createBrowserClient<Database>(..., ...);
-// For now keeping it untyped for simplicity.
 function useSupabaseClient() {
   const client = useMemo(
     () =>
@@ -111,6 +110,7 @@ export default function LastEventAnalytics() {
 
     const options: ChartOptions<"bar"> = {
       responsive: true,
+      maintainAspectRatio: false, // 👈 important for fixed-height wrapper
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -187,6 +187,7 @@ export default function LastEventAnalytics() {
 
     const options: ChartOptions<"bar"> = {
       responsive: true,
+      maintainAspectRatio: false, // 👈 same here
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -285,10 +286,9 @@ export default function LastEventAnalytics() {
   }
 
   return (
-    <div className="lg:col-span-3 bg-white p-8 rounded-lg shadow-sm pt-4 px-8 pb-8">
-      <h2 className="text-2xl font-bold">Last Event Analytics</h2>
-      <div className="space-y-6 bg-[#ffffff] ml-[2px] scale-99 rounded-[10px] pt-4 px-8 pb-8">
-      <p className="text-sm text-gray-500 ml-[10px] mt-[5px] mb-4">
+    <div className="lg:col-span-3 bg-white p-8 rounded-lg shadow-sm">
+      <h2 className="text-2xl font-bold mb-2">Last Event Analytics</h2>
+      <p className="text-sm text-gray-500 mb-6">
         Based on {totalEvents} events between{" "}
         <span className="font-medium">Jan 2025</span> and{" "}
         <span className="font-medium">Apr 2025</span>; Overall average
@@ -299,29 +299,41 @@ export default function LastEventAnalytics() {
         .
       </p>
 
-      <div className="w-[90%] grid grid-cols-1  ml-[10px] lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Attendance by weekday */}
         <div>
           <h3 className="text-lg font-semibold mb-2">
             Attendance by Day of Week
           </h3>
-          {weekdayBarCfg ? (
-            <BaseChart config={weekdayBarCfg} height={320} />
-          ) : (
-            <p className="text-gray-400 text-sm">Not enough data.</p>
-          )}
+          <p className="text-xs text-gray-500 mb-3">
+            See which days tend to have better attendance for planning future
+            events.
+          </p>
+          <div className="w-full max-w-[520px] h-[260px] mx-auto">
+            {weekdayBarCfg ? (
+              <BaseChart config={weekdayBarCfg} height={260} />
+            ) : (
+              <p className="text-gray-400 text-sm">Not enough data.</p>
+            )}
+          </div>
         </div>
 
+        {/* Attendance: food vs no food */}
         <div>
           <h3 className="text-lg font-semibold mb-2">
             Attendance: Food vs No Food
           </h3>
-          {foodBarCfg ? (
-            <BaseChart config={foodBarCfg} height={320} />
-          ) : (
-            <p className="text-gray-400 text-sm">Not enough data.</p>
-          )}
+          <p className="text-xs text-gray-500 mb-3">
+            Compare the average attendance for events with and without food.
+          </p>
+          <div className="w-full max-w-[520px] h-[260px] mx-auto">
+            {foodBarCfg ? (
+              <BaseChart config={foodBarCfg} height={260} />
+            ) : (
+              <p className="text-gray-400 text-sm">Not enough data.</p>
+            )}
+          </div>
         </div>
-      </div>
       </div>
     </div>
   );
