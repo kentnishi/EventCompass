@@ -9,12 +9,44 @@ import PreviewScreen from './questionaire/PreviewScreen';
 
 import { PLACEHOLDER_EVENT_BASICS, generatePlaceholderActivities, generatePlaceholderScheduleItems, generatePlaceholderTasks, generatePlaceholderBudgetItems, generatePlaceholderShoppingItems } from "@/app/utils/placeholderData";
 
+import { IntakeFormData } from '@/types/eventPlan';
+
 
 // Main App Component
 const EventQuestionaire = () => {
   const [step, setStep] = useState('start');
-  const [selectedPath, setSelectedPath] = useState(null);
+  const [selectedPath, setSelectedPath] = useState("");
   const [formData, setFormData] = useState({});
+  const [intakeFormData, setIntakeFormData] = useState<IntakeFormData>({
+    organizationName: '',
+    organizationMission: '',
+    budgetRange: '',
+    totalBudget: 0,
+    expectedAttendance: 0,
+    locationType: 'on-campus',
+    venue: '',
+    startDate: '',
+    endDate: '',  // Optional for multi-day events
+    
+    // No-idea specific
+    eventGoals: [],
+    eventVibe: [],
+    constraints: '',
+    
+    // Rough-idea specific
+    eventType: '',
+    roughIdea: '',
+    duration: '',
+    additionalContext: '',
+    
+    // Solid-idea specific
+    eventName: '',
+    eventDescription: '',
+    keyActivities: '',
+    startTime: '',
+    endTime: '',
+    specialRequirements: ''
+  });
   const [selectedConcept, setSelectedConcept] = useState(null);
   const [eventPlan, setEventPlan] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
@@ -31,6 +63,8 @@ const EventQuestionaire = () => {
   const [status, setStatus] = useState('planning');
 
   const router = useRouter();
+
+  const paths = ["no-idea", "rough-idea", "solid-idea"];
 
 
   const conceptsByPath = {
@@ -165,12 +199,15 @@ const EventQuestionaire = () => {
 
   
 
-  const handleStartPath = (path) => {
+  const handleStartPath = (path: string) => {
     setSelectedPath(path);
     setStep('intake');
   };
 
   const handleIntakeSubmit = () => {
+    if (selectedPath === 'no-idea') {
+      
+    }
     setStep('concepts');
   };
 
@@ -353,13 +390,14 @@ const EventQuestionaire = () => {
         selectedPath={selectedPath}
         onBack={() => setStep('start')}
         onSubmit={handleIntakeSubmit}
-        formData={formData}
-        setFormData={setFormData}
+        formData={intakeFormData}
+        setFormData={setIntakeFormData}
       />
     );
   }
 
   if (step === 'concepts') {
+    console.log("Intake Form Data: ", intakeFormData);
     return (
       <ConceptsScreen
         selectedPath={selectedPath}
