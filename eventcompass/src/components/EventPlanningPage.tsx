@@ -424,7 +424,7 @@ const EventPlanningPage = ({ id }: { id: string }) => {
             <label style={{ fontSize: '0.9rem', fontWeight: 600, color: '#666' }}>Status:</label>
             <select
               value={status}
-              onChange={(e) => onStatusChange(e.target.value)}
+              // onChange={(e) => onStatusChange(e.target.value)}
               style={{
                 padding: '8px 32px 8px 12px',
                 fontSize: '0.9rem',
