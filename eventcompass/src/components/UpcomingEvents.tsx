@@ -129,17 +129,17 @@ export default function UpcomingEvents({
   const isLoading = rows === null && !error;
 
   return (
-    <section className="relative rounded-[10px] border border-[#d6d9e7] bg-[white] p-4">
+    <section className="relative rounded-[10px] border border-[#eaecf1] bg-[white] p-4">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-3">
-        <span className="scale-98 text-xs font-bold tracking-widest text-[#2b3a55]">
+      <div className="flex items-center gap-[10px] mb-[1px] mt-[5px] ml-[10px]">
+        <span className="scale-98 text-xs font-[700] tracking-widest text-[#2d4da3]">
           UPCOMING EVENTS
         </span>
 
         {/* All pill */}
         <button
           className={[
-            "text-xs px-2 py-0.5 rounded-full border",
+            "text-xs px-2 py-0.5 rounded-full border text-[#4a5676]",
             !committee
               ? "bg-[#cfe0ff] border-[#b8c9f2] text-[#1f2b4a]"
               : "bg-[#eaf0fe] border-[#d6e1fb] text-[#536084] hover:bg-[#e1e9fd]",
@@ -147,7 +147,7 @@ export default function UpcomingEvents({
           onClick={() => setCommittee(undefined)}
           aria-pressed={!committee}
         >
-          All
+          ALL
         </button>
 
         {/* Committee pill → opens popover */}
@@ -155,7 +155,7 @@ export default function UpcomingEvents({
           <button
             ref={btnRef}
             className={[
-              "text-xs px-2 py-0.5 rounded-full border",
+              "text-xs px-2 py-0.5 rounded-full borde text-[#4a5676]",
               committee
                 ? "bg-[#cfe0ff] border-[#b8c9f2] text-[#1f2b4a]"
                 : "bg-[#eaf0fe] border-[#d6e1fb] text-[#536084] hover:bg-[#e1e9fd]",
@@ -165,7 +165,7 @@ export default function UpcomingEvents({
             aria-haspopup="menu"
             title={committee ? `Committee: ${committee}` : "Pick committee"}
           >
-            Committee
+            COMMITTEE
           </button>
 
           {open && (
@@ -187,10 +187,10 @@ export default function UpcomingEvents({
                         setOpen(false);
                       }}
                       className={[
-                        "w-full text-left px-3 py-2 rounded-lg text-sm",
+                        "w-full text-left px-3 py-2 border-[0.5px] border-[#f1f1ea] rounded-[5px] text-sm ",
                         active
                           ? "bg-[#e8f0ff] text-[#1f2b4a] font-medium"
-                          : "hover:bg-[#f5f7ff] text-[#2b3a55]",
+                          : "bg-[#d4dcf1] text-[#2b3a55]",
                       ].join(" ")}
                     >
                       {c}
@@ -205,7 +205,7 @@ export default function UpcomingEvents({
                     setCommittee(undefined);
                     setOpen(false);
                   }}
-                  className="text-xs px-2 py-1 rounded-md border border-[#d6d9e7] text-[#2b3a55] hover:bg-[#f6f8ff]"
+                  className="text-xs px-2 py-1 rounded-md border border-[#d6d9e7] text-[#2b3a55] bg-[#d4dcf1]"
                 >
                   Clear
                 </button>
@@ -248,7 +248,7 @@ export default function UpcomingEvents({
       <div ref={railRef} className="overflow-x-auto scroll-smooth py-2">
         <ul className="flex gap-4 p-2 items-stretch snap-x snap-mandatory ">
           {isLoading &&
-            Array.from({ length: 6 }).map((_, i) => (
+            Array.from({ length: 2 }).map((_, i) => (
               <li
                 key={`s-${i}`}
                 className="snap-start shrink-0 w-72 h-32 rounded-2xl border border-[#d6d9e7] bg-[#e3e9f8] animate-pulse"
@@ -259,13 +259,13 @@ export default function UpcomingEvents({
             items?.map((e) => (
               <li
                 key={e.id}
-                className="snap-start rounded-[10px] shrink-0 w-72 h-32 rounded-2xl border border-[#d6d9e7] bg-[#e3e9f8] flex items-center justify-center"
+                className="snap-start rounded-[10px] shrink-0 w-[250px] h-[100px] text-center rounded-2xl border border-[#f3f4f6] bg-[#e3e9f8] flex justify-center"
               >
-                <div className="text-[18px] text-center">
-                  <div className="font-medium text-[#2b3a55] truncate">
+                <div className="text-[18px] text-center justify-center m-auto p-4">
+                  <div className="font-medium font-[700] text-[#2b3a55] truncate">
                     {e.title}
                   </div>
-                  <div className="text-xs text-[#5d6a8a]">
+                  <div className="text-xs font-[700] text-[#5d6a8a]">
                     {e.when.toLocaleString(undefined, {
                       weekday: "short",
                       month: "short",
