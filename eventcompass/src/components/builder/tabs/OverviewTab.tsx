@@ -501,9 +501,6 @@ const OverviewTab = ({
               <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "#1a1a1a", padding: "8px 12px" }}>
                 ${eventPlan.budget?.toFixed(2) || "0.00"}
               </div>
-              <div style={{ fontSize: "0.75rem", color: "#888", fontStyle: "italic", marginTop: "2px", paddingLeft: "12px" }}>
-                Auto-calculated
-              </div>
             </div>
 
             <div>
