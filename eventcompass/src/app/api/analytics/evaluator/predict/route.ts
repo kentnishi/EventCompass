@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "../../../../../../lib/supabase";
+import { client } from "../../../../../../lib/supabase";
 
 
 const IDEAL_SIZE_DEFAULT = 115;
@@ -172,11 +172,11 @@ export async function GET(req: Request) {
 
 
     try {
-        const { data: event, error: evErr } = await supabase.from("events").select("*").eq("id", id).single();
+        const { data: event, error: evErr } = await client.from("events").select("*").eq("id", id).single();
         if (evErr || !event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
 
 
-        const { data: rows, error: stErr } = await supabase
+        const { data: rows, error: stErr } = await client
             .from("event_stats")
             .select("timing,structure,incentives,budgeting,score");
         if (stErr) return NextResponse.json({ error: stErr.message }, { status: 500 });

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "../../../../../lib/supabase";
+import { client } from "../../../../../lib/supabase";
 
 
 // basic matrix helpers
@@ -33,7 +33,7 @@ function invSymmetric(M: number[][]) { // naive Gauss-Jordan 7x7
 
 
 export async function GET() {
-    const { data, error } = await supabase
+    const { data, error } = await client
         .from('event_stats')
         .select('timing,structure,incentives,location,registration,budgeting,score')
         .not('score', 'is', null);

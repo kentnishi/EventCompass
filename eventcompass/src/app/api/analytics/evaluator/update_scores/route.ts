@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "../../../../../../lib/supabase";
+import { client } from "../../../../../../lib/supabase";
 
 
 const IDEAL_SIZE_DEFAULT = 115;
@@ -211,7 +211,7 @@ function toFivePoint(att: number, rate: number) {
 
 
 export async function POST() {
-    const { data: events, error } = await supabase.from("past_events").select("*");
+    const { data: events, error } = await client.from("past_events").select("*");
     if (error) {
         console.error("[update_scores] select error:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -261,7 +261,7 @@ export async function POST() {
 
 
     try {
-        const { data: upData, error: upErr } = await supabase
+        const { data: upData, error: upErr } = await client
             .from("event_stats")
             .upsert(rows, { onConflict: "event_id" })
             .select("event_id");

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "../../../../../lib/supabase";
+import { client } from "../../../../../lib/supabase";
 
 function nowPartsUTC() {
   const now = new Date();
@@ -15,7 +15,7 @@ export async function GET() {
     const { today, nowTime } = nowPartsUTC();
     const pastExpr = `start_date.lt.${today},and(start_date.eq.${today},start_time.lte.${nowTime})`;
 
-    const evRes = await supabase
+    const evRes = await client
       .from("events")
       .select("id,name,location,start_date,start_time,attendees,budget,spending")
       .or(pastExpr)
@@ -35,7 +35,7 @@ export async function GET() {
     const ev = evRes.data;
 
     // Try to load stats (optional)
-    const stRes = await supabase
+    const stRes = await client
       .from("event_stats")
       .select("*")
       .eq("event_id", ev.id)
@@ -50,7 +50,7 @@ export async function GET() {
     const ratingAvg   = stRes.data?.rating_avg ?? null;
     const ratingCount = stRes.data?.rating_count ?? 0;
 
-    const fbRes = await supabase
+    const fbRes = await client
       .from("event_feedback")
       .select("sentiment,text")
       .eq("event_id", ev.id)
