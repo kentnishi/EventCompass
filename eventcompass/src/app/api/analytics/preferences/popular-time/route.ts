@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
-import { createServer } from "@/lib/supabase/server";
+import { supabase } from "../../../../../../lib/supabase";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   // latest survey id
-  const s = await createServer().from("survey").select("id").order("created_at", { ascending: false }).limit(1).single();
+  const s = await supabase.from("survey").select("id").order("created_at", { ascending: false }).limit(1).single();
   if (s.error || !s.data) return NextResponse.json([], { status: 200 });
 
   // qid17
-  const q = await createServer()
+  const q = await supabase
     .from("survey_question")
     .select("id")
     .eq("survey_id", s.data.id)
@@ -18,7 +18,7 @@ export async function GET() {
     .single();
   if (q.error || !q.data) return NextResponse.json([], { status: 200 });
 
-  const a = await createServer()
+  const a = await supabase
     .from("survey_answer")
     .select("response_id, value_json, value_text")
     .eq("question_id", q.data.id);

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createServer } from "@/lib/supabase/server";
+import { supabase } from "../../../../../lib/supabase";
 
 function nowParts() {
   const now = new Date();
@@ -21,7 +21,7 @@ export async function GET(req: Request) {
   // upcoming => start_date > today OR (start_date = today AND start_time > now)
   const orExpr = `start_date.gt.${today},and(start_date.eq.${today},start_time.gt.${nowTime})`;
 
-  let query = createServer()
+  let query = supabase
     .from("events")
     .select("id,name,location,start_date,start_time,committee")
     .or(orExpr)

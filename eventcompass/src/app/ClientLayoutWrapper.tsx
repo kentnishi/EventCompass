@@ -4,10 +4,7 @@
 import { useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
-import { ThemeProvider, createTheme } from '@mui/material/styles';
 import NavBar from "../components/NavBar";
-
-const theme = createTheme();
 
 export default function ClientLayoutWrapper({ children }: { children: React.ReactNode }) {
   const [supabase] = useState(() =>
@@ -19,10 +16,8 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
 
   return (
     <SessionContextProvider supabaseClient={supabase}>
-      <ThemeProvider theme={theme}>
-        <NavBar />
-        <main className="main-container">{children}</main>
-      </ThemeProvider>
+      <NavBar />
+      <main className="main-container">{children}</main>
     </SessionContextProvider>
   );
 }

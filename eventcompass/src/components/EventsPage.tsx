@@ -7,6 +7,8 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import SearchIcon from '@mui/icons-material/Search';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import AddIcon from '@mui/icons-material/Add';
 import { supabase } from '@/lib/supabase/client';
 
 interface Event {
@@ -14,39 +16,48 @@ interface Event {
   name: string;
   description?: string;
   start_date?: string;
-  attended_count?: number;
+  attendees?: number;
   location?: string;
-  spent?: number;
+  spending?: number;
   budget?: number;
   status: 'planning' | 'reservations' | 'promo' | 'purchases' | 'completed';
   committee?: string;
 }
 
-function EventCard({ event }: { event: Event; }) {
+function EventCard({ event, onClick }: { event: Event; onClick: () => void }) {
+  // Status badge styling
   const styles = {
-    completed: { bg: '#119113ff', color: '#e7eeeaff', label: 'Complete' },
-    planning: { bg: '#911111ff', color: '#e7eeeaff', label: 'Planning' },
-    reservations: { bg: '#911111ff', color: '#e7eeeaff', label: 'Reservations' },
-    promo: { bg: '#911111ff', color: '#e7eeeaff', label: 'Promotions' },
-    purchases: { bg: '#911111ff', color: '#e7eeeaff', label: 'Purchasing' }
+    planning: { bg: '#e3f2fd', color: '#1976d2', label: 'Planning' },
+    reservations: { bg: '#fff3e0', color: '#f57c00', label: 'Reservations' },
+    promo: { bg: '#e8f5e9', color: '#388e3c', label: 'Promo' },
+    purchases: { bg: '#f3e5f5', color: '#7b1fa2', label: 'Purchases' },
   };
 
   const getStatusStyle = (status: keyof typeof styles) => {
-    return styles[status] || styles.completed;
+    return styles[status] || styles.planning;
   };
 
   const statusStyle = getStatusStyle(event.status);
 
   return (
     <div
+      onClick={onClick}
       style={{
         backgroundColor: '#FFF',
         borderRadius: '12px',
         padding: '20px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        // cursor: 'pointer',
+        cursor: 'pointer',
         transition: 'all 0.2s ease',
         border: '1px solid #e0e0e0',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-2px)';
+        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
       }}
     >
       {/* Header */}
@@ -124,7 +135,7 @@ function EventCard({ event }: { event: Event; }) {
               ATTENDEES
             </div>
             <div style={{ fontSize: '0.9rem', color: '#4a5676', fontWeight: 600 }}>
-              {event.attended_count || 0}
+              {event.attendees || 0}
             </div>
           </div>
         </div>
@@ -158,7 +169,7 @@ function EventCard({ event }: { event: Event; }) {
             </div>
             <div style={{ fontSize: '0.9rem', color: '#4a5676', fontWeight: 600 }}>
 
-              {event.spent === -1 ? 0: event.spent} / {event.budget === -1 ? 0 : event.budget}
+              {event.spending === -1 ? 0: event.spending} / {event.budget === -1 ? 0 : event.budget}
             </div>
           </div>
         </div>
@@ -187,12 +198,13 @@ function EventCard({ event }: { event: Event; }) {
   );
 }
 
-export default function EventsPage() {
+export default function EventsPage({ filterByStatus }: { filterByStatus?: string }) {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCommittee, setFilterCommittee] = useState('all');
+  const [filterStatus, setFilterStatus] = useState(filterByStatus || 'all');
   const [sortBy, setSortBy] = useState('date');
 
   const router = useRouter();
@@ -205,7 +217,7 @@ export default function EventsPage() {
     try {
       setLoading(true);
       const { data, error: fetchError } = await supabase
-        .from('past_events')
+        .from('events')
         .select('*')
         .order('start_date', { ascending: true, nullsFirst: false });
 
@@ -219,13 +231,19 @@ export default function EventsPage() {
     }
   }
 
+  async function createEvent() {
+    console.log("Created new event");
+    router.push(`/events/new`)
+  }
+
   // Filter and sort events
   const filteredEvents = events
     .filter(event => {
       const matchesSearch = event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchesCommittee = filterCommittee === 'all' || event.committee === filterCommittee;
-      return matchesSearch && matchesCommittee;
+      const matchesStatus = filterStatus === 'all' || event.status === filterStatus;
+      return matchesSearch && matchesCommittee && matchesStatus;
     })
     .sort((a, b) => {
       if (sortBy === 'date') {
@@ -234,15 +252,13 @@ export default function EventsPage() {
         return a.name.localeCompare(b.name);
       } else if (sortBy === 'budget') {
         return (b.budget || 0) - (a.budget || 0);
-      } else if (sortBy === 'attendees') {
-        return (b.attended_count || 0) - (a.attended_count || 0);
       }
-      
       return 0;
     });
 
   // Get unique committees and statuses for filters
   const committees = ['all', ...new Set(events.filter(e => e.committee).map(e => e.committee))];
+  const statuses = ['all', 'planning', 'reservations', 'promo', 'purchases'];
 
   if (loading) {
     return (
@@ -321,6 +337,26 @@ export default function EventsPage() {
             {filteredEvents.length} {filteredEvents.length === 1 ? 'event' : 'events'} found
           </p>
         </div>
+        <button
+          onClick={() => createEvent()}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '12px 24px',
+            backgroundColor: '#6B7FD7',
+            color: '#FFF',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontWeight: 600,
+            fontSize: '1rem',
+            boxShadow: '0 2px 8px rgba(107, 127, 215, 0.3)',
+          }}
+        >
+          <AddIcon style={{ fontSize: '1.3rem' }} />
+          New Event
+        </button>
       </div>
 
       {/* Filters and Search */}
@@ -363,8 +399,32 @@ export default function EventsPage() {
             />
           </div>
 
+          {/* Status Filter */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <FilterListIcon style={{ color: '#888', fontSize: '1.2rem' }} />
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              style={{
+                padding: '12px 16px',
+                borderRadius: '8px',
+                border: '1px solid #ddd',
+                fontSize: '0.95rem',
+                color: '#4a5676',
+                fontWeight: 600,
+                cursor: 'pointer',
+                backgroundColor: '#FFF',
+              }}
+            >
+              {statuses.map(status => (
+                <option key={status} value={status}>
+                  {status === 'all' ? 'All Statuses' : status.charAt(0).toUpperCase() + status.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Committee Filter */}
-          {/* <FilterListIcon style={{ color: '#888', fontSize: '1.2rem' }} /> */}
           <select
             value={filterCommittee}
             onChange={(e) => setFilterCommittee(e.target.value)}
@@ -404,7 +464,6 @@ export default function EventsPage() {
             <option value="date">Sort by Date</option>
             <option value="name">Sort by Name</option>
             <option value="budget">Sort by Budget</option>
-            <option value="attendees">Sort by Attendees</option>
           </select>
         </div>
       </div>
@@ -436,7 +495,7 @@ export default function EventsPage() {
             fontSize: '1rem',
             color: '#666',
           }}>
-            {searchQuery || filterCommittee !== 'all'
+            {searchQuery || filterCommittee !== 'all' || filterStatus !== 'all'
               ? 'Try adjusting your filters'
               : 'Create your first event to get started'}
           </p>
@@ -450,7 +509,12 @@ export default function EventsPage() {
           {filteredEvents.map(event => (
             <EventCard
               key={event.id}
-              event={event}              
+              event={event}
+              onClick={() => {
+                const route = event.status === "planning" ? `/event-plans/${event.id}` : `/events/${event.id}`;
+                router.push(route);
+              }}
+              
             />
           ))}
         </div>

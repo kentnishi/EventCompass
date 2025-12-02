@@ -1,46 +1,32 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
+/* Base variables and reset inspired by ref.html */
+:root{
   --navbar-height: 68px;
-  --bg: #f4f6fb;
-  --ink: #2b2f3a;
-  --muted: #6e7485;
-  --brand: #3b4a6b;
-  --brand-2: #505c7a;
-  --accent: #8aa0ff;
-  --assistant: #dde6fb;
-  --card: #ffffff;
-  --ring: #d6d9e6;
-  --btn: #5f6fa3;
-  --btn-text: #fff;
+  --bg:#f4f6fb;
+  --ink:#2b2f3a;
+  --muted:#6e7485;
+  --brand:#3b4a6b;
+  --brand-2:#505c7a;
+  --accent:#8aa0ff;
+  --assistant:#dde6fb;
+  --card:#ffffff;
+  --ring:#d6d9e6;
+  --btn:#5f6fa3;
+  --btn-text:#fff;
   font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Inter", sans-serif;
-  --bar: #a2c2f4;
-  --ink: #28356a;
+  --bar:#a2c2f4;
+  --ink:#28356a;
 }
 
-* {
-  box-sizing: border-box
-}
-
-html,
-body,
-#root {
-  height: 100%
-}
-
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  color: var(--ink);
-  background: var(--bg)
-}
+*{box-sizing:border-box}
+html, body, #root {height:100%}
+body{margin:0;font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; color:var(--ink); background:var(--bg)}
 
 /* Make images and svgs behave */
-img,
-svg {
-  max-width: 100%;
-  height: auto
-}
+img, svg{max-width:100%;height:auto}
 
 .main-container {
   max-width: 1400px;

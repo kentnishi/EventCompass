@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createServer } from "@/lib/supabase/server";
+import { supabase } from "../../../../../../lib/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -110,7 +110,7 @@ const VENDOR_SYNONYMS: Record<string, string> = {
 export async function GET() {
   try {
     // 1) latest survey
-    const s = await createServer()
+    const s = await supabase
       .from("survey")
       .select("id")
       .order("created_at", { ascending: false })
@@ -120,7 +120,7 @@ export async function GET() {
     const surveyId = s.data.id;
 
     // 2) find the vendor free-text question by label
-    const q = await createServer()
+    const q = await supabase
       .from("survey_question")
       .select("id,text")
       .eq("survey_id", surveyId)
@@ -139,7 +139,7 @@ export async function GET() {
       );
 
     // 3) pull answers (free-text)
-    const a = await createServer()
+    const a = await supabase
       .from("survey_answer")
       .select("response_id,value_text")
       .eq("question_id", q.data.id);

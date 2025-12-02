@@ -1,13 +1,13 @@
 // app/api/analytics/preferences/popular-days/route.ts
 import { NextResponse } from "next/server";
-import { createServer } from "@/lib/supabase/server";
+import { supabase } from "../../../../../../lib/supabase";
 
 export const dynamic = "force-dynamic"; // avoid caching in dev
 
 export async function GET() {
   try {
     // 0) latest survey id
-    const s = await createServer()
+    const s = await supabase
       .from("survey")
       .select("id")
       .order("created_at", { ascending: false })
@@ -18,7 +18,7 @@ export async function GET() {
     const surveyId = s.data.id;
 
     // 1) find qid16 for that survey
-    const q = await createServer()
+    const q = await supabase
       .from("survey_question")
       .select("id,qtype")
       .eq("survey_id", surveyId)
@@ -29,7 +29,7 @@ export async function GET() {
     if (!q.data) return NextResponse.json([], { status: 200 });
 
     // 2) pull answers (both json and text)
-    const a = await createServer()
+    const a = await supabase
       .from("survey_answer")
       .select("value_json,value_text")
       .eq("question_id", q.data.id);

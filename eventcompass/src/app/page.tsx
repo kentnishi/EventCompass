@@ -1,5 +1,6 @@
-import { redirect } from "next/navigation";
+import React from "react";
+import CompassChat from "../components/CompassChat";
 
 export default function Page() {
-	redirect("/home");
+	return <CompassChat />;
 }

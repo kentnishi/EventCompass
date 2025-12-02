@@ -1,74 +1,21 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import StartScreen from './questionaire/StartScreen';
 import IntakeForm from './questionaire/IntakeForm';
 import ConceptsScreen from './questionaire/ConceptsScreen';
 import PreviewScreen from './questionaire/PreviewScreen';
 
-import { 
-  PLACEHOLDER_EVENT_BASICS, 
-  generatePlaceholderActivities, 
-  generatePlaceholderScheduleItems, 
-  generatePlaceholderTasks, 
-  generatePlaceholderBudgetItems, 
-  generatePlaceholderShoppingItems, 
-  PLACEHOLDER_CONCEPTS
-} from "@/app/utils/placeholderData";
-
-import { IntakeFormData, Concept } from '@/types/eventPlan';
-
-import { generateConceptsWithRetry } from "@/app/utils/conceptsGeneration";
+import { PLACEHOLDER_EVENT_BASICS, generatePlaceholderActivities, generatePlaceholderScheduleItems, generatePlaceholderTasks, generatePlaceholderBudgetItems, generatePlaceholderShoppingItems } from "@/app/utils/placeholderData";
 
 
 // Main App Component
 const EventQuestionaire = () => {
   const [step, setStep] = useState('start');
-  const [selectedPath, setSelectedPath] = useState("");
+  const [selectedPath, setSelectedPath] = useState(null);
   const [formData, setFormData] = useState({});
-  const [concepts, setConcepts] = useState<Concept[]>([]);
-  const [intakeFormData, setIntakeFormData] = useState<IntakeFormData>({
-    organizationName: '',
-    organizationMission: '',
-    budgetRange: '',
-    totalBudget: 0,
-    expectedAttendance: 0,
-    locationType: 'on-campus',
-    venue: '',
-    startDate: '',
-    endDate: '',  // Optional for multi-day events
-    
-    // No-idea specific
-    eventGoals: [],
-    eventVibe: [],
-    constraints: '',
-    
-    // Rough-idea specific
-    eventType: '',
-    roughIdea: '',
-    duration: '',
-    additionalContext: '',
-    
-    // Solid-idea specific
-    eventName: '',
-    eventDescription: '',
-    keyActivities: '',
-    startTime: '',
-    endTime: '',
-    specialRequirements: ''
-  });
-  const [selectedConcept, setSelectedConcept] = useState<Concept>(
-    PLACEHOLDER_CONCEPTS[0]
-  );
-  const [isGenerating, setIsGenerating] = useState(false); // For concepts CHANGE TO isGeneratingConcepts
-  const [customizations, setCustomizations] = useState({
-      includeActivities: true,
-      includeSchedule: true,
-      includeShopping: true,
-      includeTasks: true,
-      includeBudget: true,
-    });
+  const [selectedConcept, setSelectedConcept] = useState(null);
   const [eventPlan, setEventPlan] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [keepSections, setKeepSections] = useState({
@@ -84,8 +31,6 @@ const EventQuestionaire = () => {
   const [status, setStatus] = useState('planning');
 
   const router = useRouter();
-
-  const paths = ["no-idea", "rough-idea", "solid-idea"];
 
 
   const conceptsByPath = {
@@ -220,58 +165,17 @@ const EventQuestionaire = () => {
 
   
 
-  const handleStartPath = (path: string) => {
+  const handleStartPath = (path) => {
     setSelectedPath(path);
     setStep('intake');
   };
 
-  const handleIntakeSubmit = async () => {
-    if (!selectedPath) return;
-
-      // Only generate concepts if the path is no idea or rough ideas
-      if (selectedPath === 'no-idea' || selectedPath === 'rough-idea') {
-        
-        // 2. Show loading state
-        setIsGenerating(true);
-      
-        try {
-          // 3. Generate concepts (takes 10-20 seconds)
-          const result = await generateConceptsWithRetry(intakeFormData, selectedPath);
-      
-          if (result.success && result.concepts) {
-            // 4. Set concepts (loading will automatically hide)
-            setConcepts(result.concepts);
-            
-          } else {
-            // Handle error - go back to intake
-            alert(`Failed to generate concepts: ${result.error}`);
-            setStep('intake');
-          }
-        } catch (error) {
-          console.error('Error:', error);
-          alert('An error occurred. Please try again.');
-          setStep('intake');
-        } finally {
-          // 5. Hide loading state
-          setIsGenerating(false);
-          setStep('concepts');
-        }
-      } else {
-        // if solid-idea, head straight to event plan customization
-        setStep('preview');
-      }
+  const handleIntakeSubmit = () => {
+    setStep('concepts');
   };
 
-  const handleConceptSelect = (concept: Concept) => {
+  const handleConceptSelect = (concept) => {
     setSelectedConcept(concept);
-  };
-
-  useEffect(() => {
-    console.log("Selected Concept:", selectedConcept);
-  }, [selectedConcept]);
-
-  const handleConceptsSubmit = () => {
-    setStep('preview');
   };
 
   const handleCreatePlan = () => {
@@ -284,45 +188,31 @@ const EventQuestionaire = () => {
     setKeepSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const handleGenerateClick = () => {
-    proceedToEditor();
-  }
 
   const proceedToEditor = async () => {
-    try {
+    // const customizedPlan = PLACEHOLDER_EVENT_PLAN;
 
-      console.log("Intake Form Data:", intakeFormData);
-      console.log("Selected Concept:", selectedConcept);
-      console.log("Customizations:", customizations);
-      // Step 1: Generate the event plan using AI
-      const generateResponse = await fetch("/api/event-gen/plan", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          intakeFormData,
-          selectedConcept, // Will be undefined for solid-idea path
-          customizations,
-        }),
-      });
+    // if (!keepSections.activities) PLACEHOLDER_ACTIVITIES.activities = [];
+    // if (!keepSections.schedule) customizedPlan.schedule = [];
+    // if (!keepSections.shopping) customizedPlan.shopping = [];
+    // if (!keepSections.tasks) customizedPlan.tasks = [];
+    // if (!keepSections.budget) {
+    //   customizedPlan.budget = [
+    //     { category: "Food & Beverages", estimated: 0, actual: 0 },
+    //     { category: "Miscellaneous", estimated: 0, actual: 0 },
+    //   ];
+    // }
   
-      if (!generateResponse.ok) {
-        const errorText = await generateResponse.text();
-        console.error("Failed to generate plan:", errorText);
-        throw new Error(`Failed to generate plan: ${errorText}`);
-      }
-  
-      const { eventPlan } = await generateResponse.json();
-      console.log("Generated event plan:", eventPlan);
-  
-      // Step 2: Create the event basics in the database
+    try {
+      // Create the event in the database with all related data
       const eventResponse = await fetch("/api/event-plans", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(eventPlan.event_basics),
+        body: JSON.stringify({
+          ...PLACEHOLDER_EVENT_BASICS, 
+        }),
       });
   
       if (!eventResponse.ok) {
@@ -330,181 +220,121 @@ const EventQuestionaire = () => {
         console.error("Failed to create event:", errorText);
         throw new Error(`Failed to create event: ${errorText}`);
       }
-      
+  
+      // const result = await response.json();
       const { event } = await eventResponse.json();
-      const eventId = event.id;
-      console.log("Event created with ID:", eventId);
-  
-      // Mappings to track temp_id -> database_id relationships
-      const activityIdMap = new Map<string, number>();
-      const budgetIdMap = new Map<string, number>();
-  
-      // Step 3: Create activities (if included)
-      if (customizations.includeActivities && eventPlan.activities.length > 0) {
-        // Prepare activities for database insertion (remove temp_id, add event_id)
-        const activitiesToInsert = eventPlan.activities.map((activity: any) => ({
-          event_id: eventId,
-          name: activity.name,
-          description: activity.description,
-          notes: activity.notes || "",
-          staffing_needs: activity.staffing_needs || [],
-        }));
-  
-        const activitiesResponse = await fetch(`/api/event-plans/${eventId}/activities`, {
+      const id = event.id;
+
+
+      const PLACEHOLDER_ACTIVITIES = generatePlaceholderActivities(id);
+
+      // Add activities
+
+
+      if (PLACEHOLDER_ACTIVITIES.length > 0) { //Replace with whether activities is being kept
+        const activitiesResponse = await fetch(`/api/event-plans/${id}/activities`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(activitiesToInsert),
+          body: JSON.stringify(PLACEHOLDER_ACTIVITIES),
         });
-  
+
         if (!activitiesResponse.ok) {
           const errorText = await activitiesResponse.text();
           console.error("Failed to add activities:", errorText);
           throw new Error(`Failed to add activities: ${errorText}`);
         }
-  
-        const insertedActivities = await activitiesResponse.json();
-        console.log("Activities added:", insertedActivities);
-  
-        // Build mapping from temp_id to actual database ID
-        eventPlan.activities.forEach((activity: any, index: number) => {
-          activityIdMap.set(activity.temp_id, insertedActivities[index].id);
-        });
-      }
-  
-      // Step 4: Create budget items (if included)
-      if (customizations.includeBudget && eventPlan.budget_items.length > 0) {
-        const budgetItemsToInsert = eventPlan.budget_items.map((item: any) => ({
-          event_id: eventId,
-          category: item.category,
-          allocated: item.allocated,
-          description: item.description,
-          spent: item.spent,
-        }));
-  
-        const budgetResponse = await fetch(`/api/event-plans/${eventId}/budget`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(budgetItemsToInsert),
-        });
-  
-        if (!budgetResponse.ok) {
-          const errorText = await budgetResponse.text();
-          console.error("Failed to add budget items:", errorText);
-          throw new Error(`Failed to add budget items: ${errorText}`);
+
+        const activities = await activitiesResponse.json();
+        console.log("Activities added:", activities);
+
+        // Activities must exist for schedule to work
+        const PLACEHOLDER_SCHEDULE = generatePlaceholderScheduleItems(id, activities);
+        if (PLACEHOLDER_SCHEDULE.length > 0) { // Replace with logic about whether schedule is being kept
+          const scheduleResponse = await fetch(`/api/event-plans/${id}/schedule`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(PLACEHOLDER_SCHEDULE),
+            })
+
+            const schedule = await scheduleResponse.json();
+
+            if (!scheduleResponse.ok) {
+              const errorText = await scheduleResponse.text();
+              console.error("Failed to add schedule:", errorText);
+              throw new Error(`Failed to add schedule: ${errorText}`);
+            }
+
+            console.log("Schedule added:", schedule);
         }
-  
-        const insertedBudgetItems = await budgetResponse.json();
-        console.log("Budget items added:", insertedBudgetItems);
-  
-        // Build mapping from temp_id to actual database ID
-        eventPlan.budget_items.forEach((item: any, index: number) => {
-          budgetIdMap.set(item.temp_id, insertedBudgetItems[index].id);
-        });
-      }
-  
-      // Step 5: Create schedule items (if included)
-      if (customizations.includeSchedule && eventPlan.schedule_items.length > 0) {
-        const scheduleItemsToInsert = eventPlan.schedule_items.map((item: any) => ({
-          event_id: eventId,
-          activity_id: item.activity_temp_id ? activityIdMap.get(item.activity_temp_id) || null : null,
-          start_date: item.start_date,
-          end_date: item.end_date,
-          start_time: item.start_time,
-          end_time: item.end_time,
-          location: item.location,
-          notes: item.notes,
-        }));
-  
-        const scheduleResponse = await fetch(`/api/event-plans/${eventId}/schedule`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(scheduleItemsToInsert),
-        });
-  
-        if (!scheduleResponse.ok) {
-          const errorText = await scheduleResponse.text();
-          console.error("Failed to add schedule:", errorText);
-          throw new Error(`Failed to add schedule: ${errorText}`);
+
+        const PLACEHOLDER_TASKS = generatePlaceholderTasks(id, activities);
+        if (PLACEHOLDER_TASKS.length > 0) { // Replace with logic about whether tasks is being kept
+          const tasksResponse = await fetch(`/api/event-plans/${id}/tasks`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(PLACEHOLDER_TASKS),
+            })
+
+            const tasks = await tasksResponse.json();
+
+            if (!tasksResponse.ok) {
+              const errorText = await tasksResponse.text();
+              console.error("Failed to add tasks:", errorText);
+              throw new Error(`Failed to add tasks: ${errorText}`);
+            }
+
+            console.log("Tasks added:", tasks);
         }
+
+        const PLACEHOLDER_BUDGET = generatePlaceholderBudgetItems(id);
+        if (PLACEHOLDER_BUDGET.length > 0) { // Replace with logic about whether budget is being kept
+          const budgetResponse = await fetch(`/api/event-plans/${id}/budget`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(PLACEHOLDER_BUDGET),
+            })
+
+            const budget = await budgetResponse.json();
+
+            if (!budgetResponse.ok) {
+              const errorText = await budgetResponse.text();
+              console.error("Failed to add budget items:", errorText);
+              throw new Error(`Failed to add budget items: ${errorText}`);
+            }
+
+            console.log("Budget items added:", budget);
+
+            // Shopping depends on activities for linking (and also activity but that can be null)
+            const PLACEHOLDER_SHOPPING = generatePlaceholderShoppingItems(id, activities, budget);
+
+            if (PLACEHOLDER_SHOPPING.length > 0) { // Replace with logic about whether shopping is being kept
+              const shoppingResponse = await fetch(`/api/event-plans/${id}/shopping`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(PLACEHOLDER_SHOPPING),
+                })
   
-        const schedule = await scheduleResponse.json();
-        console.log("Schedule added:", schedule);
+                const shopping = await shoppingResponse.json();
+  
+                if (!shoppingResponse.ok) {
+                  const errorText = await shoppingResponse.text();
+                  console.error("Failed to add shopping items:", errorText);
+                  throw new Error(`Failed to add shopping items: ${errorText}`);
+                }
+  
+                console.log("Shopping items added:", shopping);
+            }
+          }
+
+
       }
-  
-      // Step 6: Create tasks (if included)
-      if (customizations.includeTasks && eventPlan.tasks.length > 0) {
-        const tasksToInsert = eventPlan.tasks.map((task: any) => ({
-          event_id: eventId,
-          activity_id: task.activity_temp_id ? activityIdMap.get(task.activity_temp_id) || null : null,
-          title: task.title,
-          description: task.description,
-          status: task.status,
-          assignee_name: task.assignee_name,
-          assignee_email: task.assignee_email,
-          due_date: task.due_date,
-          priority: task.priority,
-          notes: task.notes,
-        }));
-  
-        const tasksResponse = await fetch(`/api/event-plans/${eventId}/tasks`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(tasksToInsert),
-        });
-  
-        if (!tasksResponse.ok) {
-          const errorText = await tasksResponse.text();
-          console.error("Failed to add tasks:", errorText);
-          throw new Error(`Failed to add tasks: ${errorText}`);
-        }
-  
-        const tasks = await tasksResponse.json();
-        console.log("Tasks added:", tasks);
-      }
-  
-      // Step 7: Create shopping items (if included)
-      if (customizations.includeShopping && eventPlan.shopping_items.length > 0) {
-        const shoppingItemsToInsert = eventPlan.shopping_items.map((item: any) => ({
-          event_id: eventId,
-          item: item.item,
-          vendor: item.vendor,
-          unit_cost: item.unit_cost,
-          quantity: item.quantity,
-          notes: item.notes,
-          activity_id: item.activity_temp_id ? activityIdMap.get(item.activity_temp_id) || null : null,
-          budget_id: item.budget_temp_id ? budgetIdMap.get(item.budget_temp_id) || null : null,
-          link: item.link,
-          status: item.status,
-        }));
-  
-        const shoppingResponse = await fetch(`/api/event-plans/${eventId}/shopping`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(shoppingItemsToInsert),
-        });
-  
-        if (!shoppingResponse.ok) {
-          const errorText = await shoppingResponse.text();
-          console.error("Failed to add shopping items:", errorText);
-          throw new Error(`Failed to add shopping items: ${errorText}`);
-        }
-  
-        const shopping = await shoppingResponse.json();
-        console.log("Shopping items added:", shopping);
-      }
-  
-      // Step 8: Navigate to the event editor page
-      router.push(`/event-plans/${eventId}`);
+
+
+      
+      // Navigate to the event editor page
+      router.push(`/event-plans/${id}`);
     } catch (error) {
       console.error("Error creating event:", error);
       alert("An error occurred while creating the event. Please try again.");
@@ -523,9 +353,8 @@ const EventQuestionaire = () => {
         selectedPath={selectedPath}
         onBack={() => setStep('start')}
         onSubmit={handleIntakeSubmit}
-        formData={intakeFormData}
-        setFormData={setIntakeFormData}
-        isLoading={isGenerating}
+        formData={formData}
+        setFormData={setFormData}
       />
     );
   }
@@ -534,24 +363,23 @@ const EventQuestionaire = () => {
     return (
       <ConceptsScreen
         selectedPath={selectedPath}
-        concepts={concepts}
+        concepts={conceptsByPath[selectedPath] || []}
         selectedConcept={selectedConcept}
         onSelectConcept={handleConceptSelect}
         onCreatePlan={handleCreatePlan}
         onBack={() => setStep('intake')}
-        handleSubmit={handleConceptsSubmit}
       />
     );
   }
 
-  if (step === 'preview' && selectedConcept) {
+  if (step === 'preview' && eventPlan) {
     return (
       <PreviewScreen
-        selectedConcept={selectedConcept}
-        customizations={customizations}
-        setCustomizations={setCustomizations}
+        eventPlan={eventPlan}
+        keepSections={keepSections}
+        onToggleSection={toggleSection}
+        onProceed={proceedToEditor}
         onBack={() => setStep('concepts')}
-        onGenerate={handleGenerateClick}
       />
     );
   }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServer } from "@/lib/supabase/server";
+import { client } from "../../../../../lib/supabase";
 
 function nowPartsLocal() {
   const d = new Date();
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   // past = start_date < today OR (start_date = today AND start_time <= now)
   const pastExpr = `start_date.lt.${today},and(start_date.eq.${today},start_time.lte.${nowTime})`;
 
-  let q = createServer()
+  let q = client
     .from("events")
     .select("id,name,location,committee,start_date,start_time,end_date,end_time")
     .or(pastExpr)

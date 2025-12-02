@@ -1,8 +1,11 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Box, CircularProgress, Typography } from "@mui/material";
-import { CheckCircle as CheckCircleIcon, CloudQueue as CloudQueueIcon, CloudDone as CloudDoneIcon } from "@mui/icons-material";
+import React, { useState, useEffect, useRef } from "react";
+import { CircularProgress, Box, Typography } from "@mui/material";
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CloudDoneIcon from '@mui/icons-material/CloudDone';
+import CloudQueueIcon from '@mui/icons-material/CloudQueue';
 
 import OverviewTab from '@/components/builder/tabs/OverviewTab';
 import ActivitiesTab from "@/components/builder/tabs/ActivitiesTab";
@@ -12,125 +15,178 @@ import BudgetTab from "@/components/builder/tabs/BudgetTab";
 import ShoppingTab from "@/components/builder/tabs/ShoppingTab";
 import SummaryTab from "@/components/builder/tabs/SummaryTab";
 import ForecastTab from "@/components/builder/tabs/ForecastTab";
-import EventCopilot from "./eventcopilot/EventCopilot";
 
-// Types & Utils
-import { EventPlan, Activity, ScheduleItem, Task, BudgetItem, ShoppingItem, EventBasics } from "@/types/eventPlan";
+import { EventPlan, EventBasics, Activity, ScheduleItem, Task, BudgetItem, ShoppingItem } from "@/types/eventPlan";
 
-
-interface EventPlanningPageProps {
-  id: string;
-}
-
-const statusOptions = [
-  { value: "planning", label: "Planning", color: "#6B7FD7" },
-  { value: "confirmed", label: "Confirmed", color: "#28a745" },
-  { value: "completed", label: "Completed", color: "#6c757d" },
-  { value: "cancelled", label: "Cancelled", color: "#dc3545" },
-];
-
-const tabs = [
-  { id: "overview", label: "Overview" },
-  { id: "activities", label: "Activities" },
-  { id: "schedule", label: "Schedule" },
-  { id: "tasks", label: "Tasks" },
-  { id: "budget", label: "Budget" },
-  { id: "shopping", label: "Shopping" },
-  { id: "summary", label: "Summary" },
-];
-
-const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
-  const router = useRouter();
+const EventPlanningPage = ({ id }: { id: string }) => {
+  console.log("Event ID in EventPlanningPage:", id);
 
   // State
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("overview");
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-
-  // Data State
   const [eventBasics, setEventBasics] = useState<EventBasics | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [budget, setBudget] = useState<BudgetItem[]>([]);
   const [shopping, setShopping] = useState<ShoppingItem[]>([]);
-  const [status, setStatus] = useState("planning");
 
-  // Fetch all data
+  const [activeTab, setActiveTab] = useState("overview");
+  const [status, setStatus] = useState("planning");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Single data fetch on mount
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAllData = async () => {
       try {
         setLoading(true);
+        setError(null);
 
-        // Fetch event basics
-        const eventRes = await fetch(`/api/event-plans/${id}`);
-        if (!eventRes.ok) throw new Error("Failed to fetch event details");
-        const eventData = await eventRes.json();
-
-        // API returns { event: ... }
-        setEventBasics(eventData.event || eventData);
-        setStatus(eventData.event?.status || eventData.status || "planning");
-
-        // Fetch sub-collections in parallel
-        const [activitiesRes, scheduleRes, tasksRes, budgetRes, shoppingRes] = await Promise.all([
+        // Fetch all data in parallel
+        const [
+          eventResponse,
+          activitiesResponse,
+          scheduleResponse,
+          tasksResponse,
+          budgetResponse,
+          shoppingResponse
+        ] = await Promise.all([
+          fetch(`/api/event-plans/${id}`),
           fetch(`/api/event-plans/${id}/activities`),
           fetch(`/api/event-plans/${id}/schedule`),
           fetch(`/api/event-plans/${id}/tasks`),
           fetch(`/api/event-plans/${id}/budget`),
-          fetch(`/api/event-plans/${id}/shopping`)
+          fetch(`/api/event-plans/${id}/shopping`),
         ]);
 
-        if (activitiesRes.ok) setActivities(await activitiesRes.json());
-        if (scheduleRes.ok) setSchedule(await scheduleRes.json());
-        if (tasksRes.ok) setTasks(await tasksRes.json());
-        if (budgetRes.ok) setBudget(await budgetRes.json());
-        if (shoppingRes.ok) setShopping(await shoppingRes.json());
+        // Check for errors
+        if (!eventResponse.ok) throw new Error("Failed to fetch event details");
 
+        // Parse all responses
+        const [
+          eventData,
+          activitiesData,
+          scheduleData,
+          tasksData,
+          budgetData,
+          shoppingData
+        ] = await Promise.all([
+          eventResponse.json(),
+          activitiesResponse.json(),
+          scheduleResponse.json(),
+          tasksResponse.json(),
+          budgetResponse.json(),
+          shoppingResponse.json(),
+        ]);
+
+        // Set event basics
+        const event = eventData.event;
+        setEventBasics({
+          name: event.name || "Untitled Event",
+          description: event.description || "",
+          attendees: event.attendees || 0,
+          start_date: event.start_date || "",
+          start_time: event.start_time || "",
+          end_date: event.end_date || "",
+          end_time: event.end_time || "",
+          budget: event.budget || 0,
+          location: event.location || "Unknown",
+          registration_required: event.registration_required ?? false,
+          event_type: event.event_type || "General",
+          keywords: event.keywords || []
+        });
+
+        // Set status
+        setStatus(event.status || "planning");
+
+        // Set all other data
+        setActivities(activitiesData || []);
+        setSchedule(scheduleData || []);
+        setTasks(tasksData || []);
+        setBudget(budgetData || []);
+        setShopping(shoppingData || []);
+
+        console.log("✅ All data loaded successfully");
       } catch (err) {
-        console.error("Error loading event data:", err);
-        setError(err instanceof Error ? err.message : "An unknown error occurred");
+        console.error("Error fetching event data:", err);
+        setError(err instanceof Error ? err.message : "Failed to load event data");
       } finally {
         setLoading(false);
       }
     };
 
-    if (id) {
-      fetchData();
-    }
+    fetchAllData();
   }, [id]);
 
-  // Helper to update local state and trigger save
+  // Auto-save for event basics
   const updateEventBasics = async (field: string, value: any) => {
     if (!eventBasics) return;
 
     // Optimistic update
-    setEventBasics(prev => prev ? { ...prev, [field]: value } : null);
+    setEventBasics((prev) => prev ? { ...prev, [field]: value } : prev);
+    
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    setSaveStatus('saving');
+    
+    // Debounce API call
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/event-plans/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [field]: value })
+        });
+        
+        if (!response.ok) throw new Error('Failed to save');
+        
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      } catch (error) {
+        console.error('Save error:', error);
+        setSaveStatus('error');
+        setTimeout(() => setSaveStatus('idle'), 3000);
+      }
+    }, 1000);
+  };
 
-    // Save to DB
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Activities operations
+  const updateActivity = async (index: number, field: string, value: any) => {
     try {
-      setSaveStatus('saving');
-      const response = await fetch(`/api/event-plans/${id}`, {
+      const activity = activities[index];
+      const response = await fetch(`/api/event-plans/activities/${activity.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ [field]: value }),
       });
 
-      if (!response.ok) throw new Error("Failed to save");
+      if (!response.ok) throw new Error("Failed to update activity");
 
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch (err) {
-      console.error("Error saving event basics:", err);
-      setSaveStatus('error');
+      const updatedData = await response.json();
+      setActivities((prev) => prev.map((a, i) => (i === index ? updatedData : a)));
+    } catch (error) {
+      console.error("Error updating activity:", error);
+      alert("Failed to update activity. Please try again.");
     }
   };
 
-  // --- Actions ---
-
   const addActivity = async () => {
     try {
-      const newActivity: Partial<Activity> = {
+      const newActivity: Activity = {
         name: "New Activity",
         event_id: id,
         description: "",
@@ -154,18 +210,9 @@ const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
     }
   };
 
-  const updateActivity = (index: number, field: string, value: any) => {
-    const newActivities = [...activities];
-    // @ts-ignore
-    newActivities[index][field] = value;
-    setActivities(newActivities);
-    // Note: This only updates local state. You'd need a way to save these changes to DB.
-  };
-
   const deleteActivity = async (index: number) => {
     try {
       const activity = activities[index];
-      if (!activity.id) return;
 
       if (!confirm(`Are you sure you want to delete "${activity.name}"?`)) {
         return;
@@ -178,13 +225,14 @@ const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
       if (!response.ok) throw new Error("Failed to delete activity");
 
       setActivities((prev) => prev.filter((_, i) => i !== index));
-      await fetchSchedule(); // Refresh schedule as it might depend on activities
+      await fetchSchedule(); // Refresh schedule
     } catch (error) {
       console.error("Error deleting activity:", error);
       alert("Failed to delete activity. Please try again.");
     }
   };
 
+  // Schedule operations
   const fetchSchedule = async () => {
     try {
       const response = await fetch(`/api/event-plans/${id}/schedule`);
@@ -196,36 +244,60 @@ const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
     }
   };
 
-  const addScheduleItem = () => {
-    const newItem: Partial<ScheduleItem> = {
-      event_id: id,
-      start_time: "",
-      end_time: "",
-      activity_id: null,
-      notes: ""
-    };
-    setSchedule(prev => [...prev, newItem as ScheduleItem]);
+  const addScheduleItem = async () => {
+    try {
+      const newScheduleItem = {
+        start_date: new Date().toISOString().split('T')[0],
+        start_time: "12:00",
+        end_time: "13:00",
+        activity_id: null,
+        location: "",
+        notes: "",
+      };
+
+      const response = await fetch(`/api/event-plans/${id}/schedule`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newScheduleItem),
+      });
+
+      if (!response.ok) throw new Error("Failed to add schedule item");
+      await fetchSchedule();
+    } catch (error) {
+      console.error("Error adding schedule item:", error);
+    }
   };
 
-  const fetchShoppingItems = async () => {
+  // 
+  // Tasks operations
+  const fetchTasks = async () => {
     try {
-      const response = await fetch(`/api/event-plans/${id}/shopping`);
-      if (!response.ok) throw new Error("Failed to fetch shopping items");
+      const response = await fetch(`/api/event-plans/${id}/tasks`);
+      if (!response.ok) throw new Error("Failed to fetch tasks");
       const data = await response.json();
-      setShopping(data || []);
+      setTasks(data || []);
     } catch (error) {
-      console.error("Error fetching shopping items:", error);
+      console.error("Error fetching tasks:", error);
+    }
+  };
+
+  // Budget operations
+  const fetchBudgetItems = async () => {
+    try {
+      const response = await fetch(`/api/event-plans/${id}/budget`);
+      if (!response.ok) throw new Error("Failed to fetch budget items");
+      const data = await response.json();
+      setBudget(data);
+    } catch (error) {
+      console.error("Error fetching budget items:", error);
     }
   };
 
   const onBudgetChange = () => {
-    // Re-fetch budget items if needed
-    fetch(`/api/event-plans/${id}/budget`)
-      .then(res => res.json())
-      .then(data => setBudget(data))
-      .catch(err => console.error("Error refreshing budget:", err));
+    fetchBudgetItems();
   };
 
+  // Status change
   const onStatusChange = async (newStatus: string) => {
     try {
       const response = await fetch(`/api/event-plans/${id}`, {
@@ -244,38 +316,48 @@ const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
     }
   };
 
-  const fetchTasks = async () => {
+  const fetchShoppingItems = async () => {
     try {
-      const response = await fetch(`/api/event-plans/${id}/tasks`);
-      if (!response.ok) throw new Error("Failed to fetch tasks");
+      const response = await fetch(`/api/event-plans/${id}/shopping`);
+      if (!response.ok) throw new Error("Failed to fetch shopping items");
       const data = await response.json();
-      setTasks(data || []);
+      setShopping(data);
     } catch (error) {
-      console.error("Error fetching tasks:", error);
+      console.error("Error fetching shopping items:", error);
     }
   };
 
-  // Copilot update plan handler
-  const updatePlan = (field: string, value: any) => {
-    // This is a generic handler for the copilot. 
-    // We need to map 'field' to the correct state setter.
-    switch (field) {
-      case 'activities': setActivities(value); break;
-      case 'schedule': setSchedule(value); break;
-      case 'tasks': setTasks(value); break;
-      case 'budget': setBudget(value); break;
-      case 'shopping': setShopping(value); break;
-      case 'event_basics': setEventBasics(prev => ({ ...prev, ...value })); break;
-      default: console.warn(`Unknown field update from Copilot: ${field}`);
+  // Recalculate budget when shopping changes
+  useEffect(() => {
+    if (!loading && shopping.length > 0) {
+      fetchBudgetItems();
     }
-  };
+  }, [shopping]); // Only trigger on length change to avoid excessive calls
 
-  // Derived state
-  const isReadOnly = status !== "planning";
+  const isReadOnly = status === "completed";
+
+  // Tab and status configuration
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'activities', label: 'Activities' },
+    { id: 'schedule', label: 'Schedule' },
+    { id: 'shopping', label: 'Shopping' },
+    { id: 'tasks', label: 'Tasks' },
+    { id: 'budget', label: 'Budget' },
+    { id: 'summary', label: 'Summary' },
+    { id: 'forecast', label: 'Evaluation' },
+  ];
+
+  const statusOptions = [
+    { value: 'planning', label: 'Planning', color: '#9e9e9e' },
+    { value: 'in_progress', label: 'In Progress', color: '#2196f3' },
+    { value: 'ready', label: 'Ready', color: '#ff9800' },
+    { value: 'completed', label: 'Completed', color: '#4caf50' }
+  ];
+
   const currentStatus = statusOptions.find(s => s.value === status) || statusOptions[0];
 
-  // --- Render ---
-
+  // Loading screen
   if (loading) {
     return (
       <Box
@@ -297,6 +379,7 @@ const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
     );
   }
 
+  // Error screen
   if (error) {
     return (
       <Box
@@ -336,11 +419,11 @@ const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
     );
   }
 
+  // Main content (only renders when data is loaded)
   if (!eventBasics) return null;
 
-  // Construct the full event plan object for child components that need it
+  // Create eventPlan object only when needed
   const eventPlan: EventPlan = {
-    id: id,
     event_basics: eventBasics,
     activities,
     schedule_items: schedule,
@@ -412,8 +495,8 @@ const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
       {/* Read-only warning */}
       {isReadOnly && (
         <div style={{ maxWidth: '1400px', margin: '20px auto 0', padding: '0 30px' }}>
-          <div style={{
-            backgroundColor: '#fff3cd',
+          <div style={{ 
+            backgroundColor: '#fff3cd', 
             border: '1px solid #ffc107',
             borderRadius: '8px',
             padding: '12px 16px',
@@ -437,10 +520,10 @@ const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
             position: "fixed",
             bottom: "24px",
             right: "24px",
-            background:
-              saveStatus === 'saved' ? "#28a745" :
-                saveStatus === 'error' ? "#dc3545" :
-                  "#ffc107",
+            background: 
+              saveStatus === 'saved' ? "#28a745" : 
+              saveStatus === 'error' ? "#dc3545" : 
+              "#ffc107",
             color: saveStatus === 'saved' || saveStatus === 'error' ? "white" : "#333",
             padding: "12px 20px",
             borderRadius: "24px",
@@ -556,8 +639,6 @@ const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
           />
         )}
       </div>
-
-      <EventCopilot eventPlan={eventPlan} updatePlan={updatePlan} eventId={id} />
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createServer } from "@/lib/supabase/server";
+import { supabase } from "../../../../../../lib/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +9,7 @@ type OtherRow = { response_id: string; value_text: string | null };
 export async function GET() {
   try {
     // 1) latest survey
-    const s = await createServer()
+    const s = await supabase
       .from("survey")
       .select("id")
       .order("created_at", { ascending: false })
