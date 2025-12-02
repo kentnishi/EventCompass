@@ -182,3 +182,88 @@ export const generatePlaceholderShoppingItems = (eventId: string, activities: Ac
         status: 'ordered',
     }
 ];
+
+
+// Placeholder concepts data for all three paths
+export const PLACEHOLDER_CONCEPTS = [
+    {
+      id: 1,
+      title: "Memory Lane Letter Writing Night",
+      tagline: "An intimate evening connecting students with nursing home residents",
+      goal: "Awareness + Community",
+      description: "Students write heartfelt letters to nursing home residents while learning about Alzheimer's disease and memory care through a guest speaker presentation. Includes reflection time and light refreshments.",
+      budget: "$400-500",
+      estimatedBudget: "$400-500",
+      duration: "2 hours",
+      attendance: "50-75 people",
+      venue: "Indoor classroom or lounge",
+      vibe: "Cozy & Reflective",
+      elements: ["Stationery table", "Guest speaker", "Reflection board", "Light refreshments"],
+      preview: {
+        activities: ["Check-in & Welcome", "Educational Introduction", "Letter Writing Session", "Reflection & Sharing"],
+        schedule: "6:00 PM - 8:00 PM",
+        keyItems: ["Stationery sets (60)", "Writing prompts", "Tea & coffee", "Display board"],
+        tasks: ["Book guest speaker", "Order stationery", "Coordinate with nursing home"]
+      }
+    },
+    {
+      id: 2,
+      title: "Purple Ribbon Craft & Info Fair",
+      tagline: "Interactive stations combining awareness with creative engagement",
+      goal: "Education + Hands-on",
+      description: "Multiple interactive stations where students learn Alzheimer's facts while creating purple ribbon awareness crafts and participating in memory-focused activities. Features info booths and brain-healthy snacks.",
+      budget: "$600-800",
+      estimatedBudget: "$600-800",
+      duration: "3 hours",
+      attendance: "100-150 people",
+      venue: "Large open space or multiple rooms",
+      vibe: "High-energy & Interactive",
+      elements: ["Craft stations", "Info booths", "Memory games", "Brain-healthy snacks"],
+      preview: {
+        activities: ["Ribbon crafting", "Info booth tours", "Memory challenge games", "Refreshment area"],
+        schedule: "2:00 PM - 5:00 PM",
+        keyItems: ["Purple ribbon & supplies", "Craft materials", "Info posters", "Healthy snacks"],
+        tasks: ["Set up craft stations", "Recruit booth volunteers", "Print educational materials"]
+      }
+    },
+    {
+      id: 3,
+      title: "Walk to Remember Charity Event",
+      tagline: "Steps for awareness, funds for research",
+      goal: "Fundraising + Awareness",
+      description: "A campus walk event raising funds for Alzheimer's research. Participants wear purple, share personal stories at stations along the route, and enjoy a post-walk celebration with music and refreshments.",
+      budget: "$800-1000",
+      estimatedBudget: "$800-1000",
+      duration: "2.5 hours",
+      attendance: "150-200 people",
+      venue: "Campus paths with outdoor gathering space",
+      vibe: "Energetic & Meaningful",
+      elements: ["Walking route", "Registration booth", "Music & entertainment", "Food vendors"],
+      preview: {
+        activities: ["Registration & T-shirt pickup", "Group walk with stations", "Post-walk celebration", "Awards ceremony"],
+        schedule: "9:00 AM - 11:30 AM",
+        keyItems: ["Purple T-shirts", "Registration materials", "Route markers", "Sound system"],
+        tasks: ["Map walking route", "Order T-shirts", "Book DJ/music", "Arrange food vendors"]
+      }
+    },
+    {
+      id: 4,
+      title: "Memory Café Social",
+      tagline: "Sharing stories over coffee and conversation",
+      goal: "Community Bonding",
+      description: "A cozy café-style gathering where students, faculty, and community members share stories and memories over coffee and treats. Features conversation prompts, photo sharing opportunities, and soft background music.",
+      budget: "$300-400",
+      estimatedBudget: "$300-400",
+      duration: "2 hours",
+      attendance: "40-60 people",
+      venue: "Campus café or cozy indoor space",
+      vibe: "Intimate & Warm",
+      elements: ["Café setup", "Conversation cards", "Photo display", "Coffee & pastries"],
+      preview: {
+        activities: ["Welcome & coffee service", "Guided conversation circles", "Photo sharing time", "Closing reflection"],
+        schedule: "3:00 PM - 5:00 PM",
+        keyItems: ["Coffee & tea service", "Pastries & treats", "Conversation prompt cards", "Photo frames"],
+        tasks: ["Arrange café setup", "Order refreshments", "Create conversation cards", "Set up photo display"]
+      }
+    }
+];

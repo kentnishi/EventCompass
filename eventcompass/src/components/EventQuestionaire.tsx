@@ -7,7 +7,15 @@ import IntakeForm from './questionaire/IntakeForm';
 import ConceptsScreen from './questionaire/ConceptsScreen';
 import PreviewScreen from './questionaire/PreviewScreen';
 
-import { PLACEHOLDER_EVENT_BASICS, generatePlaceholderActivities, generatePlaceholderScheduleItems, generatePlaceholderTasks, generatePlaceholderBudgetItems, generatePlaceholderShoppingItems } from "@/app/utils/placeholderData";
+import { 
+  PLACEHOLDER_EVENT_BASICS, 
+  generatePlaceholderActivities, 
+  generatePlaceholderScheduleItems, 
+  generatePlaceholderTasks, 
+  generatePlaceholderBudgetItems, 
+  generatePlaceholderShoppingItems, 
+  PLACEHOLDER_CONCEPTS
+} from "@/app/utils/placeholderData";
 
 import { IntakeFormData } from '@/types/eventPlan';
 
@@ -206,7 +214,7 @@ const EventQuestionaire = () => {
 
   const handleIntakeSubmit = () => {
     if (selectedPath === 'no-idea') {
-      
+
     }
     setStep('concepts');
   };
@@ -401,7 +409,7 @@ const EventQuestionaire = () => {
     return (
       <ConceptsScreen
         selectedPath={selectedPath}
-        concepts={conceptsByPath[selectedPath] || []}
+        concepts={PLACEHOLDER_CONCEPTS}
         selectedConcept={selectedConcept}
         onSelectConcept={handleConceptSelect}
         onCreatePlan={handleCreatePlan}

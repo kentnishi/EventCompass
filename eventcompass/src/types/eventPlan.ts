@@ -32,6 +32,27 @@ export interface IntakeFormData {
     specialRequirements?: string;
 }
 
+export interface Concept {
+    id?: number;
+    title: string;
+    tagline: string;
+    goal: string;
+    description: string;
+    budget: string;
+    estimatedBudget: string;
+    duration: string;
+    attendance: string;
+    venue: string;
+    vibe: string;
+    elements: string[];
+    preview: {
+        activities: string[];
+        schedule: string;
+        keyItems: string[];
+        tasks: string[];
+    }
+}
+
 export interface EventPlan {
     id?: string;
 
