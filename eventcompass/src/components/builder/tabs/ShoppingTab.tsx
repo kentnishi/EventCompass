@@ -35,20 +35,24 @@ import { ShoppingItem, Activity, BudgetItem } from "@/types/eventPlan";
 
 interface ShoppingTabProps {
   event_id: string;
+  shoppingItems: ShoppingItem[];
   budgetItems: BudgetItem[];
   activities: Activity[];
   isReadOnly: boolean;
   onBudgetChange: () => void;
+  fetchShoppingItems: () => void;
 }
 
 const ShoppingTab: React.FC<ShoppingTabProps> = ({
   event_id,
+  shoppingItems,
   budgetItems,
   activities,
   isReadOnly,
-  onBudgetChange
+  onBudgetChange,
+  fetchShoppingItems
 }) => {
-  const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
+  // const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
   const [selectedItem, setSelectedItem] = useState<ShoppingItem | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -58,16 +62,6 @@ const ShoppingTab: React.FC<ShoppingTabProps> = ({
     fetchShoppingItems();
   }, [event_id]);
 
-  const fetchShoppingItems = async () => {
-    try {
-      const response = await fetch(`/api/event-plans/${event_id}/shopping`);
-      if (!response.ok) throw new Error("Failed to fetch shopping items");
-      const data = await response.json();
-      setShoppingItems(data);
-    } catch (error) {
-      console.error("Error fetching shopping items:", error);
-    }
-  };
 
   const toggleCategory = (budgetId: number) => {
     setExpandedCategories((prev) => {

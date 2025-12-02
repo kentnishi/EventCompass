@@ -17,7 +17,7 @@ interface ShoppingItemModalProps {
   isCreating: boolean;
   onClose: () => void;
   fetchShoppingItems: () => void;
-  onBudgetChange: () => {};
+  onBudgetChange: () => void;
 }
 
 const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({

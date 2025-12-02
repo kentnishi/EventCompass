@@ -267,6 +267,7 @@ const EventPlanningPage = ({ id }: { id: string }) => {
     }
   };
 
+  // 
   // Tasks operations
   const fetchTasks = async () => {
     try {
@@ -314,12 +315,23 @@ const EventPlanningPage = ({ id }: { id: string }) => {
     }
   };
 
+  const fetchShoppingItems = async () => {
+    try {
+      const response = await fetch(`/api/event-plans/${id}/shopping`);
+      if (!response.ok) throw new Error("Failed to fetch shopping items");
+      const data = await response.json();
+      setShopping(data);
+    } catch (error) {
+      console.error("Error fetching shopping items:", error);
+    }
+  };
+
   // Recalculate budget when shopping changes
   useEffect(() => {
     if (!loading && shopping.length > 0) {
       fetchBudgetItems();
     }
-  }, [shopping.length]); // Only trigger on length change to avoid excessive calls
+  }, [shopping]); // Only trigger on length change to avoid excessive calls
 
   const isReadOnly = status === "completed";
 
@@ -583,9 +595,11 @@ const EventPlanningPage = ({ id }: { id: string }) => {
           <ShoppingTab
             event_id={id}
             budgetItems={budget}
+            shoppingItems={shopping}
             activities={activities}
             isReadOnly={isReadOnly}
             onBudgetChange={onBudgetChange}
+            fetchShoppingItems={fetchShoppingItems}
           />
         )}
 
