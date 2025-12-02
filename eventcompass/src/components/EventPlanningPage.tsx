@@ -14,6 +14,7 @@ import TasksTab from "@/components/builder/tabs/TasksTab";
 import BudgetTab from "@/components/builder/tabs/BudgetTab";
 import ShoppingTab from "@/components/builder/tabs/ShoppingTab";
 import SummaryTab from "@/components/builder/tabs/SummaryTab";
+import ForecastTab from "@/components/builder/tabs/ForecastTab";
 
 import { EventPlan, EventBasics, Activity, ScheduleItem, Task, BudgetItem, ShoppingItem } from "@/types/eventPlan";
 
@@ -343,7 +344,8 @@ const EventPlanningPage = ({ id }: { id: string }) => {
     { id: 'shopping', label: 'Shopping' },
     { id: 'tasks', label: 'Tasks' },
     { id: 'budget', label: 'Budget' },
-    { id: 'summary', label: 'Summary' }
+    { id: 'summary', label: 'Summary' },
+    { id: 'forecast', label: 'Evaluation' },
   ];
 
   const statusOptions = [
@@ -626,6 +628,14 @@ const EventPlanningPage = ({ id }: { id: string }) => {
         {activeTab === "summary" && (
           <SummaryTab
             eventPlan={eventPlan}
+          />
+        )}
+
+        {activeTab === "forecast" && (
+          <ForecastTab
+            eventId={id}
+            attendees={eventBasics.attendees} 
+
           />
         )}
       </div>
