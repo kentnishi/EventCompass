@@ -37,6 +37,7 @@ const tabs = [
   { id: "budget", label: "Budget" },
   { id: "shopping", label: "Shopping" },
   { id: "summary", label: "Summary" },
+  { id: "forecast", label: "Forecast" },
 ];
 
 const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
