@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "../../../../../../lib/supabase";
+import { createServer } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +8,7 @@ type Row = { response_id: string; value_json: any; value_text: string | null };
 export async function GET() {
   try {
     // 1) latest survey
-    const s = await supabase
+    const s = await createServer()
       .from("survey")
       .select("id")
       .order("created_at", { ascending: false })
@@ -18,7 +18,7 @@ export async function GET() {
     const surveyId = s.data.id;
 
     // 2) find qids for this survey
-    const qs = await supabase
+    const qs = await createServer()
       .from("survey_question")
       .select("id, code")
       .eq("survey_id", surveyId)
@@ -37,12 +37,12 @@ export async function GET() {
 
     // 3) fetch answers for both
     const [multiRes, otherRes] = await Promise.all([
-      supabase
+      createServer()
         .from("survey_answer")
         .select("response_id,value_json,value_text")
         .eq("question_id", qid52),
       qid52Other
-        ? supabase
+        ? createServer()
             .from("survey_answer")
             .select("response_id,value_text")
             .eq("question_id", qid52Other)
