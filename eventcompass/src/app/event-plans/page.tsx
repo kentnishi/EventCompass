@@ -1,10 +1,9 @@
 // UPDATE TO ONLY SHOW EVENT IN PROGRESS
 
-import EventsPage from "@/components/EventsPage";
+import EventPlan from "@/components/EventPagewithPlan";
 
 export default function Events() {
-  
-    return <EventsPage filterByStatus="planning" />;
 
-  }
-  
+  return <EventPlan filterByStatus="planning" />;
+
+}
