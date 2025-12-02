@@ -8,24 +8,26 @@ import ActivityModal from "./modals/ActivityModal";
 
 interface ActivitiesTabProps {
   activities: Activity[];
+  schedule: ScheduleItem[];
+  tasks: Task[];
+  shoppingItems?: ShoppingItem[];
   setActivities: React.Dispatch<React.SetStateAction<Activity[]>>;
   isReadOnly: boolean;
   updateActivity: (index: number, field: string, value: any) => void;
   addActivity: () => void;
   deleteActivity: (index: number) => void;
-  scheduleItems?: ScheduleItem[];
-  shoppingItems?: ShoppingItem[];
 }
 
 const ActivitiesTab: React.FC<ActivitiesTabProps> = ({
   activities,
+  schedule,
+  tasks,
+  shoppingItems,
   setActivities,
   isReadOnly,
   updateActivity,
   addActivity,
   deleteActivity,
-  scheduleItems = [],
-  shoppingItems = [],
 }) => {
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -54,11 +56,15 @@ const ActivitiesTab: React.FC<ActivitiesTabProps> = ({
   };
 
   const getRelatedScheduleItems = (activityId: number) => {
-    return scheduleItems.filter((item) => item.activity_id === activityId);
+    return schedule.filter((item) => item.activity_id === activityId);
+  };
+
+  const getRelatedTasks = (activityId: number) => {
+    return tasks.filter((task) => task.activity_id === activityId);
   };
 
   const getRelatedShoppingItems = (activityId: number) => {
-    return shoppingItems.filter((item) => item.activity_id === activityId);
+    return shoppingItems?.filter((item) => item.activity_id === activityId);
   };
 
   return (
@@ -192,6 +198,7 @@ const ActivitiesTab: React.FC<ActivitiesTabProps> = ({
           isReadOnly={isReadOnly}
           scheduleItems={getRelatedScheduleItems(selectedActivity.id)}
           shoppingItems={getRelatedShoppingItems(selectedActivity.id)}
+          tasks={getRelatedTasks(selectedActivity.id)}
         />
       )}
     </div>

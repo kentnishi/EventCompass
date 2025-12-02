@@ -526,6 +526,9 @@ const EventPlanningPage = ({ id }: { id: string }) => {
         {activeTab === "activities" && (
           <ActivitiesTab
             activities={activities}
+            schedule={schedule}
+            tasks={tasks}
+            shoppingItems={shopping}
             setActivities={setActivities}
             isReadOnly={isReadOnly}
             updateActivity={updateActivity}
