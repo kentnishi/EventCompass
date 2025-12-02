@@ -189,7 +189,7 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
               Budget Category
             </label>
             <select
-              value={localItem.budget_id}
+              value={localItem.budget_id ?? ""}
               onChange={(e) => handleFieldChange("budget_id", parseInt(e.target.value))}
               disabled={isReadOnly}
               style={{
@@ -377,8 +377,17 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
               <input
                 type="number"
                 min="1"
-                value={localItem.quantity}
-                onChange={(e) => handleFieldChange("quantity", parseInt(e.target.value) || 1)}
+                value={localItem.quantity === 0 ? "" : localItem.quantity}
+                onChange={(e) => {
+                    const value = e.target.value;
+                    handleFieldChange("quantity", value === "" ? "" : parseInt(value)); // Temporarily allow empty string
+                }}
+                onBlur={(e) => {
+                    // Convert empty input to 1 on blur
+                    if (e.target.value === "") {
+                      handleFieldChange("quantity", 1);
+                    }
+                }}    
                 disabled={isReadOnly}
                 style={{
                   width: "100%",

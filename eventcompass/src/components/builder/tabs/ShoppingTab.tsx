@@ -38,7 +38,7 @@ interface ShoppingTabProps {
   budgetItems: BudgetItem[];
   activities: Activity[];
   isReadOnly: boolean;
-  onBudgetChange: () => {};
+  onBudgetChange: () => void;
 }
 
 const ShoppingTab: React.FC<ShoppingTabProps> = ({
@@ -223,7 +223,7 @@ const ShoppingTab: React.FC<ShoppingTabProps> = ({
 
       {/* Shopping Categories */}
       {itemsByCategory.map(({ budget, items, total, spent, pendingCount, orderedCount, receivedCount }) => {
-        const isExpanded = expandedCategories.has(budget.id);
+        const isExpanded = budget.id !== undefined && expandedCategories.has(budget.id);
         const progress = budget.allocated > 0 ? (spent / budget.allocated) * 100 : 0;
 
         return (
@@ -236,7 +236,7 @@ const ShoppingTab: React.FC<ShoppingTabProps> = ({
                 borderBottom: "1px solid #E0E0E0",
                 cursor: "pointer",
               }}
-              onClick={() => toggleCategory(budget.id)}
+              onClick={() => budget.id !== undefined && toggleCategory(budget.id)}
             >
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <Box sx={{ flexGrow: 1 }}>

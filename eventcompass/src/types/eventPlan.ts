@@ -27,7 +27,7 @@ export interface EventBasics {
 
 // Define smaller types for each subsection
 export interface Activity {
-    id: number;
+    id?: number;
     event_id: string;
     name: string;
     description: string;

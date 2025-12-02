@@ -116,11 +116,6 @@ const EventPlanningPage = ({ id }: { id: string }) => {
   }, [id]);
   
   
-
-  const updatePlan = (field, value) => {
-    setEventPlan((prev) => ({ ...prev, [field]: value }));
-  };
-
    // ✅ Updated updatePlan with auto-save
    const updateEventBasics = async (field: string, value: any) => {
     // Update local state immediately (optimistic update)
@@ -184,30 +179,98 @@ const EventPlanningPage = ({ id }: { id: string }) => {
     };
   }, []);
 
-  // const updateEventBasics = (field, value) => {
-  //   setEventBasics((prev) => ({ ...prev, [field]: value }));
-  // };
-
-  const updateActivity = (index, field, value) => {
-    const newActivities = [...eventPlan.activities];
-    newActivities[index][field] = value;
-    updatePlan("activities", newActivities);
+  // For Activities Tab
+  const updateActivity = async (index: number, field: string, value: any) => {
+    try {
+      const activity = activities[index];
+      const updatedActivity = { ...activity, [field]: value };
+  
+      const response = await fetch(`/api/event-plans/activities/${activity.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ [field]: value }),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to update activity");
+      }
+  
+      const updatedData = await response.json();
+  
+      // Update the activity in the local state
+      setActivities((prevActivities) =>
+        prevActivities.map((a, i) => (i === index ? updatedData : a))
+      );
+    } catch (error) {
+      console.error("Error updating activity:", error);
+      alert("Failed to update activity. Please try again.");
+    }
   };
 
-  const addActivity = () => {
-    const newId = Math.max(0, ...eventPlan.activities.map((a) => a.id)) + 1;
-    const newActivities = [
-      ...eventPlan.activities, 
-      { id: newId, name: "", description: "" }
-    ];
-    updatePlan("activities", newActivities);
+  const addActivity = async () => {
+    try {
+      const newActivity: Activity = {
+        name: "New Activity",
+        event_id: id,
+        description: "",
+        notes: "",
+        staffing_needs: [],
+      };
+  
+      const response = await fetch(`/api/event-plans/${id}/activities`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newActivity),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to add activity");
+      }
+  
+      const createdActivity = await response.json();
+  
+      // Add the new activity to the local state
+      setActivities((prevActivities) => [...prevActivities, createdActivity]);
+    } catch (error) {
+      console.error("Error adding activity:", error);
+      alert("Failed to add activity. Please try again.");
+    }
+  };
+  
+  const deleteActivity = async (index: number) => {
+    try {
+      const activity = activities[index];
+  
+      if (!confirm(`Are you sure you want to delete the activity "${activity.name}"?`)) {
+        return;
+      }
+  
+      const response = await fetch(`/api/event-plans/activities/${activity.id}`, {
+        method: "DELETE",
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to delete activity");
+      }
+  
+      // Remove the activity from the local state
+      setActivities((prevActivities) =>
+        prevActivities.filter((_, i) => i !== index)
+      );
+
+      // Refresh schedule in case any items were linked to this activity
+      fetchSchedule();
+    } catch (error) {
+      console.error("Error deleting activity:", error);
+      alert("Failed to delete activity. Please try again.");
+    }
   };
 
-  const deleteActivity = (index) => {
-    const newActivities = eventPlan.activities.filter((_, i) => i !== index);
-    updatePlan("activities", newActivities);
-  };
-
+  // For Schedule Tab
   const fetchSchedule = async () => {
     try {
       const response = await fetch(`/api/event-plans/${id}/schedule`);
@@ -253,26 +316,7 @@ const EventPlanningPage = ({ id }: { id: string }) => {
     }
   };
 
-  const updateShoppingItem = (index, field, value) => {
-    const newShopping = [...eventPlan.shopping];
-    newShopping[index][field] = value;
-    updatePlan("shopping", newShopping);
-  };
-
-  const addShoppingItem = () => {
-    const newId = Math.max(0, ...eventPlan.shopping.map((s) => s.id)) + 1;
-    const newShopping = [
-      ...eventPlan.shopping, 
-      { id: newId, item: "", quantity: "", category: "", linkedTo: null, purchased: false }
-    ];
-    updatePlan("shopping", newShopping);
-  };
-
-  const deleteShoppingItem = (index) => {
-    const newShopping = eventPlan.shopping.filter((_, i) => i !== index);
-    updatePlan("shopping", newShopping);
-  };
-
+  // For Tasks tab
   const fetchTasks = async (eventId: string, setTasks: (tasks: Task[]) => void) => {
     try {
       const response = await fetch(`/api/event-plans/${eventId}/tasks`, {
@@ -293,8 +337,8 @@ const EventPlanningPage = ({ id }: { id: string }) => {
     }
   };
 
-   // Function to fetch budget items from API
-   const fetchBudgetItems = async () => {
+  // Function to fetch budget items from API
+  const fetchBudgetItems = async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/event-plans/${id}/budget`);

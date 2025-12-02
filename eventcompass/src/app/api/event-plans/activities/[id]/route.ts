@@ -141,10 +141,11 @@ export async function PATCH(
 // DELETE /api/event-plans/activities/[id] - Delete an activity
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     const supabase = await createServer();
+    const params = await context.params;
     const activityId = parseInt(params.id);
 
     if (isNaN(activityId)) {

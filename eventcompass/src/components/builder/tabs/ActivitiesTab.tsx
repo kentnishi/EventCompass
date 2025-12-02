@@ -1,25 +1,9 @@
 import React, { useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import PeopleIcon from "@mui/icons-material/People";
-import { Activity, StaffingNeed } from "@/types/eventPlan";
+import { Activity, StaffingNeed, ScheduleItem, ShoppingItem, Task } from "@/types/eventPlan";
 import ActivityModal from "./modals/ActivityModal";
 
-interface ScheduleItem {
-  id: number;
-  title: string;
-  start_time: string;
-  end_time: string;
-  activity_id?: number;
-}
-
-interface ShoppingItem {
-  id: number;
-  item_name: string;
-  quantity: number;
-  unit: string;
-  estimated_cost: string;
-  activity_id?: number;
-}
 
 
 interface ActivitiesTabProps {

@@ -27,8 +27,8 @@ const ActivityModal: React.FC<ActivityModalProps> = ({
     scheduleItems,
     shoppingItems,
 }) => {
-    const [name, setName] = useState(activity.name);
-    const [description, setDescription] = useState(activity.description);
+    const [name, setName] = useState(activity.name || "");
+    const [description, setDescription] = useState(activity.description || "");
     const [notes, setNotes] = useState(activity.notes || "");
     const [staffingNeeds, setStaffingNeeds] = useState<StaffingNeed[]>(
         activity.staffing_needs || []
