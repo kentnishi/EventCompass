@@ -7,13 +7,14 @@ import PeopleIcon from "@mui/icons-material/People";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import CloudQueueIcon from "@mui/icons-material/CloudQueue";
+import { EventBasics } from "@/types/eventPlan";
 
 const OverviewTab = ({
   eventPlan,
   updatePlan,
   isReadOnly
 }: {
-  eventPlan: any;
+  eventPlan: EventBasics;
   updatePlan: (field: string, value: any) => void;
   isReadOnly: boolean
 }) => {
@@ -25,7 +26,6 @@ const OverviewTab = ({
 
   const handleFieldChange = (field: string, value: any) => {
     updatePlan(field, value);
-
   };
 
   const addKeyword = () => {
@@ -555,17 +555,17 @@ const OverviewTab = ({
 
       <style>
         {`
-          @keyframes slideIn {
-            from {
-              transform: translateY(100px);
-              opacity: 0;
+            @keyframes slideIn {
+              from {
+                transform: translateY(100px);
+                opacity: 0;
+              }
+              to {
+                transform: translateY(0);
+                opacity: 1;
+              }
             }
-            to {
-              transform: translateY(0);
-              opacity: 1;
-            }
-          }
-        `}
+          `}
       </style>
     </div>
   );
