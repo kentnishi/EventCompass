@@ -382,12 +382,38 @@ const EventPlanningPage = ({ id }: { id: string }) => {
     fetchBudgetItems();
   };
 
+  // onStatusChange
+  const onStatusChange = async (newStatus: string) => {
+    try {
+      // Send a PATCH request to update the status in the backend
+      const response = await fetch(`/api/event-plans/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to update status");
+      }
+
+      setStatus(newStatus);
+      
+  
+      console.log(`Status updated successfully to "${newStatus}" for event ID: ${id}`);
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert("Failed to update status. Please try again.");
+    }
+  };
+
   // Recalculate spending whenever shopping changes
   useEffect(() => {
     fetchBudgetItems();
   }, [shopping]);
   
-  const isReadOnly = status !== "planning";
+  const isReadOnly = status == "completed";
 
 
 
@@ -404,8 +430,8 @@ const EventPlanningPage = ({ id }: { id: string }) => {
 
   const statusOptions = [
     { value: 'planning', label: 'Planning', color: '#9e9e9e' },
-    { value: 'promo', label: 'In Progress', color: '#2196f3' },
-    { value: 'reservations', label: 'Ready', color: '#ff9800' },
+    { value: 'in_progress', label: 'In Progress', color: '#2196f3' },
+    { value: 'ready', label: 'Ready', color: '#ff9800' },
     { value: 'completed', label: 'Completed', color: '#4caf50' }
   ];
 
