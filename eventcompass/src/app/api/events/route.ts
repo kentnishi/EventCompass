@@ -6,6 +6,3 @@ export async function GET() {
     if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     return new Response(JSON.stringify({ events }), { status: 200 });
 }
-
-// export async function POST(request: Request) {
-// }
