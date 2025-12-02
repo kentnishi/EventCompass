@@ -309,7 +309,7 @@ export default function LastEventAnalytics() {
             See which days tend to have better attendance for planning future
             events.
           </p>
-          <div className="w-full max-w-[520px] h-[260px] mx-auto">
+          <div className="w-full h-[260px] mx-auto">
             {weekdayBarCfg ? (
               <BaseChart config={weekdayBarCfg} height={260} />
             ) : (
@@ -326,7 +326,7 @@ export default function LastEventAnalytics() {
           <p className="text-xs text-gray-500 mb-3">
             Compare the average attendance for events with and without food.
           </p>
-          <div className="w-full max-w-[520px] h-[260px] mx-auto">
+          <div className="w-full h-[260px] mx-auto">
             {foodBarCfg ? (
               <BaseChart config={foodBarCfg} height={260} />
             ) : (
