@@ -9,13 +9,16 @@ interface IntakeFormProps {
   onSubmit: () => void;
   formData: any;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
+  isLoading: boolean;
+  i
 }
 const IntakeForm: React.FC<IntakeFormProps> = ({ 
   selectedPath, 
   onBack, 
   onSubmit, 
   formData, 
-  setFormData 
+  setFormData,
+  isLoading 
 }) => {
 
   
@@ -849,25 +852,50 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
 
             <button
               onClick={onSubmit}
+              disabled={isLoading}
               style={{
                 marginTop: '8px',
                 padding: '14px 32px',
-                backgroundColor: '#6B7FD7',
+                backgroundColor: isLoading ? '#9CA3AF' : '#6B7FD7',
                 color: '#FFF',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '1rem',
                 fontWeight: 600,
-                cursor: 'pointer',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
+                opacity: isLoading ? 0.7 : 1,
+                transition: 'all 0.2s',
               }}
             >
-              {selectedPath === 'solid-idea' ? '→' : <AutoAwesomeIcon style={{ width: '18px', height: '18px' }} />}
-              {getButtonText()}
+              {isLoading ? (
+                <>
+                  <div style={{ 
+                    width: '16px', 
+                    height: '16px', 
+                    border: '2px solid #FFF',
+                    borderTopColor: 'transparent',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite'
+                  }} />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  {selectedPath === 'solid-idea' ? '→' : <AutoAwesomeIcon style={{ width: '18px', height: '18px' }} />}
+                  {getButtonText()}
+                </>
+              )}
             </button>
+            
+            <style>{`
+              @keyframes spin {
+                to { transform: rotate(360deg); }
+              }
+            `}</style>
           </div>
         </div>
       </div>

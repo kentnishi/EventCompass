@@ -17,7 +17,9 @@ import {
   PLACEHOLDER_CONCEPTS
 } from "@/app/utils/placeholderData";
 
-import { IntakeFormData } from '@/types/eventPlan';
+import { IntakeFormData, Concept } from '@/types/eventPlan';
+
+import { generateConceptsWithRetry } from "@/app/utils/conceptsGeneration";
 
 
 // Main App Component
@@ -25,6 +27,7 @@ const EventQuestionaire = () => {
   const [step, setStep] = useState('start');
   const [selectedPath, setSelectedPath] = useState("");
   const [formData, setFormData] = useState({});
+  const [concepts, setConcepts] = useState<Concept[]>([]);
   const [intakeFormData, setIntakeFormData] = useState<IntakeFormData>({
     organizationName: '',
     organizationMission: '',
@@ -56,6 +59,7 @@ const EventQuestionaire = () => {
     specialRequirements: ''
   });
   const [selectedConcept, setSelectedConcept] = useState(null);
+  const [isGenerating, setIsGenerating] = useState(false); // For concepts CHANGE TO isGeneratingConcepts
   const [customizations, setCustomizations] = useState({
       includeActivities: true,
       includeSchedule: true,
@@ -220,11 +224,34 @@ const EventQuestionaire = () => {
     setStep('intake');
   };
 
-  const handleIntakeSubmit = () => {
-    if (selectedPath === 'no-idea') {
-
+  const handleIntakeSubmit = async () => {
+    if (!selectedPath) return;
+    
+    // 2. Show loading state
+    setIsGenerating(true);
+  
+    try {
+      // 3. Generate concepts (takes 10-20 seconds)
+      const result = await generateConceptsWithRetry(intakeFormData, selectedPath);
+  
+      if (result.success && result.concepts) {
+        // 4. Set concepts (loading will automatically hide)
+        setConcepts(result.concepts);
+        
+      } else {
+        // Handle error - go back to intake
+        alert(`Failed to generate concepts: ${result.error}`);
+        setStep('intake');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred. Please try again.');
+      setStep('intake');
+    } finally {
+      // 5. Hide loading state
+      setIsGenerating(false);
+      setStep('concepts');
     }
-    setStep('concepts');
   };
 
   const handleConceptSelect = (concept) => {
@@ -415,6 +442,7 @@ const EventQuestionaire = () => {
         onSubmit={handleIntakeSubmit}
         formData={intakeFormData}
         setFormData={setIntakeFormData}
+        isLoading={isGenerating}
       />
     );
   }
@@ -424,7 +452,7 @@ const EventQuestionaire = () => {
     return (
       <ConceptsScreen
         selectedPath={selectedPath}
-        concepts={PLACEHOLDER_CONCEPTS}
+        concepts={concepts}
         selectedConcept={selectedConcept}
         onSelectConcept={handleConceptSelect}
         onCreatePlan={handleCreatePlan}
