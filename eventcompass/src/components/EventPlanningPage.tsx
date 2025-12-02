@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import { CircularProgress, Box, Typography } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -14,22 +15,13 @@ import BudgetTab from "@/components/builder/tabs/BudgetTab";
 import ShoppingTab from "@/components/builder/tabs/ShoppingTab";
 import SummaryTab from "@/components/builder/tabs/SummaryTab";
 
-import { PLACEHOLDER_EVENT_BASICS, generatePlaceholderActivities, generatePlaceholderScheduleItems } from "@/app/utils/placeholderData";
-
 import { EventPlan, EventBasics, Activity, ScheduleItem, Task, BudgetItem, ShoppingItem } from "@/types/eventPlan";
 
 const EventPlanningPage = ({ id }: { id: string }) => {
   console.log("Event ID in EventPlanningPage:", id);
 
-  const [eventPlan, setEventPlan] = useState<EventPlan>({
-    event_basics: PLACEHOLDER_EVENT_BASICS,
-    activities: [],
-    schedule_items: [],
-    tasks: [],
-    budget_items: [],
-    shopping_items: []
-  });
-  const [eventBasics, setEventBasics] = useState<EventBasics>(PLACEHOLDER_EVENT_BASICS);
+  // State
+  const [eventBasics, setEventBasics] = useState<EventBasics | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -39,24 +31,26 @@ const EventPlanningPage = ({ id }: { id: string }) => {
   const [activeTab, setActiveTab] = useState("overview");
   const [status, setStatus] = useState("planning");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-
-  // Fetching data
+  // Single data fetch on mount
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAllData = async () => {
       try {
         setLoading(true);
+        setError(null);
 
-        const [ 
+        // Fetch all data in parallel
+        const [
           eventResponse,
-          eventActivitiesResponse,
-          eventScheduleResponse,
-          eventTasksResponse,
-          eventBudgetResponse,
-          eventShoppingResponse
+          activitiesResponse,
+          scheduleResponse,
+          tasksResponse,
+          budgetResponse,
+          shoppingResponse
         ] = await Promise.all([
           fetch(`/api/event-plans/${id}`),
           fetch(`/api/event-plans/${id}/activities`),
@@ -64,14 +58,31 @@ const EventPlanningPage = ({ id }: { id: string }) => {
           fetch(`/api/event-plans/${id}/tasks`),
           fetch(`/api/event-plans/${id}/budget`),
           fetch(`/api/event-plans/${id}/shopping`),
-        ])
+        ]);
 
-        // Event Basics: Name, Description, etc.
-        const event_response = await eventResponse.json();
-        const event = event_response.event;
-        // console.log("Event Basics: ", event);
+        // Check for errors
+        if (!eventResponse.ok) throw new Error("Failed to fetch event details");
+
+        // Parse all responses
+        const [
+          eventData,
+          activitiesData,
+          scheduleData,
+          tasksData,
+          budgetData,
+          shoppingData
+        ] = await Promise.all([
+          eventResponse.json(),
+          activitiesResponse.json(),
+          scheduleResponse.json(),
+          tasksResponse.json(),
+          budgetResponse.json(),
+          shoppingResponse.json(),
+        ]);
+
+        // Set event basics
+        const event = eventData.event;
         setEventBasics({
-          // id: event.id,
           name: event.name || "Untitled Event",
           description: event.description || "",
           attendees: event.attendees || 0,
@@ -85,111 +96,65 @@ const EventPlanningPage = ({ id }: { id: string }) => {
           event_type: event.event_type || "General",
           keywords: event.keywords || []
         });
-        console.log("eventBasics: ", eventBasics);
 
+        // Set status
+        setStatus(event.status || "planning");
 
-        // Activities: List of activities
-        const activities_response = await eventActivitiesResponse.json()
-        console.log("Activities response from API: ", activities_response);
-        setActivities(activities_response || []);
+        // Set all other data
+        setActivities(activitiesData || []);
+        setSchedule(scheduleData || []);
+        setTasks(tasksData || []);
+        setBudget(budgetData || []);
+        setShopping(shoppingData || []);
 
-        // Schedule: List of schedule items
-        const schedule_response = await eventScheduleResponse.json()
-        console.log("Schedule response from API: ", schedule_response);
-        setSchedule(schedule_response || []);
-
-        // Tasks: List of tasks
-        const tasks_response = await eventTasksResponse.json()
-        console.log("Tasks response from API: ", tasks_response);
-        setTasks(tasks_response || []);
-
-        // Budget: List of budget items
-        const budget_response = await eventBudgetResponse.json()
-        console.log("Budget response from API: ", budget_response);
-        setBudget(budget_response || []);
-
-        // Shopping: List of shopping items
-        const shopping_response = await eventShoppingResponse.json()
-        console.log("Shopping response from API: ", shopping_response);
-        setShopping(shopping_response || []);
-
-
-        // setEventPlan(data.eventPlan);
-      } catch (error) {
-        console.error("Error fetching event plan:", error);
-      } 
+        console.log("✅ All data loaded successfully");
+      } catch (err) {
+        console.error("Error fetching event data:", err);
+        setError(err instanceof Error ? err.message : "Failed to load event data");
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchData();
-    
+    fetchAllData();
   }, [id]);
 
-  useEffect(() => {
-    setEventPlan({ 
-      event_basics: eventBasics, 
-      activities: activities, 
-      schedule_items: schedule, 
-      tasks: tasks, 
-      budget_items: budget, 
-      shopping_items: shopping});
-  }, [eventBasics, activities, schedule, tasks, budget, shopping]);
-  
-  
-   // ✅ Updated updatePlan with auto-save
-   const updateEventBasics = async (field: string, value: any) => {
-    // Update local state immediately (optimistic update)
-    // Implement the rest of the tabs too
-    setEventBasics((prev) => ({ ...prev, [field]: value }));
+  // Auto-save for event basics
+  const updateEventBasics = async (field: string, value: any) => {
+    if (!eventBasics) return;
+
+    // Optimistic update
+    setEventBasics((prev) => prev ? { ...prev, [field]: value } : prev);
     
     // Clear existing timeout
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
     
-    // Show saving status immediately
     setSaveStatus('saving');
     
-    // Debounce the API call (wait 1 second after last change)
+    // Debounce API call
     saveTimeoutRef.current = setTimeout(async () => {
       try {
         const response = await fetch(`/api/event-plans/${id}`, {
           method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            [field]: value
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [field]: value })
         });
         
-        if (!response.ok) {
-          throw new Error('Failed to save');
-        }
+        if (!response.ok) throw new Error('Failed to save');
         
-        // Success!
         setSaveStatus('saved');
-        
-        // Hide success message after 2 seconds
-        setTimeout(() => {
-          setSaveStatus('idle');
-        }, 2000);
-        
+        setTimeout(() => setSaveStatus('idle'), 2000);
       } catch (error) {
         console.error('Save error:', error);
         setSaveStatus('error');
-        
-        // Optionally: revert the optimistic update
-        // You could refetch the data here or keep a backup of previous state
-        
-        // Hide error message after 3 seconds
-        setTimeout(() => {
-          setSaveStatus('idle');
-        }, 3000);
+        setTimeout(() => setSaveStatus('idle'), 3000);
       }
-    }, 1000); // 1 second debounce
+    }, 1000);
   };
 
-  // ✅ Cleanup on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (saveTimeoutRef.current) {
@@ -198,30 +163,20 @@ const EventPlanningPage = ({ id }: { id: string }) => {
     };
   }, []);
 
-  // For Activities Tab
+  // Activities operations
   const updateActivity = async (index: number, field: string, value: any) => {
     try {
       const activity = activities[index];
-      const updatedActivity = { ...activity, [field]: value };
-  
       const response = await fetch(`/api/event-plans/activities/${activity.id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ [field]: value }),
       });
-  
-      if (!response.ok) {
-        throw new Error("Failed to update activity");
-      }
-  
+
+      if (!response.ok) throw new Error("Failed to update activity");
+
       const updatedData = await response.json();
-  
-      // Update the activity in the local state
-      setActivities((prevActivities) =>
-        prevActivities.map((a, i) => (i === index ? updatedData : a))
-      );
+      setActivities((prev) => prev.map((a, i) => (i === index ? updatedData : a)));
     } catch (error) {
       console.error("Error updating activity:", error);
       alert("Failed to update activity. Please try again.");
@@ -237,78 +192,61 @@ const EventPlanningPage = ({ id }: { id: string }) => {
         notes: "",
         staffing_needs: [],
       };
-  
+
       const response = await fetch(`/api/event-plans/${id}/activities`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newActivity),
       });
-  
-      if (!response.ok) {
-        throw new Error("Failed to add activity");
-      }
-  
+
+      if (!response.ok) throw new Error("Failed to add activity");
+
       const createdActivity = await response.json();
-  
-      // Add the new activity to the local state
-      setActivities((prevActivities) => [...prevActivities, createdActivity]);
+      setActivities((prev) => [...prev, createdActivity]);
     } catch (error) {
       console.error("Error adding activity:", error);
       alert("Failed to add activity. Please try again.");
     }
   };
-  
+
   const deleteActivity = async (index: number) => {
     try {
       const activity = activities[index];
-  
-      if (!confirm(`Are you sure you want to delete the activity "${activity.name}"?`)) {
+
+      if (!confirm(`Are you sure you want to delete "${activity.name}"?`)) {
         return;
       }
-  
+
       const response = await fetch(`/api/event-plans/activities/${activity.id}`, {
         method: "DELETE",
       });
-  
-      if (!response.ok) {
-        throw new Error("Failed to delete activity");
-      }
-  
-      // Remove the activity from the local state
-      setActivities((prevActivities) =>
-        prevActivities.filter((_, i) => i !== index)
-      );
 
-      // Refresh schedule in case any items were linked to this activity
-      fetchSchedule();
+      if (!response.ok) throw new Error("Failed to delete activity");
+
+      setActivities((prev) => prev.filter((_, i) => i !== index));
+      await fetchSchedule(); // Refresh schedule
     } catch (error) {
       console.error("Error deleting activity:", error);
       alert("Failed to delete activity. Please try again.");
     }
   };
 
-  // For Schedule Tab
+  // Schedule operations
   const fetchSchedule = async () => {
     try {
       const response = await fetch(`/api/event-plans/${id}/schedule`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch schedule");
-      }
-      const scheduleData = await response.json();
-      console.log("Fetched schedule:", scheduleData);
-      setSchedule(scheduleData || []);
+      if (!response.ok) throw new Error("Failed to fetch schedule");
+      const data = await response.json();
+      setSchedule(data || []);
     } catch (error) {
       console.error("Error fetching schedule:", error);
     }
   };
 
-  // Function to add a new schedule item
   const addScheduleItem = async () => {
     try {
       const newScheduleItem = {
-        start_date: "2024-12-14", // Example default values
+        start_date: new Date().toISOString().split('T')[0],
         start_time: "12:00",
         end_time: "13:00",
         activity_id: null,
@@ -318,106 +256,74 @@ const EventPlanningPage = ({ id }: { id: string }) => {
 
       const response = await fetch(`/api/event-plans/${id}/schedule`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newScheduleItem),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to add schedule item");
-      }
-
-      console.log("Schedule item added successfully");
-      fetchSchedule(); // Refresh the schedule after adding
+      if (!response.ok) throw new Error("Failed to add schedule item");
+      await fetchSchedule();
     } catch (error) {
       console.error("Error adding schedule item:", error);
     }
   };
 
-  // For Tasks tab
-  const fetchTasks = async (eventId: string, setTasks: (tasks: Task[]) => void) => {
+  // Tasks operations
+  const fetchTasks = async () => {
     try {
-      const response = await fetch(`/api/event-plans/${eventId}/tasks`, {
-        method: "GET",
-      });
-  
-      if (!response.ok) {
-        throw new Error("Failed to fetch tasks");
-      }
-  
-      const tasks = await response.json();
-      console.log("Fetched tasks:", tasks);
-  
-      // Update the tasks state
-      setTasks(tasks);
+      const response = await fetch(`/api/event-plans/${id}/tasks`);
+      if (!response.ok) throw new Error("Failed to fetch tasks");
+      const data = await response.json();
+      setTasks(data || []);
     } catch (error) {
       console.error("Error fetching tasks:", error);
     }
   };
 
-  // Function to fetch budget items from API
+  // Budget operations
   const fetchBudgetItems = async () => {
     try {
-      setLoading(true);
       const response = await fetch(`/api/event-plans/${id}/budget`);
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch budget items");
-      }
-      
+      if (!response.ok) throw new Error("Failed to fetch budget items");
       const data = await response.json();
       setBudget(data);
     } catch (error) {
       console.error("Error fetching budget items:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
-  
-
-  // This is the callback function to pass to BudgetTab
   const onBudgetChange = () => {
     fetchBudgetItems();
   };
 
-  // onStatusChange
+  // Status change
   const onStatusChange = async (newStatus: string) => {
     try {
-      // Send a PATCH request to update the status in the backend
       const response = await fetch(`/api/event-plans/${id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
-  
-      if (!response.ok) {
-        throw new Error("Failed to update status");
-      }
+
+      if (!response.ok) throw new Error("Failed to update status");
 
       setStatus(newStatus);
-      
-  
-      console.log(`Status updated successfully to "${newStatus}" for event ID: ${id}`);
+      console.log(`Status updated to "${newStatus}"`);
     } catch (error) {
       console.error("Error updating status:", error);
       alert("Failed to update status. Please try again.");
     }
   };
 
-  // Recalculate spending whenever shopping changes
+  // Recalculate budget when shopping changes
   useEffect(() => {
-    fetchBudgetItems();
-  }, [shopping]);
-  
-  const isReadOnly = status == "completed";
+    if (!loading && shopping.length > 0) {
+      fetchBudgetItems();
+    }
+  }, [shopping.length]); // Only trigger on length change to avoid excessive calls
 
+  const isReadOnly = status === "completed";
 
-
-  // From Editor Screen
+  // Tab and status configuration
   const tabs = [
     { id: 'overview', label: 'Overview' },
     { id: 'activities', label: 'Activities' },
@@ -437,10 +343,84 @@ const EventPlanningPage = ({ id }: { id: string }) => {
 
   const currentStatus = statusOptions.find(s => s.value === status) || statusOptions[0];
 
-  
+  // Loading screen
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#d5dcf1',
+          gap: 3
+        }}
+      >
+        <CircularProgress size={60} sx={{ color: '#6B7FD7' }} />
+        <Typography variant="h6" sx={{ color: '#333', fontWeight: 600 }}>
+          Loading event data...
+        </Typography>
+      </Box>
+    );
+  }
+
+  // Error screen
+  if (error) {
+    return (
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#d5dcf1',
+          gap: 2
+        }}
+      >
+        <Typography variant="h6" sx={{ color: '#d32f2f', fontWeight: 600 }}>
+          Failed to load event
+        </Typography>
+        <Typography variant="body2" sx={{ color: '#666' }}>
+          {error}
+        </Typography>
+        <button
+          onClick={() => window.location.reload()}
+          style={{
+            padding: '10px 24px',
+            backgroundColor: '#6B7FD7',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '0.9rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            marginTop: '16px'
+          }}
+        >
+          Retry
+        </button>
+      </Box>
+    );
+  }
+
+  // Main content (only renders when data is loaded)
+  if (!eventBasics) return null;
+
+  // Create eventPlan object only when needed
+  const eventPlan: EventPlan = {
+    event_basics: eventBasics,
+    activities,
+    schedule_items: schedule,
+    tasks,
+    budget_items: budget,
+    shopping_items: shopping
+  };
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#d5dcf1' }}>
+      {/* Header */}
       <div style={{ backgroundColor: '#FFF', borderBottom: '1px solid #e0e0e0', padding: '20px 30px' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#333', margin: 0 }}>
@@ -471,6 +451,7 @@ const EventPlanningPage = ({ id }: { id: string }) => {
         </div>
       </div>
 
+      {/* Tabs */}
       <div style={{ backgroundColor: '#FFF', borderBottom: '1px solid #e0e0e0' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 30px' }}>
           <div style={{ display: 'flex', gap: '4px', overflowX: 'auto' }}>
@@ -497,6 +478,7 @@ const EventPlanningPage = ({ id }: { id: string }) => {
         </div>
       </div>
 
+      {/* Read-only warning */}
       {isReadOnly && (
         <div style={{ maxWidth: '1400px', margin: '20px auto 0', padding: '0 30px' }}>
           <div style={{ 
@@ -517,7 +499,7 @@ const EventPlanningPage = ({ id }: { id: string }) => {
         </div>
       )}
 
-      {/* ✅ Add Save Status Indicator (shared across all tabs) */}
+      {/* Save status indicator */}
       {saveStatus !== 'idle' && (
         <div
           style={{
@@ -538,7 +520,6 @@ const EventPlanningPage = ({ id }: { id: string }) => {
             alignItems: "center",
             gap: "8px",
             zIndex: 1000,
-            animation: "slideIn 0.3s ease",
           }}
         >
           {saveStatus === 'saving' && (
@@ -561,6 +542,7 @@ const EventPlanningPage = ({ id }: { id: string }) => {
         </div>
       )}
 
+      {/* Tab content */}
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '30px' }}>
         {activeTab === 'overview' && (
           <OverviewTab
@@ -568,7 +550,6 @@ const EventPlanningPage = ({ id }: { id: string }) => {
             updatePlan={updateEventBasics}
             isReadOnly={isReadOnly}
           />
-          
         )}
 
         {activeTab === "activities" && (
@@ -614,26 +595,25 @@ const EventPlanningPage = ({ id }: { id: string }) => {
             tasks={tasks}
             activities={activities}
             isReadOnly={isReadOnly}
-            fetchTasks={() => fetchTasks(id, setTasks)}
+            fetchTasks={fetchTasks}
           />
         )}
 
-      {activeTab === "budget" && (
-        <BudgetTab
-          event_id={id}
-          onBudgetChange={onBudgetChange}
-          budgetItems={budget}
-          isReadOnly={isReadOnly}
-          // updateBudgetItem={updateBudgetItem}
-          totalBudget={eventBasics.budget}
-        />
-      )}
+        {activeTab === "budget" && (
+          <BudgetTab
+            event_id={id}
+            onBudgetChange={onBudgetChange}
+            budgetItems={budget}
+            isReadOnly={isReadOnly}
+            totalBudget={eventBasics.budget}
+          />
+        )}
 
-      {activeTab === "summary" && (
-        <SummaryTab
-          eventPlan={eventPlan}
-        />
-      )}
+        {activeTab === "summary" && (
+          <SummaryTab
+            eventPlan={eventPlan}
+          />
+        )}
       </div>
     </div>
   );

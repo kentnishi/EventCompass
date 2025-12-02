@@ -62,7 +62,7 @@ export const generatePlaceholderScheduleItems = (eventId: string, activities: Ac
         end_date: null,
         start_time: "18:00",
         end_time: "19:00",
-        activity_id: activities[0].id,
+        activity_id: activities[0]?.id ?? null,
         location: "Grand Ballroom Foyer",
         notes: "Wine, beer, and light appetizers. Setup starts at 5:30 PM.",
     },
@@ -72,7 +72,7 @@ export const generatePlaceholderScheduleItems = (eventId: string, activities: Ac
         end_date: null,
         start_time: "18:30",
         end_time: "19:00",
-        activity_id: activities[1].id,
+        activity_id: activities[1].id ?? null,
         location: "Main Entrance",
         notes: "Have name badges and programs ready",
     },
@@ -83,7 +83,7 @@ export const generatePlaceholderScheduleItems = (eventId: string, activities: Ac
         event_id: eventId,
         start_time: "23:00",
         end_time: "02:00",
-        activity_id: activities[2].id,
+        activity_id: activities[2].id ?? null,
         location: "Main Hall",
         notes: "Continues past midnight into Saturday. Cleanup crew scheduled.",
     },
@@ -93,7 +93,7 @@ export const generatePlaceholderTasks = (eventId: string, activities: Activity[]
     // Placeholder Tasks Data
     {
       event_id: eventId,
-      activity_id: activities[0].id,
+      activity_id: activities[0].id ?? null,
       title: "Coordinate with photographer",
       description: "Book professional photographer for cocktail hour. Need someone experienced with event photography and comfortable working in dimly lit environments.",
       status: "in_progress" as const,
@@ -119,7 +119,7 @@ export const generatePlaceholderTasks = (eventId: string, activities: Activity[]
     },
     {
       event_id: eventId,
-      activity_id: activities[1].id,
+      activity_id: activities[1].id ?? null,
       title: "Finalize program booklet",
       description: "Design and finalize program booklet with event schedule, scholarship recipient bios, donor recognition, and speaker information. Need 210 copies printed.",
       status: "blocked" as const,
@@ -164,7 +164,7 @@ export const generatePlaceholderShoppingItems = (eventId: string, activities: Ac
         unit_cost: 10.99,
         quantity: 10,
         notes: "Must be sparkling",
-        activity_id: activities[0].id,
+        activity_id: activities[0].id ?? null,
         link: "https://www.walgreens.com/store/c/cooks-california-champagne-brut-white-sparkling-wine/ID=prod6084901-product",
         budget_id: budgetItems[0]?.id ?? null, // Linked budget item ID
         status: 'pending',
@@ -176,7 +176,7 @@ export const generatePlaceholderShoppingItems = (eventId: string, activities: Ac
         unit_cost: 50.14,
         quantity: 4,
         notes: "Vegetarian options included",
-        activity_id: activities[1].id,
+        activity_id: activities[1].id ?? null,
         link: "https://www.gourmetcateringsupplies.com/appetizer-platters",
         budget_id: budgetItems[0]?.id ?? null, // Linked budget item ID
         status: 'ordered',
