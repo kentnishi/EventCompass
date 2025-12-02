@@ -44,10 +44,10 @@ export async function GET() {
 
     const reg = stRes.data?.registered_count ?? Math.max(ev.attendees ?? 0, 0);
     const attended = stRes.data?.attended_count ?? Math.max(ev.attendees ?? 0, 0);
-    const walkins  = stRes.data?.walkins_count  ?? Math.round(attended * 0.1);
-    const noShow   = Math.max(reg - attended, 0);
+    const walkins = stRes.data?.walkins_count ?? Math.round(attended * 0.1);
+    const noShow = Math.max(reg - attended, 0);
 
-    const ratingAvg   = stRes.data?.rating_avg ?? null;
+    const ratingAvg = stRes.data?.rating_avg ?? null;
     const ratingCount = stRes.data?.rating_count ?? 0;
 
     const fbRes = await supabase
@@ -83,7 +83,8 @@ export async function GET() {
       },
       feedback: { pros, cons },
     });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message ?? String(e) }, { status: 500 });
+  } catch (e: unknown) {
+    const error = e as Error;
+    return NextResponse.json({ error: error.message ?? String(e) }, { status: 500 });
   }
 }

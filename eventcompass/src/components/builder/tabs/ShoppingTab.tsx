@@ -122,7 +122,7 @@ const ShoppingTab: React.FC<ShoppingTabProps> = ({
     const pendingCount = items.filter((item) => item.status === "pending").length;
     const orderedCount = items.filter((item) => item.status === "ordered").length;
     const receivedCount = items.filter((item) => item.status === "received").length;
-    
+
     return { budget, items, total, spent, pendingCount, orderedCount, receivedCount };
   });
 
@@ -380,12 +380,12 @@ const ShoppingTab: React.FC<ShoppingTabProps> = ({
                               <Typography variant="body2">{item.vendor}</Typography>
                             </TableCell>
                             <TableCell align="right">
-                                <Typography variant="body2">
-                                    {new Intl.NumberFormat("en-US", {
-                                        style: "currency",
-                                        currency: "USD",
-                                    }).format(item.unit_cost || 0)}
-                                </Typography>
+                              <Typography variant="body2">
+                                {new Intl.NumberFormat("en-US", {
+                                  style: "currency",
+                                  currency: "USD",
+                                }).format(item.unit_cost || 0)}
+                              </Typography>
                             </TableCell>
                             <TableCell align="center">
                               <Typography variant="body2" fontWeight={600}>
