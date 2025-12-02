@@ -56,6 +56,14 @@ const EventQuestionaire = () => {
     specialRequirements: ''
   });
   const [selectedConcept, setSelectedConcept] = useState(null);
+  const [customizations, setCustomizations] = useState({
+      includeActivities: true,
+      includeSchedule: true,
+      includeShopping: true,
+      includeTasks: true,
+      includeBudget: true,
+      detailLevel: 'comprehensive'
+    });
   const [eventPlan, setEventPlan] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [keepSections, setKeepSections] = useState({
@@ -223,6 +231,10 @@ const EventQuestionaire = () => {
     setSelectedConcept(concept);
   };
 
+  const handleConceptsSubmit = () => {
+    setStep('preview');
+  };
+
   const handleCreatePlan = () => {
     const plan = generateDetailedPlan();
     setEventPlan(plan);
@@ -233,6 +245,9 @@ const EventQuestionaire = () => {
     setKeepSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
+  const handleGenerateClick = () => {
+    proceedToEditor();
+  }
 
   const proceedToEditor = async () => {
     // const customizedPlan = PLACEHOLDER_EVENT_PLAN;
@@ -414,18 +429,19 @@ const EventQuestionaire = () => {
         onSelectConcept={handleConceptSelect}
         onCreatePlan={handleCreatePlan}
         onBack={() => setStep('intake')}
+        handleSubmit={handleConceptsSubmit}
       />
     );
   }
 
-  if (step === 'preview' && eventPlan) {
+  if (step === 'preview' && selectedConcept) {
     return (
       <PreviewScreen
-        eventPlan={eventPlan}
-        keepSections={keepSections}
-        onToggleSection={toggleSection}
-        onProceed={proceedToEditor}
+        selectedConcept={selectedConcept}
+        customizations={customizations}
+        setCustomizations={setCustomizations}
         onBack={() => setStep('concepts')}
+        onGenerate={handleGenerateClick}
       />
     );
   }
