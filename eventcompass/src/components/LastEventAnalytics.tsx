@@ -302,7 +302,7 @@ export default function LastEventAnalytics() {
       <div className="w-[90%] grid grid-cols-1  ml-[10px] lg:grid-cols-2 gap-8">
         <div>
           <h3 className="text-lg font-semibold mb-2">
-            Attendance by day of week
+            Attendance by Day of Week
           </h3>
           {weekdayBarCfg ? (
             <BaseChart config={weekdayBarCfg} height={320} />
@@ -313,7 +313,7 @@ export default function LastEventAnalytics() {
 
         <div>
           <h3 className="text-lg font-semibold mb-2">
-            Attendance: food vs no food
+            Attendance: Food vs No Food
           </h3>
           {foodBarCfg ? (
             <BaseChart config={foodBarCfg} height={320} />
