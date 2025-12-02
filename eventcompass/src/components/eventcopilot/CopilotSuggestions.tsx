@@ -248,11 +248,13 @@ export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestion
                 <div className="space-y-3">
                     {suggestions.map((suggestion) => (
                         <div key={suggestion.id} className="bg-white border border-slate-200 rounded-md p-4 mb-3 shadow-sm hover:border-indigo-300 transition-colors">
-                            <div className="flex justify-between items-start mb-2">
-                                <h4 className="font-semibold text-slate-800 text-sm leading-snug pr-2">
+                            <div className="flex justify-between items-start mb-2 gap-2">
+                                <h4 className="font-semibold text-slate-800 text-sm leading-snug flex-1 min-w-0 break-words">
                                     {suggestion.title}
                                 </h4>
-                                <Badge type={suggestion.type}>{suggestion.type}</Badge>
+                                <div className="flex-shrink-0">
+                                    <Badge type={suggestion.type}>{suggestion.type}</Badge>
+                                </div>
                             </div>
                             <p className="text-slate-600 text-xs leading-relaxed mb-4 break-words line-clamp-4">
                                 {suggestion.description}

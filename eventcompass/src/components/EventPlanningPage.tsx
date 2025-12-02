@@ -68,8 +68,9 @@ const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
         if (!eventRes.ok) throw new Error("Failed to fetch event details");
         const eventData = await eventRes.json();
 
-        setEventBasics(eventData);
-        setStatus(eventData.status || "planning");
+        // API returns { event: ... }
+        setEventBasics(eventData.event || eventData);
+        setStatus(eventData.event?.status || eventData.status || "planning");
 
         // Fetch sub-collections in parallel
         const [activitiesRes, scheduleRes, tasksRes, budgetRes, shoppingRes] = await Promise.all([
@@ -99,12 +100,30 @@ const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
     }
   }, [id]);
 
-  // Helper to update local state and trigger save (simplified for now)
-  // In a real app, you might want to debounce this or handle it per-tab
-  const updateEventBasics = (field: string, value: any) => {
+  // Helper to update local state and trigger save
+  const updateEventBasics = async (field: string, value: any) => {
     if (!eventBasics) return;
+
+    // Optimistic update
     setEventBasics(prev => prev ? { ...prev, [field]: value } : null);
-    // TODO: Implement auto-save or explicit save for basics
+
+    // Save to DB
+    try {
+      setSaveStatus('saving');
+      const response = await fetch(`/api/event-plans/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [field]: value }),
+      });
+
+      if (!response.ok) throw new Error("Failed to save");
+
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (err) {
+      console.error("Error saving event basics:", err);
+      setSaveStatus('error');
+    }
   };
 
   // --- Actions ---
@@ -178,13 +197,6 @@ const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
   };
 
   const addScheduleItem = () => {
-    // Implementation depends on how ScheduleTab handles additions. 
-    // Often it might just be a local addition until saved, or a direct API call.
-    // For consistency with addActivity, let's assume direct API or passed down handler.
-    // Since ScheduleTab takes addScheduleItem, we can define it here if needed, 
-    // or let ScheduleTab handle the API call. 
-    // Looking at the original code, it seemed to just update local state.
-    // Let's keep it simple for now.
     const newItem: Partial<ScheduleItem> = {
       event_id: id,
       start_time: "",
