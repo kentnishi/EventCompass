@@ -3,7 +3,7 @@ import { createServer } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-type Row = { response_id: string; value_json: any; value_text: string | null };
+type Row = { response_id: string; value_json: unknown; value_text: string | null };
 
 export async function GET() {
   try {
@@ -43,17 +43,17 @@ export async function GET() {
         .eq("question_id", qid52),
       qid52Other
         ? createServer()
-            .from("survey_answer")
-            .select("response_id,value_text")
-            .eq("question_id", qid52Other)
+          .from("survey_answer")
+          .select("response_id,value_text")
+          .eq("question_id", qid52Other)
         : Promise.resolve({ data: [] as any[], error: null }),
     ]);
 
     if (multiRes.error) throw multiRes.error;
-    if ((otherRes as any).error) throw (otherRes as any).error;
+    if ((otherRes as { error: unknown }).error) throw (otherRes as { error: unknown }).error;
 
     const multi: Row[] = (multiRes.data ?? []) as Row[];
-    const other = ((otherRes as any).data ?? []) as {
+    const other = ((otherRes as { data: unknown }).data ?? []) as {
       response_id: string;
       value_text: string | null;
     }[];
@@ -77,11 +77,11 @@ export async function GET() {
       const toks: string[] = Array.isArray(row.value_json)
         ? (row.value_json as string[])
         : row.value_text
-        ? String(row.value_text)
+          ? String(row.value_text)
             .split(/[;,|]/)
             .map((s) => s.trim())
             .filter(Boolean)
-        : [];
+          : [];
       for (const t of toks) add(row.response_id, t);
     }
 
@@ -117,9 +117,10 @@ export async function GET() {
       });
 
     return NextResponse.json(out, { status: 200 });
-  } catch (e: any) {
+  } catch (e: unknown) {
+    const error = e as Error;
     return NextResponse.json(
-      { error: e?.message ?? String(e) },
+      { error: error?.message ?? String(e) },
       { status: 500 }
     );
   }
