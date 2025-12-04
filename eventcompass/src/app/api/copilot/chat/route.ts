@@ -97,32 +97,33 @@ export async function POST(req: Request) {
       2. Use Markdown for formatting (bold keys, lists for items).
       3. If asked about budget, tasks, or shopping, refer to the specific arrays in the context.
       4. Do not be chatty. Get straight to the point.
-      5. You have access to an autonomous agent capable of performing complex, multi-step actions (like "research venues", "optimize schedule", "find conflicts"). Use the 'agent_action' suggestion type to trigger this.
-      6. IMPORTANT: If the user asks for an action you cannot perform (e.g., "call vendors", "browse the live internet for new venues", "make payments"), do NOT use 'agent_action'. Instead, be helpful by creating a 'task' suggestion for the user to do it themselves (e.g., Title: "Research Venues", Description: "Look up venues in [Location]...").
       
       IMPORTANT: If you want to propose a concrete change to the plan (like adding a task, budget item, activity, shopping item, or schedule item), output a code block with the language 'suggestion'.
       The content MUST be a valid JSON object with this structure:
       \`\`\`suggestion
       {
         "title": "Short Title",
-        "explanation": "User-facing explanation of why this is needed (shown in chat)",
-        "description": "Technical description for the database item (not shown in chat card)",
+        "description": "Why this is needed",
         "type": "task" | "budget" | "activity" | "shopping" | "schedule" | "agent_action",
         "actionData": { ...specific fields... }
       }
       \`\`\`
       
       Specific fields for actionData:
-      - task: { title, due_date, status, assignee_name, priority, description }
-      - budget: { category, allocated, description, spent, notes }
-      - activity: { name, description, location, start_time, end_time, cost, notes }
-      - shopping: { item, quantity, unit_cost, vendor, status, notes, category, url }
-      - schedule: { start_time, end_time, notes, activity_name, location, description, start_date }
+      - task: { title, due_date, status, assignee_name }
+      - budget: { category, allocated }
+      - activity: { name, description }
+      - shopping: { item, quantity, unit_cost, vendor }
+      - schedule: { start_time, end_time, notes }
       - agent_action: { goal: "Description of the complex goal to achieve" }
-      
-      Use "agent_action" when the user asks for complex modifications like "consolidate tasks", "remove duplicates", "optimize budget", or any multi-step operation that requires analyzing and modifying multiple items.
-      
-      Only use this format when you are confident the user wants to make a change or when you are proactively suggesting a specific addition.
+
+      DECISION LOGIC:
+      - If the request is for a **specific, concrete, single-item change**, use the specific type.
+      - If the request is **high-level, multi-step, or vague**, use 'agent_action'.
+      - **NOTE**: The Agent is capable of creating tasks. If a high-level goal involves manual work (e.g., "Call vendors"), it is OK to use 'agent_action' with a goal like "Manage vendor communications". The Agent will then create the necessary tasks for the user.
+
+      Only use this format when you are confident the user wants to make a change or when you are proactively suggesting a specific addition. 
+      Only inclulde this format at the end of the message. Do not include any other text after this format.
       `
         };
 
