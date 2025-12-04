@@ -14,10 +14,6 @@ export default function HomePage() {
 
       {/* center the content like the mock */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* header */}
-        <h1 className="text-3xl sm:text-4xl font-semibold tracking-wide">ON-CAMPUS</h1>
-        <p className="text-[#5f7aa2] sm:text-2xl font-semibold -mt-1 mb-4">Director</p>
-
         <section className="mb-6 bg-pink rounded-2xl shadow-sm p-4">
           <UpcomingEvents />
         </section>

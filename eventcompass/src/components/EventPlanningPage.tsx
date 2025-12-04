@@ -4,14 +4,14 @@ import { useRouter } from "next/navigation";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { CheckCircle as CheckCircleIcon, CloudQueue as CloudQueueIcon, CloudDone as CloudDoneIcon } from "@mui/icons-material";
 
-// Components
-import OverviewTab from "./builder/tabs/OverviewTab";
-import ActivitiesTab from "./builder/tabs/ActivitiesTab";
-import ScheduleTab from "./builder/tabs/ScheduleTab";
-import ShoppingTab from "./builder/tabs/ShoppingTab";
-import TasksTab from "./builder/tabs/TasksTab";
-import BudgetTab from "./builder/tabs/BudgetTab";
-import SummaryTab from "./builder/tabs/SummaryTab";
+import OverviewTab from '@/components/builder/tabs/OverviewTab';
+import ActivitiesTab from "@/components/builder/tabs/ActivitiesTab";
+import ScheduleTab from "@/components/builder/tabs/ScheduleTab";
+import TasksTab from "@/components/builder/tabs/TasksTab";
+import BudgetTab from "@/components/builder/tabs/BudgetTab";
+import ShoppingTab from "@/components/builder/tabs/ShoppingTab";
+import SummaryTab from "@/components/builder/tabs/SummaryTab";
+import ForecastTab from "@/components/builder/tabs/ForecastTab";
 import EventCopilot from "./eventcopilot/EventCopilot";
 
 // Types & Utils
@@ -37,6 +37,7 @@ const tabs = [
   { id: "budget", label: "Budget" },
   { id: "shopping", label: "Shopping" },
   { id: "summary", label: "Summary" },
+  { id: "forecast", label: "Forecast" },
 ];
 
 const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
@@ -57,54 +58,99 @@ const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
   const [shopping, setShopping] = useState<ShoppingItem[]>([]);
   const [status, setStatus] = useState("planning");
 
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch event basics
+      const eventRes = await fetch(`/api/event-plans/${id}`);
+      if (!eventRes.ok) throw new Error("Failed to fetch event details");
+      const eventData = await eventRes.json();
+
+      // API returns { event: ... }
+      setEventBasics(eventData.event || eventData);
+      setStatus(eventData.event?.status || eventData.status || "planning");
+
+      // Fetch sub-collections in parallel
+      const [activitiesRes, scheduleRes, tasksRes, budgetRes, shoppingRes] = await Promise.all([
+        fetch(`/api/event-plans/${id}/activities`),
+        fetch(`/api/event-plans/${id}/schedule`),
+        fetch(`/api/event-plans/${id}/tasks`),
+        fetch(`/api/event-plans/${id}/budget`),
+        fetch(`/api/event-plans/${id}/shopping`)
+      ]);
+
+      if (activitiesRes.ok) setActivities(await activitiesRes.json());
+      if (scheduleRes.ok) setSchedule(await scheduleRes.json());
+      if (tasksRes.ok) setTasks(await tasksRes.json());
+      if (budgetRes.ok) setBudget(await budgetRes.json());
+      if (shoppingRes.ok) setShopping(await shoppingRes.json());
+
+    } catch (err) {
+      console.error("Error loading event data:", err);
+      setError(err instanceof Error ? err.message : "An unknown error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fetch all data
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-
-        // Fetch event basics
-        const eventRes = await fetch(`/api/event-plans/${id}`);
-        if (!eventRes.ok) throw new Error("Failed to fetch event details");
-        const eventData = await eventRes.json();
-
-        setEventBasics(eventData);
-        setStatus(eventData.status || "planning");
-
-        // Fetch sub-collections in parallel
-        const [activitiesRes, scheduleRes, tasksRes, budgetRes, shoppingRes] = await Promise.all([
-          fetch(`/api/event-plans/${id}/activities`),
-          fetch(`/api/event-plans/${id}/schedule`),
-          fetch(`/api/event-plans/${id}/tasks`),
-          fetch(`/api/event-plans/${id}/budget`),
-          fetch(`/api/event-plans/${id}/shopping`)
-        ]);
-
-        if (activitiesRes.ok) setActivities(await activitiesRes.json());
-        if (scheduleRes.ok) setSchedule(await scheduleRes.json());
-        if (tasksRes.ok) setTasks(await tasksRes.json());
-        if (budgetRes.ok) setBudget(await budgetRes.json());
-        if (shoppingRes.ok) setShopping(await shoppingRes.json());
-
-      } catch (err) {
-        console.error("Error loading event data:", err);
-        setError(err instanceof Error ? err.message : "An unknown error occurred");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (id) {
       fetchData();
     }
   }, [id]);
 
-  // Helper to update local state and trigger save (simplified for now)
-  // In a real app, you might want to debounce this or handle it per-tab
-  const updateEventBasics = (field: string, value: any) => {
+  const refreshAllData = () => {
+    console.log("Refreshing all event data...");
+    fetchData();
+  };
+
+  const refreshDataSilent = async () => {
+    try {
+      // Fetch sub-collections in parallel without setting global loading
+      const [activitiesRes, scheduleRes, tasksRes, budgetRes, shoppingRes] = await Promise.all([
+        fetch(`/api/event-plans/${id}/activities`),
+        fetch(`/api/event-plans/${id}/schedule`),
+        fetch(`/api/event-plans/${id}/tasks`),
+        fetch(`/api/event-plans/${id}/budget`),
+        fetch(`/api/event-plans/${id}/shopping`)
+      ]);
+
+      if (activitiesRes.ok) setActivities(await activitiesRes.json());
+      if (scheduleRes.ok) setSchedule(await scheduleRes.json());
+      if (tasksRes.ok) setTasks(await tasksRes.json());
+      if (budgetRes.ok) setBudget(await budgetRes.json());
+      if (shoppingRes.ok) setShopping(await shoppingRes.json());
+    } catch (err) {
+      console.error("Error silently refreshing data:", err);
+    }
+  };
+
+  // Helper to update local state and trigger save
+  const updateEventBasics = async (field: string, value: any) => {
     if (!eventBasics) return;
+
+    // Optimistic update
     setEventBasics(prev => prev ? { ...prev, [field]: value } : null);
-    // TODO: Implement auto-save or explicit save for basics
+
+    // Save to DB
+    try {
+      setSaveStatus('saving');
+      const response = await fetch(`/api/event-plans/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [field]: value }),
+      });
+
+      if (!response.ok) throw new Error("Failed to save");
+
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (err) {
+      console.error("Error saving event basics:", err);
+      setSaveStatus('error');
+    }
   };
 
   // --- Actions ---
@@ -178,13 +224,6 @@ const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
   };
 
   const addScheduleItem = () => {
-    // Implementation depends on how ScheduleTab handles additions. 
-    // Often it might just be a local addition until saved, or a direct API call.
-    // For consistency with addActivity, let's assume direct API or passed down handler.
-    // Since ScheduleTab takes addScheduleItem, we can define it here if needed, 
-    // or let ScheduleTab handle the API call. 
-    // Looking at the original code, it seemed to just update local state.
-    // Let's keep it simple for now.
     const newItem: Partial<ScheduleItem> = {
       event_id: id,
       start_time: "",
@@ -535,9 +574,23 @@ const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
             eventPlan={eventPlan}
           />
         )}
+
+        {activeTab === "forecast" && (
+          <ForecastTab
+            eventId={id}
+            attendees={eventBasics.attendees} 
+
+          />
+        )}
       </div>
 
-      <EventCopilot eventPlan={eventPlan} updatePlan={updatePlan} eventId={id} />
+      <EventCopilot
+        eventPlan={eventPlan}
+        updatePlan={updatePlan}
+        eventId={id}
+        onRefresh={refreshDataSilent}
+        onNavigate={setActiveTab}
+      />
     </div>
   );
 };

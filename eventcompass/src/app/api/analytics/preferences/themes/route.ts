@@ -20,7 +20,7 @@ export async function GET() {
 
     // 2) find the question ids by label text (robust to code changes)
     const findQ = async (needle: string) =>
-      supabase
+      createServer()
         .from("survey_question")
         .select("id, text")
         .eq("survey_id", surveyId)
@@ -45,12 +45,12 @@ export async function GET() {
 
     // 3) fetch answers
     const [multiRes, otherRes] = await Promise.all([
-      supabase
+      createServer()
         .from("survey_answer")
         .select("response_id,value_json,value_text")
         .eq("question_id", selectedQ.data.id),
       otherQ.data
-        ? supabase
+        ? createServer()
             .from("survey_answer")
             .select("response_id,value_text")
             .eq("question_id", otherQ.data.id)

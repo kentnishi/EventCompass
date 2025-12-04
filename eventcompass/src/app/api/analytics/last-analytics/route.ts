@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServer } from "@/lib/supabase/server";
+import { supabase } from "@/lib/supabase/client"; 
 
 function nowPartsUTC() {
   const now = new Date();
@@ -50,7 +51,7 @@ export async function GET() {
     const ratingAvg = stRes.data?.rating_avg ?? null;
     const ratingCount = stRes.data?.rating_count ?? 0;
 
-    const fbRes = await supabase
+    const fbRes = await createServer()
       .from("event_feedback")
       .select("sentiment,text")
       .eq("event_id", ev.id)

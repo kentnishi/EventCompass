@@ -10,7 +10,7 @@ export default function NavBar() {
     <nav className={styles.nav} aria-label="Main navigation">
       <div className={styles.wrap}>
         <div className={styles.brand}>
-          <img src="/upb.svg" alt="UPB Logo" className={styles.mark} />
+          <img src="/compass.svg" alt="Event Compass Logo" className={styles.mark} />
           <div className={styles.product}>
             <span>Event</span>
             <span>Compass</span>

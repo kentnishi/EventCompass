@@ -9,12 +9,17 @@ export async function POST(req: Request) {
     console.log("----- SUGGESTIONS REQUEST -----");
     console.log("Event Context Summary:", {
       name: eventContext.name,
-      activitiesCount: eventContext.activities?.length
+      activitiesCount: eventContext.activities?.length || 0,
+      tasksCount: eventContext.tasks?.length || 0,
+      budgetTotal: (eventContext.budget_items || eventContext.budget)?.reduce((sum: number, item: any) => sum + (item.allocated || item.estimated || 0), 0) || 0,
+      shoppingItemsCount: (eventContext.shopping_items || eventContext.shopping)?.length || 0,
+      scheduleItemsCount: (eventContext.schedule_items || eventContext.schedule)?.length || 0
     });
 
     const systemPrompt: ChatCompletionMessage = {
       role: "system",
       content: `You are an expert event planning assistant. Analyze the current event plan and provide 3-5 specific, actionable suggestions to improve it.
+      Current Date: ${new Date().toLocaleDateString()}
       
       Current Event Plan Context:
       ${JSON.stringify(eventContext, null, 2)}
@@ -23,14 +28,24 @@ export async function POST(req: Request) {
       - id: string (unique)
       - title: string (short, action-oriented)
       - description: string (why this is important)
-      - type: "task" | "budget" | "activity" | "shopping" | "schedule" | "general"
+      - type: "task" | "budget" | "activity" | "shopping" | "schedule" | "agent_action"
       
       - actionData: object (optional, specific data to apply)
-        - For "task": { task, deadline, status, assignedTo }
-        - For "budget": { category, estimated }
-        - For "activity": { name, description }
-        - For "shopping": { item, quantity, category, estimatedCost }
-        - For "schedule": { time, duration, notes }
+        - For "task": { title, due_date, status, assignee_name }
+        - For "budget": { category, allocated }
+        - For "activity": { name, description, notes, staffing_needs }
+        - For "shopping": { item, quantity, unit_cost, vendor, budget_id }
+        - For "schedule": { start_time, end_time, notes }
+        - For "agent_action": { goal: "Description of the complex goal to achieve" }
+      
+      IMPORTANT DATA INTEGRITY RULES:
+      1. **Shopping Items**: You MUST include a 'budget_id' in actionData. Look at the 'budget_items' array in the context. Find the budget item that best matches the purchase (e.g., "Food", "Decor", "General") and use its 'id'. If no good match exists, use the first available budget item ID.
+      2. **Schedule Items**: If you are scheduling an activity that already exists in 'activities', use its 'activity_id'. If it's a new activity, provide 'activity_name' so it can be auto-created.
+      
+      DECISION LOGIC:
+      - If the suggestion is a **specific, concrete, single-item change** (e.g., "Add a task to buy flowers"), use the specific type (task, budget, etc.).
+      - If the suggestion is **high-level, multi-step, or vague** (e.g., "Research venues", "Optimize schedule", "Plan check-in flow", "Handle catering"), use 'agent_action'.
+      - **NOTE**: The Agent is capable of creating tasks. If a high-level goal involves manual work (e.g., "Call vendors"), it is OK to use 'agent_action' with a goal like "Manage vendor communications". The Agent will then create the necessary tasks for the user.
       
       Example:
       {
@@ -41,9 +56,31 @@ export async function POST(req: Request) {
             "description": "You have a cleanup activity but no assigned task for it.",
             "type": "task",
             "actionData": {
-              "task": "Coordinate cleanup crew",
-              "deadline": "2025-11-25",
-              "status": "pending"
+              "title": "Coordinate cleanup crew",
+              "due_date": "2025-11-25",
+              "status": "todo"
+            }
+          },
+          {
+            "id": "2",
+            "title": "Buy Decorations",
+            "description": "Purchase streamers and balloons.",
+            "type": "shopping",
+            "actionData": {
+              "item": "Streamers and Balloons",
+              "quantity": 5,
+              "unit_cost": 20,
+              "vendor": "Party City",
+              "budget_id": 123 
+            }
+          },
+          {
+            "id": "3",
+            "title": "Research Venues",
+            "description": "We need to find a suitable location for the event.",
+            "type": "agent_action",
+            "actionData": {
+              "goal": "Research and suggest 3 potential venues in San Francisco with a capacity of 100 people."
             }
           }
         ]
@@ -77,11 +114,12 @@ export async function POST(req: Request) {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
-        // Check if we already have suggestions for this event
+        // Check if we already have suggestions for this event AND user
         const { data: existing } = await supabase
           .from('suggestions')
           .select('id')
           .eq('event_id', eventId)
+          .eq('user_id', user.id) // Enforce user ownership
           .single();
 
         if (existing) {
@@ -91,7 +129,8 @@ export async function POST(req: Request) {
               suggestions: suggestionsData.suggestions,
               updated_at: new Date().toISOString()
             })
-            .eq('event_id', eventId);
+            .eq('event_id', eventId)
+            .eq('user_id', user.id); // Enforce user ownership
         } else {
           await supabase
             .from('suggestions')
@@ -132,6 +171,7 @@ export async function GET(req: Request) {
       .from('suggestions')
       .select('suggestions')
       .eq('event_id', eventId)
+      .eq('user_id', user.id) // Enforce user ownership
       .single();
 
     if (suggestionRecord) {
@@ -168,7 +208,8 @@ export async function PUT(req: Request) {
         suggestions: suggestions,
         updated_at: new Date().toISOString()
       })
-      .eq('event_id', eventId);
+      .eq('event_id', eventId)
+      .eq('user_id', user.id); // Enforce user ownership
 
     if (error) {
       console.error("Error updating suggestions:", error);

@@ -1,19 +1,36 @@
 import React from 'react';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import { Concept } from '@/types/eventPlan';
 
-const ConceptCustomization = ({ 
-  selectedConcept, 
-  customizations, 
-  setCustomizations, 
-  onBack, 
-  onGenerate 
-}) => {
+interface PreviewScreenProps {
+  selectedConcept: Concept;
+  customizations: {
+    includeActivities: boolean;
+    includeSchedule: boolean;
+    includeShopping: boolean;
+    includeTasks: boolean;
+    includeBudget: boolean;
+  };
+  setCustomizations: (customizations: any) => void;
+  onBack: () => void;
+  onGenerate: () => void;
+  isGenerating: boolean;
+}
+
+const ConceptCustomization = ({
+  selectedConcept,
+  customizations,
+  setCustomizations,
+  onBack,
+  onGenerate,
+  isGenerating
+}: PreviewScreenProps) => {
   console.log("Selected Concept:", selectedConcept);
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#d5dcf1', padding: '30px' }}>
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-        <button 
+        <button
           onClick={onBack}
           style={{
             display: 'flex',
@@ -48,7 +65,7 @@ const ConceptCustomization = ({
             <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#333', marginBottom: '16px' }}>
               What should we include in your plan?
             </h3>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {[
                 { key: 'includeActivities', label: 'Detailed Activities', desc: 'Breakdown of all event activities with descriptions and staffing needs' },
@@ -118,14 +135,32 @@ const ConceptCustomization = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '8px'
+              gap: '8px',
+              opacity: isGenerating ? 0.7 : 1,
+              cursor: isGenerating ? 'not-allowed' : 'pointer'
             }}
+            disabled={isGenerating}
           >
-            <AutoAwesomeIcon style={{ width: '20px', height: '20px' }} />
-            Generate Complete Event Plan
+            {isGenerating ? (
+              <>
+                <AutoAwesomeIcon style={{ width: '20px', height: '20px', animation: 'spin 1s linear infinite' }} />
+                Generating Plan...
+              </>
+            ) : (
+              <>
+                <AutoAwesomeIcon style={{ width: '20px', height: '20px' }} />
+                Generate Complete Event Plan
+              </>
+            )}
           </button>
         </div>
       </div>
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };

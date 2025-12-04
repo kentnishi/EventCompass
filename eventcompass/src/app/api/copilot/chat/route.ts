@@ -19,11 +19,16 @@ export async function POST(req: Request) {
         if (chatId) {
             const { data: chat } = await supabase
                 .from("chats")
-                .select("messages")
+                .select("messages, user")
                 .eq("id", chatId)
                 .single();
 
             if (chat) {
+                // Verify ownership
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user || chat.user !== user.id) {
+                    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+                }
                 existingMessages = chat.messages || [];
             } else {
                 // Invalid chatId provided
@@ -36,25 +41,35 @@ export async function POST(req: Request) {
             const { data: { user } } = await supabase.auth.getUser();
 
             if (user) {
-                // Try to find existing chat for this event (Legacy behavior: find *any* chat for event if no specific ID)
-                // BUT for multi-chat support, if no ID is passed, we should probably create a NEW one or just pick the most recent?
-                // Let's stick to creating a new one if explicitly requested via the new API, 
-                // but here if just eventId is passed, maybe we default to the most recent one to be safe?
-                // actually, let's just create a new one if no chatId is passed to avoid confusion.
-
-                const { data: newChat } = await supabase
+                // Try to find existing chat for this user and event
+                const { data: existingChat } = await supabase
                     .from("chats")
-                    .insert({
-                        name: `Chat for ${eventContext.name || "Event"}`,
-                        user: user.id,
-                        event_id: eventId,
-                        messages: []
-                    })
-                    .select()
+                    .select("id, messages")
+                    .eq("event_id", eventId)
+                    .eq("user", user.id)
+                    .order("created_at", { ascending: false })
+                    .limit(1)
                     .single();
 
-                if (newChat) {
-                    chatId = newChat.id;
+                if (existingChat) {
+                    chatId = existingChat.id;
+                    existingMessages = existingChat.messages || [];
+                } else {
+                    // Create new chat if none exists
+                    const { data: newChat } = await supabase
+                        .from("chats")
+                        .insert({
+                            name: `Chat for ${eventContext.name || "Event"}`,
+                            user: user.id,
+                            event_id: eventId,
+                            messages: []
+                        })
+                        .select()
+                        .single();
+
+                    if (newChat) {
+                        chatId = newChat.id;
+                    }
                 }
             }
         }
@@ -65,14 +80,15 @@ export async function POST(req: Request) {
             name: eventContext.name,
             activitiesCount: eventContext.activities?.length || 0,
             tasksCount: eventContext.tasks?.length || 0,
-            budgetTotal: eventContext.budget?.reduce((sum: number, item: any) => sum + item.estimated, 0) || 0,
-            shoppingItemsCount: eventContext.shopping?.length || 0,
-            scheduleItemsCount: eventContext.schedule?.length || 0
+            budgetTotal: (eventContext.budget_items || eventContext.budget)?.reduce((sum: number, item: any) => sum + (item.allocated || item.estimated || 0), 0) || 0,
+            shoppingItemsCount: (eventContext.shopping_items || eventContext.shopping)?.length || 0,
+            scheduleItemsCount: (eventContext.schedule_items || eventContext.schedule)?.length || 0
         });
 
         const systemPrompt: ChatCompletionMessage = {
             role: "system",
             content: `You are an expert event planning assistant.
+            Current Date: ${new Date().toLocaleDateString()}
       
       Current Event Plan:
       ${JSON.stringify(eventContext, null, 2)}
@@ -89,19 +105,30 @@ export async function POST(req: Request) {
       {
         "title": "Short Title",
         "description": "Why this is needed",
-        "type": "task" | "budget" | "activity" | "shopping" | "schedule",
+        "type": "task" | "budget" | "activity" | "shopping" | "schedule" | "agent_action",
         "actionData": { ...specific fields... }
       }
       \`\`\`
       
       Specific fields for actionData:
-      - task: { task, deadline, status, assignedTo }
-      - budget: { category, estimated }
-      - activity: { name, description }
-      - shopping: { item, quantity, category, estimatedCost }
-      - schedule: { time, duration, notes }
-      
-      Only use this format when you are confident the user wants to make a change or when you are proactively suggesting a specific addition.
+      - task: { title, due_date, status, assignee_name }
+      - budget: { category, allocated }
+      - activity: { name, description, notes, staffing_needs }
+      - shopping: { item, quantity, unit_cost, vendor, budget_id, status: "pending" | "ordered" | "received" | "cancelled" }
+      - schedule: { start_time, end_time, notes }
+      - agent_action: { goal: "Description of the complex goal to achieve" }
+
+      IMPORTANT DATA INTEGRITY RULES:
+      1. **Shopping Items**: You MUST include a 'budget_id' in actionData. Look at the 'budget_items' array in the context. Find the budget item that best matches the purchase (e.g., "Food", "Decor", "General") and use its 'id'. If no good match exists, use the first available budget item ID.
+      2. **Schedule Items**: If you are scheduling an activity that already exists in 'activities', use its 'activity_id'. If it's a new activity, provide 'activity_name' so it can be auto-created.
+
+      DECISION LOGIC:
+      - If the request is for a **specific, concrete, single-item change**, use the specific type.
+      - If the request is **high-level, multi-step, or vague**, use 'agent_action'.
+      - **NOTE**: The Agent is capable of creating tasks. If a high-level goal involves manual work (e.g., "Call vendors"), it is OK to use 'agent_action' with a goal like "Manage vendor communications". The Agent will then create the necessary tasks for the user.
+
+      Only use this format when you are confident the user wants to make a change or when you are proactively suggesting a specific addition. 
+      Only inclulde this format at the end of the message. Do not include any other text after this format.
       `
         };
 
@@ -110,7 +137,14 @@ export async function POST(req: Request) {
             content: message
         };
 
-        const stream = await getChatCompletionStream([systemPrompt, ...existingMessages.map((m: any) => ({ role: m.role.toLowerCase(), content: m.text })), userMessageObj]);
+        const CONVERSATION_WINDOW_SIZE = 20;
+        const recentMessages = existingMessages.slice(-CONVERSATION_WINDOW_SIZE);
+
+        const stream = await getChatCompletionStream([
+            systemPrompt,
+            ...recentMessages.map((m: any) => ({ role: m.role.toLowerCase(), content: m.text })),
+            userMessageObj
+        ]);
 
         if (!stream) {
             return NextResponse.json({ error: "Failed to start stream" }, { status: 500 });
@@ -129,34 +163,51 @@ export async function POST(req: Request) {
                         controller.enqueue(encoder.encode(content));
                     }
                 }
-                controller.close();
 
                 console.log("----- CHAT RESPONSE -----");
                 console.log("AI Response:", fullResponse);
                 console.log("-------------------------");
 
                 // Persist messages if we have a chatId
+                // CRITICAL: Perform DB update BEFORE closing the controller.
+                // In serverless environments, closing the stream might terminate the execution context immediately.
                 if (chatId) {
-                    const newUserMsg = {
-                        id: randomUUID(),
-                        role: "USER",
-                        text: message,
-                        createdAt: new Date().toISOString()
-                    };
-                    const newAiMsg = {
-                        id: randomUUID(),
-                        role: "ASSISTANT",
-                        text: fullResponse,
-                        createdAt: new Date().toISOString()
-                    };
+                    try {
+                        // Fetch latest messages to avoid race conditions/overwrites
+                        const { data: currentChat } = await supabase
+                            .from("chats")
+                            .select("messages")
+                            .eq("id", chatId)
+                            .single();
 
-                    const updatedMessages = [...existingMessages, newUserMsg, newAiMsg];
+                        const currentMessages = currentChat?.messages || [];
 
-                    await supabase
-                        .from("chats")
-                        .update({ messages: updatedMessages })
-                        .eq("id", chatId);
+                        const newUserMsg = {
+                            id: randomUUID(),
+                            role: "USER",
+                            text: message,
+                            createdAt: new Date().toISOString()
+                        };
+
+                        const newAiMsg = {
+                            id: randomUUID(),
+                            role: "ASSISTANT",
+                            text: fullResponse,
+                            createdAt: new Date().toISOString()
+                        };
+
+                        await supabase
+                            .from("chats")
+                            .update({ messages: [...currentMessages, newUserMsg, newAiMsg] })
+                            .eq("id", chatId);
+
+                    } catch (dbError) {
+                        console.error("Failed to save chat messages:", dbError);
+                    }
                 }
+
+                // Close the stream only AFTER the DB update is complete
+                controller.close();
             },
         });
 
@@ -192,6 +243,7 @@ export async function GET(req: Request) {
             .from("chats")
             .select("messages")
             .eq("id", chatId)
+            .eq("user", user.id) // Enforce ownership
             .single();
 
         if (chat) {
