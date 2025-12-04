@@ -20,12 +20,60 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
   isLoading
 }) => {
 
+  useEffect(() => {
+    console.log("Form Data Updated:", formData);
+  }, [formData]);
+
+  const [dateErrors, setDateErrors] = React.useState<{
+    startBeforeCreated?: string;
+    endBeforeStart?: string;
+  }>({});
+  
+  const [dateWarning, setDateWarning] = React.useState<string>('');
+
+  // Date validation effect
+  useEffect(() => {
+    const errors: typeof dateErrors = {};
+    let warning = '';
+
+    if (formData.startDate) {
+      const startDate = new Date(formData.startDate);
+      const today = new Date(formData.createdAt);
+      today.setHours(0, 0, 0, 0); // Reset time for comparison
+
+      // Error: Start date is in the past
+      if (startDate < today) {
+        errors.startBeforeCreated = 'Start date cannot be in the past';
+      }
+
+      // Warning: Start date is less than a week away
+      const oneWeekFromNow = new Date(today);
+      oneWeekFromNow.setDate(today.getDate() + 7);
+      if (startDate < oneWeekFromNow && startDate >= today) {
+        warning = 'Note: Your event is less than a week away. Make sure you have enough time to prepare!';
+      }
+
+      // Error: End date is before start date
+      if (formData.endDate) {
+        const endDate = new Date(formData.endDate);
+        if (endDate < startDate) {
+          errors.endBeforeStart = 'End date cannot be before start date';
+        }
+      }
+    }
+
+    setDateErrors(errors);
+    setDateWarning(warning);
+  }, [formData.startDate, formData.endDate]);
+
   const validateForm = () => {
     // Common required fields for all paths
     if (!formData.organizationName?.trim()) return false;
     if (!formData.startDate) return false;
     if (!formData.totalBudget && formData.totalBudget !== 0) return false;
     if (!formData.expectedAttendance) return false;
+
+    if (Object.keys(dateErrors).length > 0) return false;
   
     // Path-specific validation
     if (selectedPath === 'no-idea') {
@@ -54,10 +102,14 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
   
   const isFormValid = validateForm();
 
-  const handleCheckboxChange = (field: string, value) => {
+  interface CheckboxChangeHandler {
+    (field: keyof typeof formData, value: string): void;
+  }
+
+  const handleCheckboxChange: CheckboxChangeHandler = (field, value) => {
     const current = formData[field] || [];
     const updated = current.includes(value)
-      ? current.filter(item => item !== value)
+      ? current.filter((item: string) => item !== value)
       : [...current, value];
     setFormData({ ...formData, [field]: updated });
   };
@@ -149,6 +201,18 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
               cursor: 'pointer',
             }}
           />
+          {dateErrors.startBeforeCreated && (
+            <div style={{ 
+              marginTop: '6px', 
+              fontSize: '0.85rem', 
+              color: '#EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              ⚠️ {dateErrors.startBeforeCreated}
+            </div>
+          )}
         </div>
 
         <div>
@@ -171,6 +235,18 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
             }}
             placeholder="Leave blank for single day"
           />
+          {dateErrors.endBeforeStart && (
+            <div style={{ 
+              marginTop: '6px', 
+              fontSize: '0.85rem', 
+              color: '#EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              ⚠️ {dateErrors.endBeforeStart}
+            </div>
+          )}
         </div>
 
         <div>
@@ -361,6 +437,18 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
               cursor: 'pointer',
             }}
           />
+          {dateErrors.startBeforeCreated && (
+            <div style={{ 
+              marginTop: '6px', 
+              fontSize: '0.85rem', 
+              color: '#EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              ⚠️ {dateErrors.startBeforeCreated}
+            </div>
+          )}
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '8px' }}>
@@ -382,6 +470,18 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
             }}
             placeholder="Leave blank for single day"
           />
+          {dateErrors.endBeforeStart && (
+            <div style={{ 
+              marginTop: '6px', 
+              fontSize: '0.85rem', 
+              color: '#EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              ⚠️ {dateErrors.endBeforeStart}
+            </div>
+          )}
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '8px' }}>
@@ -579,6 +679,18 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
               cursor: 'pointer',
             }}
           />
+            {dateErrors.startBeforeCreated && (
+              <div style={{ 
+                marginTop: '6px', 
+                fontSize: '0.85rem', 
+                color: '#EF4444',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                ⚠️ {dateErrors.startBeforeCreated}
+              </div>
+            )}
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '8px' }}>
@@ -600,6 +712,18 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
             }}
             placeholder="Leave blank for single day"
           />
+          {dateErrors.endBeforeStart && (
+            <div style={{ 
+              marginTop: '6px', 
+              fontSize: '0.85rem', 
+              color: '#EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              ⚠️ {dateErrors.endBeforeStart}
+            </div>
+          )}
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '8px' }}>
@@ -868,7 +992,24 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
                   placeholder="e.g., 60"
                 />
               </div>
-            </div>
+            </div> 
+            {/* Date warning if event date is less than one week from today */}
+            {dateWarning && (
+              <div style={{
+                padding: '12px 16px',
+                backgroundColor: '#FEF3C7',
+                border: '1px solid #FCD34D',
+                borderRadius: '8px',
+                color: '#92400E',
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '8px',
+              }}>
+                <span style={{ fontSize: '1.1rem' }}>⏰</span>
+                <span>{dateWarning}</span>
+              </div>
+            )}
 
             <button
               onClick={onSubmit}

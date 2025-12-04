@@ -38,6 +38,7 @@ const EventQuestionaire = () => {
     venue: '',
     startDate: '',
     endDate: '',  // Optional for multi-day events
+    createdAt: new Date().toISOString(),
 
     // No-idea specific
     eventGoals: [],
