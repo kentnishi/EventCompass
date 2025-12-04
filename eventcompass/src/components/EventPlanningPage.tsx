@@ -58,48 +58,74 @@ const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
   const [shopping, setShopping] = useState<ShoppingItem[]>([]);
   const [status, setStatus] = useState("planning");
 
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch event basics
+      const eventRes = await fetch(`/api/event-plans/${id}`);
+      if (!eventRes.ok) throw new Error("Failed to fetch event details");
+      const eventData = await eventRes.json();
+
+      // API returns { event: ... }
+      setEventBasics(eventData.event || eventData);
+      setStatus(eventData.event?.status || eventData.status || "planning");
+
+      // Fetch sub-collections in parallel
+      const [activitiesRes, scheduleRes, tasksRes, budgetRes, shoppingRes] = await Promise.all([
+        fetch(`/api/event-plans/${id}/activities`),
+        fetch(`/api/event-plans/${id}/schedule`),
+        fetch(`/api/event-plans/${id}/tasks`),
+        fetch(`/api/event-plans/${id}/budget`),
+        fetch(`/api/event-plans/${id}/shopping`)
+      ]);
+
+      if (activitiesRes.ok) setActivities(await activitiesRes.json());
+      if (scheduleRes.ok) setSchedule(await scheduleRes.json());
+      if (tasksRes.ok) setTasks(await tasksRes.json());
+      if (budgetRes.ok) setBudget(await budgetRes.json());
+      if (shoppingRes.ok) setShopping(await shoppingRes.json());
+
+    } catch (err) {
+      console.error("Error loading event data:", err);
+      setError(err instanceof Error ? err.message : "An unknown error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fetch all data
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-
-        // Fetch event basics
-        const eventRes = await fetch(`/api/event-plans/${id}`);
-        if (!eventRes.ok) throw new Error("Failed to fetch event details");
-        const eventData = await eventRes.json();
-
-        // API returns { event: ... }
-        setEventBasics(eventData.event || eventData);
-        setStatus(eventData.event?.status || eventData.status || "planning");
-
-        // Fetch sub-collections in parallel
-        const [activitiesRes, scheduleRes, tasksRes, budgetRes, shoppingRes] = await Promise.all([
-          fetch(`/api/event-plans/${id}/activities`),
-          fetch(`/api/event-plans/${id}/schedule`),
-          fetch(`/api/event-plans/${id}/tasks`),
-          fetch(`/api/event-plans/${id}/budget`),
-          fetch(`/api/event-plans/${id}/shopping`)
-        ]);
-
-        if (activitiesRes.ok) setActivities(await activitiesRes.json());
-        if (scheduleRes.ok) setSchedule(await scheduleRes.json());
-        if (tasksRes.ok) setTasks(await tasksRes.json());
-        if (budgetRes.ok) setBudget(await budgetRes.json());
-        if (shoppingRes.ok) setShopping(await shoppingRes.json());
-
-      } catch (err) {
-        console.error("Error loading event data:", err);
-        setError(err instanceof Error ? err.message : "An unknown error occurred");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (id) {
       fetchData();
     }
   }, [id]);
+
+  const refreshAllData = () => {
+    console.log("Refreshing all event data...");
+    fetchData();
+  };
+
+  const refreshDataSilent = async () => {
+    try {
+      // Fetch sub-collections in parallel without setting global loading
+      const [activitiesRes, scheduleRes, tasksRes, budgetRes, shoppingRes] = await Promise.all([
+        fetch(`/api/event-plans/${id}/activities`),
+        fetch(`/api/event-plans/${id}/schedule`),
+        fetch(`/api/event-plans/${id}/tasks`),
+        fetch(`/api/event-plans/${id}/budget`),
+        fetch(`/api/event-plans/${id}/shopping`)
+      ]);
+
+      if (activitiesRes.ok) setActivities(await activitiesRes.json());
+      if (scheduleRes.ok) setSchedule(await scheduleRes.json());
+      if (tasksRes.ok) setTasks(await tasksRes.json());
+      if (budgetRes.ok) setBudget(await budgetRes.json());
+      if (shoppingRes.ok) setShopping(await shoppingRes.json());
+    } catch (err) {
+      console.error("Error silently refreshing data:", err);
+    }
+  };
 
   // Helper to update local state and trigger save
   const updateEventBasics = async (field: string, value: any) => {
@@ -558,7 +584,13 @@ const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
         )}
       </div>
 
-      <EventCopilot eventPlan={eventPlan} updatePlan={updatePlan} eventId={id} />
+      <EventCopilot
+        eventPlan={eventPlan}
+        updatePlan={updatePlan}
+        eventId={id}
+        onRefresh={refreshDataSilent}
+        onNavigate={setActiveTab}
+      />
     </div>
   );
 };

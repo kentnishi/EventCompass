@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { RefreshCw, Plus, Sparkles, Loader2, AlertCircle } from "lucide-react";
 
 interface Suggestion {
     id: string;
     title: string;
     description: string;
-    type: "task" | "budget" | "activity" | "shopping" | "schedule" | "general";
+    explanation?: string;
+    type: "task" | "budget" | "activity" | "shopping" | "schedule" | "general" | "agent_action";
     actionData?: any;
 }
 
@@ -15,6 +16,9 @@ interface CopilotSuggestionsProps {
     eventPlan: any;
     updatePlan: (field: string, value: any) => void;
     onSuggestionsFound: () => void;
+    eventId?: string;
+    onRefresh?: () => void;
+    onNavigate?: (tab: string) => void;
 }
 
 const Badge = ({ type, children }: { type: string, children: React.ReactNode }) => {
@@ -24,6 +28,7 @@ const Badge = ({ type, children }: { type: string, children: React.ReactNode }) 
         activity: "bg-purple-100 text-purple-700 border-purple-200",
         budget: "bg-emerald-100 text-emerald-700 border-emerald-200",
         shopping: "bg-pink-100 text-pink-700 border-pink-200",
+        agent_action: "bg-indigo-100 text-indigo-700 border-indigo-200",
         default: "bg-gray-100 text-gray-700 border-gray-200"
     };
 
@@ -31,15 +36,16 @@ const Badge = ({ type, children }: { type: string, children: React.ReactNode }) 
 
     return (
         <span className={`text-[11px] font-semibold uppercase tracking-wide px-2 py-1 rounded border ${className}`}>
-            {children}
+            {children === "agent_action" ? "AGENT" : children}
         </span>
     );
 };
 
-export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestionsFound, eventId }: CopilotSuggestionsProps & { eventId?: string }) {
+export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestionsFound, eventId, onRefresh, onNavigate }: CopilotSuggestionsProps) {
     const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [applyingSuggestionId, setApplyingSuggestionId] = useState<string | null>(null);
 
     // Fetch saved suggestions on mount
     React.useEffect(() => {
@@ -105,97 +111,134 @@ export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestion
         syncSuggestions(newSuggestions);
     };
 
-    const handleApplySuggestion = (suggestion: Suggestion) => {
+    const handleApplySuggestion = async (suggestion: Suggestion) => {
+        if (applyingSuggestionId) return;
+        setApplyingSuggestionId(suggestion.id);
+
         if (!suggestion.actionData) {
-            alert(`Suggestion applied: ${suggestion.title}`);
             const newSuggestions = suggestions.filter(s => s.id !== suggestion.id);
             setSuggestions(newSuggestions);
             syncSuggestions(newSuggestions);
+            setApplyingSuggestionId(null);
             return;
         }
 
         try {
-            switch (suggestion.type) {
-                case "task":
-                    const newTasks = [...(eventPlan.tasks || [])];
-                    const newTask = {
-                        id: Math.max(0, ...newTasks.map((t: any) => t.id)) + 1,
-                        task: suggestion.actionData.task || suggestion.title,
-                        deadline: suggestion.actionData.deadline || "TBD",
-                        status: suggestion.actionData.status || "pending",
-                        assignedTo: suggestion.actionData.assignedTo || "",
-                        linkedTo: suggestion.actionData.linkedTo || null
-                    };
-                    newTasks.push(newTask);
-                    updatePlan("tasks", newTasks);
-                    break;
+            let endpoint = "";
+            let body: any = {};
+            let method = "POST";
+            let targetTab = "";
 
-                case "budget":
-                    const newBudget = [...(eventPlan.budget || [])];
-                    const categoryIndex = newBudget.findIndex((b: any) => b.category === suggestion.actionData.category);
-                    if (categoryIndex >= 0) {
-                        newBudget[categoryIndex].estimated += suggestion.actionData.estimated || 0;
-                    } else {
-                        // If category doesn't exist, add it
-                        newBudget.push({
-                            category: suggestion.actionData.category,
-                            estimated: suggestion.actionData.estimated || 0,
-                            actual: 0
-                        });
-                    }
-                    updatePlan("budget", newBudget);
-                    break;
+            if (suggestion.type === "agent_action") {
+                endpoint = "/api/copilot/agent";
+                body = {
+                    goal: suggestion.actionData.goal,
+                    eventId,
+                    eventContext: eventPlan
+                };
+            } else {
+                switch (suggestion.type) {
+                    case "task":
+                        endpoint = `/api/event-plans/${eventId}/tasks`;
+                        body = {
+                            title: suggestion.actionData.title || suggestion.title || "Untitled Task",
+                            due_date: suggestion.actionData.due_date || null,
+                            status: suggestion.actionData.status || "todo",
+                            assignee_name: suggestion.actionData.assignee_name || "",
+                            priority: suggestion.actionData.priority || "medium",
+                            description: suggestion.actionData.description || suggestion.description || ""
+                        };
+                        targetTab = "tasks";
+                        break;
 
-                case "activity":
-                    const newActivities = [...(eventPlan.activities || [])];
-                    const newActivity = {
-                        id: Math.max(0, ...newActivities.map((a: any) => a.id)) + 1,
-                        name: suggestion.actionData.name || suggestion.title,
-                        description: suggestion.actionData.description || suggestion.description
-                    };
-                    newActivities.push(newActivity);
-                    updatePlan("activities", newActivities);
-                    break;
+                    case "budget":
+                        endpoint = `/api/event-plans/${eventId}/budget`;
+                        body = {
+                            category: suggestion.actionData.category || "Miscellaneous",
+                            allocated: suggestion.actionData.allocated || suggestion.actionData.amount || suggestion.actionData.cost || 0,
+                            description: suggestion.actionData.description || suggestion.actionData.item || suggestion.title || "Budget item",
+                            spent: suggestion.actionData.spent || 0,
+                            notes: suggestion.actionData.notes || ""
+                        };
+                        targetTab = "budget";
+                        break;
 
-                case "shopping":
-                    const newShopping = [...(eventPlan.shopping || [])];
-                    const newShoppingItem = {
-                        id: Math.max(0, ...newShopping.map((s: any) => s.id)) + 1,
-                        item: suggestion.actionData.item || suggestion.title,
-                        quantity: suggestion.actionData.quantity || "1",
-                        category: suggestion.actionData.category || "Miscellaneous",
-                        estimatedCost: suggestion.actionData.estimatedCost || 0,
-                        purchased: false,
-                        linkedTo: null
-                    };
-                    newShopping.push(newShoppingItem);
-                    updatePlan("shopping", newShopping);
-                    break;
+                    case "activity":
+                        endpoint = `/api/event-plans/${eventId}/activities`;
+                        body = {
+                            name: suggestion.actionData.name || suggestion.actionData.title || suggestion.title || "Untitled Activity",
+                            description: suggestion.actionData.description || suggestion.description || "",
+                            location: suggestion.actionData.location || "",
+                            start_time: suggestion.actionData.start_time || null,
+                            end_time: suggestion.actionData.end_time || null,
+                            cost: suggestion.actionData.cost || suggestion.actionData.price || 0,
+                            notes: suggestion.actionData.notes || "",
+                            event_id: eventId
+                        };
+                        targetTab = "activities";
+                        break;
 
-                case "schedule":
-                    const newSchedule = [...(eventPlan.schedule || [])];
-                    const newScheduleItem = {
-                        time: suggestion.actionData.time || "TBD",
-                        duration: suggestion.actionData.duration || 15,
-                        notes: suggestion.actionData.notes || suggestion.title,
-                        activityId: null
-                    };
-                    newSchedule.push(newScheduleItem);
-                    updatePlan("schedule", newSchedule);
-                    break;
+                    case "shopping":
+                        endpoint = `/api/event-plans/${eventId}/shopping`;
+                        body = {
+                            item: suggestion.actionData.item || suggestion.actionData.name || suggestion.title || "Shopping Item",
+                            quantity: parseInt(suggestion.actionData.quantity) || 1,
+                            unit_cost: parseFloat(suggestion.actionData.unit_cost) || parseFloat(suggestion.actionData.cost) || parseFloat(suggestion.actionData.price) || 0,
+                            vendor: suggestion.actionData.vendor || "",
+                            status: suggestion.actionData.status || "pending",
+                            notes: suggestion.actionData.notes || "",
+                            category: suggestion.actionData.category || "General",
+                            url: suggestion.actionData.url || "",
+                            event_id: eventId
+                        };
+                        targetTab = "shopping";
+                        break;
 
-                default:
-                    console.log("Unknown suggestion type", suggestion.type);
+                    case "schedule":
+                        endpoint = `/api/event-plans/${eventId}/schedule`;
+                        body = {
+                            start_time: suggestion.actionData.start_time || "09:00",
+                            end_time: suggestion.actionData.end_time || "10:00",
+                            activity_name: suggestion.actionData.activity_name || suggestion.actionData.name || suggestion.title || "Scheduled Item",
+                            location: suggestion.actionData.location || "",
+                            description: suggestion.actionData.description || suggestion.description || "",
+                            notes: suggestion.actionData.notes || "",
+                            start_date: suggestion.actionData.start_date || eventPlan.event_basics?.start_date,
+                            event_id: eventId
+                        };
+                        targetTab = "schedule";
+                        break;
+
+                    default:
+                        console.log("Unknown suggestion type", suggestion.type);
+                        setApplyingSuggestionId(null);
+                        return;
+                }
             }
 
-            // Remove applied suggestion and sync
-            const newSuggestions = suggestions.filter(s => s.id !== suggestion.id);
-            setSuggestions(newSuggestions);
-            syncSuggestions(newSuggestions);
+            const res = await fetch(endpoint, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+
+            if (res.ok) {
+                // Remove applied suggestion and sync
+                const newSuggestions = suggestions.filter(s => s.id !== suggestion.id);
+                setSuggestions(newSuggestions);
+                syncSuggestions(newSuggestions);
+
+                if (onRefresh) onRefresh();
+                if (onNavigate && targetTab && suggestion.type !== "agent_action") onNavigate(targetTab);
+            } else {
+                throw new Error("Failed to save to database");
+            }
 
         } catch (e) {
             console.error("Failed to apply suggestion", e);
             setError("Could not apply suggestion automatically.");
+        } finally {
+            setApplyingSuggestionId(null);
         }
     };
 
@@ -208,7 +251,7 @@ export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestion
                 <button
                     onClick={fetchSuggestions}
                     disabled={isLoading}
-                    className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 text-[11px] font-bold uppercase tracking-wide bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded border border-indigo-200 transition-colors"
+                    className="cursor-pointer flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 text-[11px] font-bold uppercase tracking-wide bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded border border-indigo-200 transition-colors"
                 >
                     <RefreshCw size={10} className={isLoading ? "animate-spin" : ""} />
                     Refresh
@@ -238,7 +281,7 @@ export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestion
                     </p>
                     <button
                         onClick={fetchSuggestions}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2 px-4 rounded shadow-sm transition-colors flex items-center justify-center gap-2"
+                        className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2 px-4 rounded shadow-sm transition-colors flex items-center justify-center gap-2"
                     >
                         <Sparkles size={14} />
                         Generate Ideas
@@ -246,36 +289,46 @@ export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestion
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {suggestions.map((suggestion) => (
-                        <div key={suggestion.id} className="bg-white border border-slate-200 rounded-md p-4 mb-3 shadow-sm hover:border-indigo-300 transition-colors">
-                            <div className="flex justify-between items-start mb-2 gap-2">
-                                <h4 className="font-semibold text-slate-800 text-sm leading-snug flex-1 min-w-0 break-words">
-                                    {suggestion.title}
-                                </h4>
-                                <div className="flex-shrink-0">
-                                    <Badge type={suggestion.type}>{suggestion.type}</Badge>
+                    {suggestions.map((suggestion) => {
+                        const isApplying = applyingSuggestionId === suggestion.id;
+                        return (
+                            <div key={suggestion.id} className="bg-white border border-slate-200 rounded-md p-4 mb-3 shadow-sm hover:border-indigo-300 transition-colors">
+                                <div className="flex justify-between items-start mb-2 gap-2">
+                                    <h4 className="font-semibold text-slate-800 text-sm leading-snug flex-1 min-w-0 break-words">
+                                        {suggestion.title}
+                                    </h4>
+                                    <div className="flex-shrink-0">
+                                        <Badge type={suggestion.type}>{suggestion.type}</Badge>
+                                    </div>
+                                </div>
+                                <p className="text-slate-600 text-xs leading-relaxed mb-4 break-words line-clamp-4">
+                                    {suggestion.explanation || suggestion.description}
+                                </p>
+                                <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
+                                    <button
+                                        onClick={() => handleApplySuggestion(suggestion)}
+                                        disabled={!!applyingSuggestionId}
+                                        className={`flex-1 text-white text-xs font-semibold py-2 rounded shadow-sm transition-colors flex items-center justify-center gap-1.5 ${isApplying
+                                            ? "bg-indigo-400 cursor-wait"
+                                            : !!applyingSuggestionId
+                                                ? "bg-indigo-300 cursor-not-allowed"
+                                                : "bg-indigo-600 hover:bg-indigo-700 cursor-pointer"
+                                            }`}
+                                    >
+                                        <Plus size={14} strokeWidth={2.5} />
+                                        {isApplying ? "APPLYING..." : "APPLY"}
+                                    </button>
+                                    <button
+                                        onClick={() => handleDismissSuggestion(suggestion.id)}
+                                        disabled={!!applyingSuggestionId}
+                                        className="cursor-pointer px-2 text-slate-400 hover:text-slate-600 text-xs font-semibold transition-colors uppercase disabled:opacity-50"
+                                    >
+                                        Dismiss
+                                    </button>
                                 </div>
                             </div>
-                            <p className="text-slate-600 text-xs leading-relaxed mb-4 break-words line-clamp-4">
-                                {suggestion.description}
-                            </p>
-                            <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
-                                <button
-                                    onClick={() => handleApplySuggestion(suggestion)}
-                                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2 rounded shadow-sm transition-colors flex items-center justify-center gap-1.5"
-                                >
-                                    <Plus size={14} strokeWidth={2.5} />
-                                    APPLY
-                                </button>
-                                <button
-                                    onClick={() => handleDismissSuggestion(suggestion.id)}
-                                    className="px-2 text-slate-400 hover:text-slate-600 text-xs font-semibold transition-colors uppercase"
-                                >
-                                    Dismiss
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>

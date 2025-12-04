@@ -26,11 +26,11 @@ export async function POST(req: Request) {
       - type: "task" | "budget" | "activity" | "shopping" | "schedule" | "general"
       
       - actionData: object (optional, specific data to apply)
-        - For "task": { task, deadline, status, assignedTo }
-        - For "budget": { category, estimated }
+        - For "task": { title, due_date, status, assignee_name }
+        - For "budget": { category, allocated }
         - For "activity": { name, description }
-        - For "shopping": { item, quantity, category, estimatedCost }
-        - For "schedule": { time, duration, notes }
+        - For "shopping": { item, quantity, unit_cost, vendor }
+        - For "schedule": { start_time, end_time, notes }
       
       Example:
       {
@@ -41,9 +41,9 @@ export async function POST(req: Request) {
             "description": "You have a cleanup activity but no assigned task for it.",
             "type": "task",
             "actionData": {
-              "task": "Coordinate cleanup crew",
-              "deadline": "2025-11-25",
-              "status": "pending"
+              "title": "Coordinate cleanup crew",
+              "due_date": "2025-11-25",
+              "status": "todo"
             }
           }
         ]
@@ -77,11 +77,12 @@ export async function POST(req: Request) {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
-        // Check if we already have suggestions for this event
+        // Check if we already have suggestions for this event AND user
         const { data: existing } = await supabase
           .from('suggestions')
           .select('id')
           .eq('event_id', eventId)
+          .eq('user_id', user.id) // Enforce user ownership
           .single();
 
         if (existing) {
@@ -91,7 +92,8 @@ export async function POST(req: Request) {
               suggestions: suggestionsData.suggestions,
               updated_at: new Date().toISOString()
             })
-            .eq('event_id', eventId);
+            .eq('event_id', eventId)
+            .eq('user_id', user.id); // Enforce user ownership
         } else {
           await supabase
             .from('suggestions')
@@ -132,6 +134,7 @@ export async function GET(req: Request) {
       .from('suggestions')
       .select('suggestions')
       .eq('event_id', eventId)
+      .eq('user_id', user.id) // Enforce user ownership
       .single();
 
     if (suggestionRecord) {
@@ -168,7 +171,8 @@ export async function PUT(req: Request) {
         suggestions: suggestions,
         updated_at: new Date().toISOString()
       })
-      .eq('event_id', eventId);
+      .eq('event_id', eventId)
+      .eq('user_id', user.id); // Enforce user ownership
 
     if (error) {
       console.error("Error updating suggestions:", error);

@@ -9,13 +9,20 @@ interface EventCopilotProps {
     eventPlan: any;
     updatePlan: (field: string, value: any) => void;
     eventId?: string;
+    onRefresh?: () => void;
+    onNavigate?: (tab: string) => void;
 }
 
-export default function EventCopilot({ eventPlan, updatePlan, eventId }: EventCopilotProps) {
+export default function EventCopilot({ eventPlan, updatePlan, eventId, onRefresh, onNavigate }: EventCopilotProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'chat' | 'suggestions'>('chat');
     const [hasUnreadSuggestions, setHasUnreadSuggestions] = useState(false);
     const [mounted, setMounted] = useState(false);
+
+    // Panel State
+    const [width, setWidth] = useState(400);
+    const [isResizing, setIsResizing] = useState(false);
+    const resizeStartRef = React.useRef({ x: 0, width: 0 });
 
     // Chat Session State
     const [chatSessions, setChatSessions] = useState<{ id: string, name: string }[]>([]);
@@ -25,6 +32,50 @@ export default function EventCopilot({ eventPlan, updatePlan, eventId }: EventCo
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // Resizing Logic
+    const handleResizeStart = (e: React.MouseEvent) => {
+        e.preventDefault(); // Prevent text selection
+        e.stopPropagation();
+        setIsResizing(true);
+        resizeStartRef.current = {
+            x: e.clientX,
+            width: width
+        };
+    };
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (isResizing) {
+                const deltaX = e.clientX - resizeStartRef.current.x;
+                // Dragging left (negative delta) increases width
+                // Dragging right (positive delta) decreases width
+                const newWidth = Math.max(300, Math.min(800, resizeStartRef.current.width - deltaX));
+                setWidth(newWidth);
+            }
+        };
+
+        const handleMouseUp = () => {
+            setIsResizing(false);
+        };
+
+        if (isResizing) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = 'ew-resize';
+            document.body.style.userSelect = 'none';
+        } else {
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        }
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        };
+    }, [isResizing]);
 
     // Fetch chat sessions on mount or when eventId changes
     useEffect(() => {
@@ -86,9 +137,16 @@ export default function EventCopilot({ eventPlan, updatePlan, eventId }: EventCo
         <>
             {/* Side Panel */}
             <div
-                className={`fixed top-0 right-0 h-full w-[400px] bg-white shadow-2xl z-[9999] transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'
+                className={`fixed top-0 right-0 h-full bg-white shadow-2xl z-[9999] transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'
                     } flex flex-col border-l border-slate-300 font-sans`}
+                style={{ width: width }}
             >
+                {/* Resize Handle (Left Edge) */}
+                <div
+                    className="absolute top-0 left-0 w-1.5 h-full cursor-ew-resize hover:bg-indigo-400 transition-colors z-50"
+                    onMouseDown={handleResizeStart}
+                />
+
                 {/* Header */}
                 <header className="px-4 py-3 border-b border-indigo-200 bg-[#C8D6F3] flex items-center justify-between z-10">
                     <div className="flex items-center gap-2.5">
@@ -156,13 +214,20 @@ export default function EventCopilot({ eventPlan, updatePlan, eventId }: EventCo
                         className={`absolute inset-0 transition-opacity duration-300 ${activeTab === 'chat' ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
                         style={{ visibility: activeTab === 'chat' ? 'visible' : 'hidden' }}
                     >
-                        {activeChatId ? (
+                        {isLoadingChats ? (
+                            <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                                <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
+                                <p className="text-sm font-medium text-slate-500">Loading chats...</p>
+                            </div>
+                        ) : activeChatId ? (
                             <CopilotChat
                                 key={activeChatId} // Force re-mount on chat switch
                                 eventPlan={eventPlan}
                                 eventId={eventId}
                                 updatePlan={updatePlan}
                                 chatId={activeChatId}
+                                onRefresh={onRefresh}
+                                onNavigate={onNavigate}
                             />
                         ) : (
                             <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8 text-center">
@@ -186,6 +251,8 @@ export default function EventCopilot({ eventPlan, updatePlan, eventId }: EventCo
                             updatePlan={updatePlan}
                             onSuggestionsFound={() => setHasUnreadSuggestions(true)}
                             eventId={eventId}
+                            onRefresh={onRefresh}
+                            onNavigate={onNavigate}
                         />
                     </div>
                 </div>
