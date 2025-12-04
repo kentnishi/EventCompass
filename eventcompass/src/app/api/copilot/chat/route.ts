@@ -112,10 +112,14 @@ export async function POST(req: Request) {
       Specific fields for actionData:
       - task: { title, due_date, status, assignee_name }
       - budget: { category, allocated }
-      - activity: { name, description }
-      - shopping: { item, quantity, unit_cost, vendor }
+      - activity: { name, description, notes, staffing_needs }
+      - shopping: { item, quantity, unit_cost, vendor, budget_id, status: "pending" | "ordered" | "received" | "cancelled" }
       - schedule: { start_time, end_time, notes }
       - agent_action: { goal: "Description of the complex goal to achieve" }
+
+      IMPORTANT DATA INTEGRITY RULES:
+      1. **Shopping Items**: You MUST include a 'budget_id' in actionData. Look at the 'budget_items' array in the context. Find the budget item that best matches the purchase (e.g., "Food", "Decor", "General") and use its 'id'. If no good match exists, use the first available budget item ID.
+      2. **Schedule Items**: If you are scheduling an activity that already exists in 'activities', use its 'activity_id'. If it's a new activity, provide 'activity_name' so it can be auto-created.
 
       DECISION LOGIC:
       - If the request is for a **specific, concrete, single-item change**, use the specific type.
@@ -132,7 +136,14 @@ export async function POST(req: Request) {
             content: message
         };
 
-        const stream = await getChatCompletionStream([systemPrompt, ...existingMessages.map((m: any) => ({ role: m.role.toLowerCase(), content: m.text })), userMessageObj]);
+        const CONVERSATION_WINDOW_SIZE = 20;
+        const recentMessages = existingMessages.slice(-CONVERSATION_WINDOW_SIZE);
+
+        const stream = await getChatCompletionStream([
+            systemPrompt,
+            ...recentMessages.map((m: any) => ({ role: m.role.toLowerCase(), content: m.text })),
+            userMessageObj
+        ]);
 
         if (!stream) {
             return NextResponse.json({ error: "Failed to start stream" }, { status: 500 });
@@ -151,34 +162,51 @@ export async function POST(req: Request) {
                         controller.enqueue(encoder.encode(content));
                     }
                 }
-                controller.close();
 
                 console.log("----- CHAT RESPONSE -----");
                 console.log("AI Response:", fullResponse);
                 console.log("-------------------------");
 
                 // Persist messages if we have a chatId
+                // CRITICAL: Perform DB update BEFORE closing the controller.
+                // In serverless environments, closing the stream might terminate the execution context immediately.
                 if (chatId) {
-                    const newUserMsg = {
-                        id: randomUUID(),
-                        role: "USER",
-                        text: message,
-                        createdAt: new Date().toISOString()
-                    };
-                    const newAiMsg = {
-                        id: randomUUID(),
-                        role: "ASSISTANT",
-                        text: fullResponse,
-                        createdAt: new Date().toISOString()
-                    };
+                    try {
+                        // Fetch latest messages to avoid race conditions/overwrites
+                        const { data: currentChat } = await supabase
+                            .from("chats")
+                            .select("messages")
+                            .eq("id", chatId)
+                            .single();
 
-                    const updatedMessages = [...existingMessages, newUserMsg, newAiMsg];
+                        const currentMessages = currentChat?.messages || [];
 
-                    await supabase
-                        .from("chats")
-                        .update({ messages: updatedMessages })
-                        .eq("id", chatId);
+                        const newUserMsg = {
+                            id: randomUUID(),
+                            role: "USER",
+                            text: message,
+                            createdAt: new Date().toISOString()
+                        };
+
+                        const newAiMsg = {
+                            id: randomUUID(),
+                            role: "ASSISTANT",
+                            text: fullResponse,
+                            createdAt: new Date().toISOString()
+                        };
+
+                        await supabase
+                            .from("chats")
+                            .update({ messages: [...currentMessages, newUserMsg, newAiMsg] })
+                            .eq("id", chatId);
+
+                    } catch (dbError) {
+                        console.error("Failed to save chat messages:", dbError);
+                    }
                 }
+
+                // Close the stream only AFTER the DB update is complete
+                controller.close();
             },
         });
 

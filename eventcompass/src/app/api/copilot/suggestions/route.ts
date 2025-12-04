@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       - actionData: object (optional, specific data to apply)
         - For "task": { title, due_date, status, assignee_name }
         - For "budget": { category, allocated }
-        - For "activity": { name, description }
+        - For "activity": { name, description, notes, staffing_needs }
         - For "shopping": { item, quantity, unit_cost, vendor, budget_id }
         - For "schedule": { start_time, end_time, notes }
         - For "agent_action": { goal: "Description of the complex goal to achieve" }

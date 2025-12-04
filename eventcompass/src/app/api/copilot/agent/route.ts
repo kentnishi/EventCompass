@@ -86,7 +86,9 @@ const tools = [
                             location: { type: "string" },
                             start_time: { type: "string" },
                             end_time: { type: "string" },
-                            cost: { type: "number" }
+                            cost: { type: "number" },
+                            notes: { type: "string" },
+                            staffing_needs: { type: "string" }
                         }
                     }
                 },
@@ -111,9 +113,10 @@ const tools = [
                             quantity: { type: "number" },
                             unit_cost: { type: "number" },
                             vendor: { type: "string" },
-                            status: { type: "string" },
+                            status: { type: "string", enum: ["pending", "ordered", "received", "cancelled"] },
                             category: { type: "string" },
-                            notes: { type: "string" }
+                            notes: { type: "string" },
+                            budget_id: { type: "number", description: "ID of the budget item to link to" }
                         }
                     }
                 },
@@ -271,6 +274,24 @@ export async function POST(req: Request) {
                     if (table) {
                         try {
                             if (args.action === "create") {
+                                // Auto-resolve budget_id for shopping items if missing
+                                if (table === "shopping_items" && !args.data.budget_id) {
+                                    // Try to find matching budget category
+                                    const category = args.data.category || "Miscellaneous";
+                                    // We need access to budget items here. They are in 'budget' array from the top scope.
+                                    // But we are inside a loop. We can access 'budget' because it's in the closure.
+                                    const match = budget?.find(b => b.category.toLowerCase() === category.toLowerCase());
+                                    if (match) {
+                                        args.data.budget_id = match.id;
+                                        console.log(`Agent auto-resolved budget_id to ${match.id} (${match.category})`);
+                                    } else if (budget && budget.length > 0) {
+                                        args.data.budget_id = budget[0].id;
+                                        console.log(`Agent defaulted budget_id to ${budget[0].id} (${budget[0].category})`);
+                                    } else {
+                                        console.warn("Agent could not resolve budget_id: No budget items found.");
+                                    }
+                                }
+
                                 let finalActivityId = args.data.activity_id;
 
                                 // Auto-create activity if name provided but id missing
@@ -295,6 +316,7 @@ export async function POST(req: Request) {
                                 const insertData = { ...args.data, event_id: eventId };
                                 if (table === "schedule_items") {
                                     insertData.activity_id = finalActivityId;
+                                    delete insertData.activity_name; // Remove non-column field
                                 }
 
                                 const { data, error } = await supabase
@@ -304,6 +326,19 @@ export async function POST(req: Request) {
                                     .single();
                                 result = { action: "create", table, data, error };
                             } else if (args.action === "update" && args.id) {
+                                console.log(`Attempting to update ${table} item ${args.id} with data:`, args.data);
+
+                                // Auto-resolve budget_id for shopping items on update too, if provided
+                                if (table === "shopping_items" && args.data.budget_id === undefined && args.data.category) {
+                                    // If category is changing but budget_id not provided, try to find match
+                                    const category = args.data.category;
+                                    const match = budget?.find(b => b.category.toLowerCase() === category.toLowerCase());
+                                    if (match) {
+                                        args.data.budget_id = match.id;
+                                        console.log(`Agent auto-resolved budget_id for update to ${match.id} (${match.category})`);
+                                    }
+                                }
+
                                 const { data, error } = await supabase
                                     .from(table)
                                     .update(args.data)
@@ -311,10 +346,13 @@ export async function POST(req: Request) {
                                     .select();
 
                                 if (error) {
+                                    console.error(`Update failed for ${table} ${args.id}:`, error);
                                     result = { action: "update", table, error };
                                 } else if (!data || data.length === 0) {
+                                    console.warn(`Update returned no data for ${table} ${args.id}. Item might not exist or no changes detected.`);
                                     result = { action: "update", table, error: "Item not found or no changes made" };
                                 } else {
+                                    console.log(`Update successful for ${table} ${args.id}:`, data[0]);
                                     result = { action: "update", table, data: data[0], error: null };
                                 }
                             } else if (args.action === "delete" && args.id) {
