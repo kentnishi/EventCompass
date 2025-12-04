@@ -203,6 +203,7 @@ export async function POST(req: Request) {
             {
                 role: "system",
                 content: `You are an autonomous event planning agent.
+                Current Date: ${new Date().toLocaleDateString()}
                 Your goal is to execute the user's request by modifying the event plan.
                 
                 Current Plan Context (Fresh from Database):

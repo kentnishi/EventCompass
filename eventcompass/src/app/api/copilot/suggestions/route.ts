@@ -19,6 +19,7 @@ export async function POST(req: Request) {
     const systemPrompt: ChatCompletionMessage = {
       role: "system",
       content: `You are an expert event planning assistant. Analyze the current event plan and provide 3-5 specific, actionable suggestions to improve it.
+      Current Date: ${new Date().toLocaleDateString()}
       
       Current Event Plan Context:
       ${JSON.stringify(eventContext, null, 2)}

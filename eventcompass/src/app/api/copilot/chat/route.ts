@@ -88,6 +88,7 @@ export async function POST(req: Request) {
         const systemPrompt: ChatCompletionMessage = {
             role: "system",
             content: `You are an expert event planning assistant.
+            Current Date: ${new Date().toLocaleDateString()}
       
       Current Event Plan:
       ${JSON.stringify(eventContext, null, 2)}
