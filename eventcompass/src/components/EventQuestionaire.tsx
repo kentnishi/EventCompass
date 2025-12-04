@@ -86,139 +86,7 @@ const EventQuestionaire = () => {
 
   const router = useRouter();
 
-  const paths = ["no-idea", "rough-idea", "solid-idea"];
-
-
-  const conceptsByPath = {
-    'no-idea': [
-      {
-        id: 1,
-        title: "Memory Lane Letter Writing Night",
-        goal: "Awareness + community",
-        description: "Students write letters to local nursing home residents living with Alzheimer's. Short educational intro by a guest speaker, followed by letter-writing and snacks.",
-        elements: ["Stationery table", "Short talk", "Reflection board", "Calm music"],
-        budget: "$-$$"
-      },
-      {
-        id: 2,
-        title: "Purple Ribbon Craft & Info Fair",
-        goal: "Education + hands-on",
-        description: "Interactive stations where students learn Alzheimer's facts while creating purple ribbon awareness crafts.",
-        elements: ["Craft stations", "Info booths", "Memory games", "Brain-healthy snacks"],
-        budget: "$$"
-      }
-    ],
-    'rough-idea': [
-      {
-        id: 1,
-        title: "DIY Korean Convenience Store Night",
-        goal: "Interactive + social",
-        description: "Stations with ramyeon bar, kimbap rolling demo, and snack tasting. Students build their own combo and decorate snack bags.",
-        elements: ["Ramyeon bar", "Kimbap rolling demo", "Snack tasting", "Bag decorating"],
-        budget: "$$"
-      },
-      {
-        id: 2,
-        title: "Korean Snack Flight Tasting",
-        goal: "Low-prep + discovery",
-        description: "Curated tasting of Korean snacks with info cards. Pre-prepped and casual with themed stations.",
-        elements: ["Tasting stations", "Info cards", "Voting boards", "Photo backdrop"],
-        budget: "$"
-      }
-    ]
-  };
-
-  const generateDetailedPlan = () => {
-    if (selectedConcept.id === 1) {
-      return {
-        name: "Memory Lane Letter Writing Night",
-        org: "Alzheimer's Awareness Group",
-        description: "An intimate evening where students write heartfelt letters to nursing home residents while learning about Alzheimer's disease and memory care.",
-        goals: ["Awareness/education", "Community bonding"],
-        attendance: 60,
-        date: "TBD",
-        activities: [
-          { id: 1, name: "Check-in & Welcome", description: "Greet attendees, distribute writing materials" },
-          { id: 2, name: "Educational Introduction", description: "Guest speaker shares about Alzheimer's and letter impact" },
-          { id: 3, name: "Letter Writing Session", description: "Guided letter writing with prompts and examples" },
-          { id: 4, name: "Reflection & Sharing", description: "Optional sharing at reflection board with snacks" },
-          { id: 5, name: "Wrap-up & Clean-up", description: "Collect letters, thank attendees" }
-        ],
-        schedule: [
-          { time: "6:00 PM", duration: 15, activityId: 1, notes: "" },
-          { time: "6:15 PM", duration: 20, activityId: 2, notes: "" },
-          { time: "6:35 PM", duration: 45, activityId: 3, notes: "" },
-          { time: "7:20 PM", duration: 20, activityId: 4, notes: "" },
-          { time: "7:40 PM", duration: 20, activityId: 5, notes: "" }
-        ],
-        shopping: [
-          { item: "Stationery sets", quantity: 60, category: "Materials", linkedTo: null, purchased: false },
-          { item: "Writing prompts cards", quantity: 60, category: "Materials", linkedTo: null, purchased: false },
-          { item: "Tea & Coffee", quantity: 60, category: "Food", linkedTo: null, purchased: false },
-          { item: "Cookies", quantity: 5, category: "Food", linkedTo: null, purchased: false },
-          { item: "Display boards", quantity: 2, category: "Equipment", linkedTo: null, purchased: false }
-        ],
-        tasks: [
-          { id: 1, task: "Book guest speaker", assignedTo: "", deadline: "2 weeks before", status: "pending", linkedTo: null },
-          { id: 2, task: "Order stationery supplies", assignedTo: "", deadline: "1 week before", status: "pending", linkedTo: null },
-          { id: 3, task: "Create letter writing prompts", assignedTo: "", deadline: "1 week before", status: "pending", linkedTo: null },
-          { id: 4, task: "Set up reflection board", assignedTo: "", deadline: "Day of event", status: "pending", linkedTo: null },
-          { id: 5, task: "Coordinate with nursing home", assignedTo: "", deadline: "3 weeks before", status: "pending", linkedTo: null }
-        ],
-        budget: [
-          { category: "Food & Beverages", estimated: 200, actual: 0 },
-          { category: "Stationery & Materials", estimated: 150, actual: 0 },
-          { category: "Guest Speaker", estimated: 0, actual: 0 },
-          { category: "Decorations", estimated: 75, actual: 0 },
-          { category: "Printing & Signage", estimated: 50, actual: 0 },
-          { category: "Miscellaneous", estimated: 25, actual: 0 }
-        ]
-      };
-    } else {
-      return {
-        name: "DIY Korean Convenience Store Night",
-        org: "Korean Cultural Association",
-        description: "Experience the fun of Korean convenience store culture with interactive food stations, DIY snack combos, and K-culture vibes.",
-        goals: ["Cultural education", "Community bonding", "Interactive experience"],
-        attendance: 80,
-        date: "TBD",
-        activities: [
-          { id: 1, name: "Check-in & Station Overview", description: "Welcome guests, explain stations, distribute tasting cards" },
-          { id: 2, name: "Open Stations Time", description: "Ramyeon bar, kimbap rolling, snack tasting, bag decorating" },
-          { id: 3, name: "Group Activity & Photos", description: "Best combo contest, photo booth with props" },
-          { id: 4, name: "Wrap-up & Clean-up", description: "Thank attendees, collect feedback" }
-        ],
-        schedule: [
-          { time: "7:00 PM", duration: 15, activityId: 1, notes: "" },
-          { time: "7:15 PM", duration: 60, activityId: 2, notes: "" },
-          { time: "8:15 PM", duration: 30, activityId: 3, notes: "" },
-          { time: "8:45 PM", duration: 15, activityId: 4, notes: "" }
-        ],
-        shopping: [
-          { id: 1, item: "Ramyeon varieties", quantity: 80, category: "Food", linkedTo: null, purchased: false },
-          { id: 2, item: "Kimbap ingredients", quantity: "For 80", category: "Food", linkedTo: null, purchased: false },
-          { id: 3, item: "Korean snacks", quantity: "10 boxes", category: "Food", linkedTo: null, purchased: false },
-          { id: 4, item: "Decorative bags", quantity: 80, category: "Materials", linkedTo: null, purchased: false },
-          { id: 5, item: "Photo props", quantity: "1 set", category: "Materials", linkedTo: null, purchased: false }
-        ],
-        tasks: [
-          { id: 1, task: "Reserve venue with kitchen", assignedTo: "", deadline: "3 weeks before", status: "pending", linkedTo: null },
-          { id: 2, task: "Order Korean ingredients", assignedTo: "", deadline: "1 week before", status: "pending", linkedTo: null },
-          { id: 3, task: "Recruit station leaders", assignedTo: "", deadline: "2 weeks before", status: "pending", linkedTo: null },
-          { id: 4, task: "Create contest rules", assignedTo: "", deadline: "1 week before", status: "pending", linkedTo: null }
-        ],
-        budget: [
-          { category: "Food & Ingredients", estimated: 600, actual: 0 },
-          { category: "Beverages", estimated: 120, actual: 0 },
-          { category: "Serving Supplies", estimated: 100, actual: 0 },
-          { category: "Decorations & Props", estimated: 80, actual: 0 },
-          { category: "Materials", estimated: 60, actual: 0 },
-          { category: "Miscellaneous", estimated: 40, actual: 0 }
-        ]
-      };
-    }
-  };
-
+  const paths = ["no-idea", "rough-idea", "solid-idea"]
 
 
   const handleStartPath = (path: string) => {
@@ -234,14 +102,16 @@ const EventQuestionaire = () => {
 
       // 2. Show loading state
       setIsGenerating(true);
+      console.log("Intake Form Data: ", intakeFormData);
 
       try {
-        // 3. Generate concepts (takes 10-20 seconds)
+        // Generate concepts (takes 10-20 seconds)
         const result = await generateConceptsWithRetry(intakeFormData, selectedPath);
 
         if (result.success && result.concepts) {
-          // 4. Set concepts (loading will automatically hide)
+          // Set concepts (loading will automatically hide)
           setConcepts(result.concepts);
+          setSelectedConcept(result.concepts[0]); // by default, connect to first selectedConcept
 
         } else {
           // Handle error - go back to intake

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
@@ -10,7 +10,6 @@ interface IntakeFormProps {
   formData: any;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
   isLoading: boolean;
-  i
 }
 const IntakeForm: React.FC<IntakeFormProps> = ({
   selectedPath,

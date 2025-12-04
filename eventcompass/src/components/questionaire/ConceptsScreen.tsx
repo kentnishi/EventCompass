@@ -2,7 +2,24 @@ import React, { useState } from 'react';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
-const ConceptsScreen = ({ selectedPath, concepts, selectedConcept, onSelectConcept, onCreatePlan, onBack, handleSubmit }) => {
+interface ConceptsScreenProps {
+  selectedPath: string;
+  concepts: any[];
+  selectedConcept: any | null;
+  onSelectConcept: (concept: any) => void;
+  onCreatePlan: () => void;
+  onBack: () => void;
+  handleSubmit: () => void;
+}
+const ConceptsScreen: React.FC<ConceptsScreenProps> = ({ 
+  selectedPath, 
+  concepts, 
+  selectedConcept, 
+  onSelectConcept, 
+  onCreatePlan, 
+  onBack, 
+  handleSubmit 
+}) => {
   const [view, setView] = useState('selection'); // 'selection', 'customization', 'generating'
 
   const handleGenerateClick = () => {
