@@ -28,6 +28,7 @@ import {
   LocalShipping,
   Cancel as CancelIcon,
   Pending,
+  Error as ErrorIcon,
 } from "@mui/icons-material";
 
 import ShoppingItemModal from "./modals/ShoppingItemModal";
@@ -343,7 +344,11 @@ const ShoppingTab: React.FC<ShoppingTabProps> = ({
                     </TableHead>
                     <TableBody>
                       {items.map((item) => {
-                        const statusConfig = getStatusConfig(item.status);
+                        const statusConfig = getStatusConfig(item.status) || {
+                          label: "Pending",
+                          color: "default" as const,
+                          icon: <Pending />
+                        };
                         const linkedActivity = activities.find((a) => a.id === item.activity_id);
                         const itemTotal = item.unit_cost * item.quantity;
 

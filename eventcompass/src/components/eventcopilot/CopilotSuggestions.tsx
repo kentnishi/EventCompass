@@ -368,9 +368,20 @@ export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestion
                                         <>
                                             <button
                                                 onClick={() => handleApplySuggestion(suggestion)}
-                                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2 rounded shadow-sm transition-colors flex items-center justify-center gap-1.5"
+                                                disabled={isApplying}
+                                                className={`flex-1 text-white text-xs font-semibold py-2 rounded shadow-sm transition-colors flex items-center justify-center gap-1.5 ${isApplying
+                                                        ? "bg-indigo-400 cursor-wait"
+                                                        : "bg-indigo-600 hover:bg-indigo-700 cursor-pointer"
+                                                    }`}
                                             >
-                                                Confirm & Run Agent
+                                                {isApplying ? (
+                                                    <>
+                                                        <Loader2 size={14} className="animate-spin" />
+                                                        RUNNING...
+                                                    </>
+                                                ) : (
+                                                    "Confirm & Run Agent"
+                                                )}
                                             </button>
                                             <button
                                                 onClick={() => {
