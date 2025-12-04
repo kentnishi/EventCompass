@@ -21,6 +21,39 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
   isLoading
 }) => {
 
+  const validateForm = () => {
+    // Common required fields for all paths
+    if (!formData.organizationName?.trim()) return false;
+    if (!formData.startDate) return false;
+    if (!formData.totalBudget && formData.totalBudget !== 0) return false;
+    if (!formData.expectedAttendance) return false;
+  
+    // Path-specific validation
+    if (selectedPath === 'no-idea') {
+      if (!formData.organizationMission?.trim()) return false;
+      if (!formData.eventGoals || formData.eventGoals.length === 0) return false;
+    }
+  
+    if (selectedPath === 'rough-idea') {
+      if (!formData.organizationMission?.trim()) return false;
+      if (!formData.roughIdea?.trim()) return false;
+      if (!formData.eventGoals || formData.eventGoals.length === 0) return false;
+      if (!formData.locationType) return false;
+    }
+  
+    if (selectedPath === 'solid-idea') {
+      if (!formData.eventName?.trim()) return false;
+      if (!formData.eventDescription?.trim()) return false;
+      if (!formData.startTime) return false;
+      if (!formData.endTime) return false;
+      if (!formData.locationType) return false;
+      if (!formData.venue?.trim()) return false;
+    }
+  
+    return true;
+  };
+  
+  const isFormValid = validateForm();
 
   const handleCheckboxChange = (field: string, value) => {
     const current = formData[field] || [];
@@ -35,7 +68,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
       {/* Organization Mission */}
       <div>
         <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '8px' }}>
-          Organization Mission & Goals
+          Organization Mission*
         </label>
         <textarea
           value={formData.organizationMission || ''}
@@ -100,7 +133,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
         <div>
           <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '8px' }}>
-            Preferred Start Date
+            Start Date*
           </label>
           <input
             type="date"
@@ -243,7 +276,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
       {/* Organization Mission */}
       <div>
         <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '8px' }}>
-          Organization Mission
+          Organization Mission & Goals*
         </label>
         <textarea
           value={formData.organizationMission || ''}
@@ -291,7 +324,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
       {/* Event Goals */}
       <div>
         <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '12px' }}>
-          Primary Goals for This Event
+          Primary Goals for This Event*
         </label>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
           {['Fundraising', 'Awareness/Education', 'Community Building', 'Cultural Celebration', 'Member Engagement', 'Outreach'].map(goal => (
@@ -790,15 +823,26 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
 
                 <input
                   type="number"
-                  value={formData.totalBudget || 0}
-                  onChange={(e) => setFormData({ ...formData, totalBudget: e.target.value })}
+                  value={formData.totalBudget === 0 ? "" : formData.totalBudget} // Allow empty string while editing
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData({
+                      ...formData,
+                      totalBudget: value === "" ? 0 : parseFloat(value), // Temporarily allow empty string
+                    });
+                  }}
+                  onBlur={(e) => {
+                    if (e.target.value === "") {
+                      setFormData({ ...formData, totalBudget: 0 });
+                    }
+                  }}
                   style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    fontSize: '1rem',
-                    border: '1px solid #ddd',
-                    borderRadius: '8px',
-                    color: '#4a5676',
+                    width: "100%",
+                    padding: "12px 16px",
+                    fontSize: "1rem",
+                    border: "1px solid #ddd",
+                    borderRadius: "8px",
+                    color: "#4a5676",
                     fontWeight: 500,
                   }}
                   placeholder="e.g., 2500"
@@ -829,11 +873,11 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
 
             <button
               onClick={onSubmit}
-              disabled={isLoading}
+              disabled={isLoading || !isFormValid}
               style={{
                 marginTop: '8px',
                 padding: '14px 32px',
-                backgroundColor: isLoading ? '#9CA3AF' : '#6B7FD7',
+                backgroundColor: (isLoading || !isFormValid) ? '#9CA3AF' : '#6B7FD7',
                 color: '#FFF',
                 border: 'none',
                 borderRadius: '8px',
@@ -844,7 +888,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                opacity: isLoading ? 0.7 : 1,
+                opacity: (isLoading || !isFormValid) ? 0.7 : 1,
                 transition: 'all 0.2s',
               }}
             >
