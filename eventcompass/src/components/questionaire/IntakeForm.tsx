@@ -12,16 +12,16 @@ interface IntakeFormProps {
   isLoading: boolean;
   i
 }
-const IntakeForm: React.FC<IntakeFormProps> = ({ 
-  selectedPath, 
-  onBack, 
-  onSubmit, 
-  formData, 
+const IntakeForm: React.FC<IntakeFormProps> = ({
+  selectedPath,
+  onBack,
+  onSubmit,
+  formData,
   setFormData,
-  isLoading 
+  isLoading
 }) => {
 
-  
+
   const handleCheckboxChange = (field: string, value) => {
     const current = formData[field] || [];
     const updated = current.includes(value)
@@ -715,7 +715,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#d5dcf1', padding: '30px' }}>
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-        <button 
+        <button
           onClick={onBack}
           style={{
             display: 'flex',
@@ -735,7 +735,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
           <ArrowBackIcon style={{ width: '16px', height: '16px' }} />
           Back
         </button>
-        
+
         <div style={{ backgroundColor: '#FFF', borderRadius: '16px', padding: '40px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
           <div style={{ marginBottom: '32px' }}>
             <h2 style={{ fontSize: '2rem', fontWeight: 700, color: '#333', marginBottom: '8px' }}>
@@ -745,7 +745,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
               {header.subtitle}
             </p>
           </div>
-          
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
             {/* Organization Name - Common to all paths */}
             <div>
@@ -766,11 +766,11 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
                   fontWeight: 500,
                 }}
                 placeholder={
-                  selectedPath === 'no-idea' 
-                    ? "e.g., Alzheimer's Awareness Group" 
+                  selectedPath === 'no-idea'
+                    ? "e.g., Alzheimer's Awareness Group"
                     : selectedPath === 'rough-idea'
-                    ? "e.g., Korean Cultural Association"
-                    : "e.g., Environmental Action Club"
+                      ? "e.g., Korean Cultural Association"
+                      : "e.g., Environmental Action Club"
                 }
                 required
               />
@@ -787,22 +787,22 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
                 <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '8px' }}>
                   Total Budget*
                 </label>
-                
-                  <input
-                    type="number"
-                    value={formData.totalBudget || 0}
-                    onChange={(e) => setFormData({ ...formData, totalBudget: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      fontSize: '1rem',
-                      border: '1px solid #ddd',
-                      borderRadius: '8px',
-                      color: '#4a5676',
-                      fontWeight: 500,
-                    }}
-                    placeholder="e.g., 2500"
-                  />      
+
+                <input
+                  type="number"
+                  value={formData.totalBudget || 0}
+                  onChange={(e) => setFormData({ ...formData, totalBudget: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    fontSize: '1rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    color: '#4a5676',
+                    fontWeight: 500,
+                  }}
+                  placeholder="e.g., 2500"
+                />
               </div>
 
               <div>
@@ -850,9 +850,9 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
             >
               {isLoading ? (
                 <>
-                  <div style={{ 
-                    width: '16px', 
-                    height: '16px', 
+                  <div style={{
+                    width: '16px',
+                    height: '16px',
                     border: '2px solid #FFF',
                     borderTopColor: 'transparent',
                     borderRadius: '50%',
@@ -867,7 +867,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
                 </>
               )}
             </button>
-            
+
             <style>{`
               @keyframes spin {
                 to { transform: rotate(360deg); }

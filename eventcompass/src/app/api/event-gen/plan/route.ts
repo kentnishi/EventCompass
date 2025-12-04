@@ -6,38 +6,38 @@ import { zodResponseFormat } from "openai/helpers/zod";
 
 
 function parseBudget(budgetString: string): number | null {
-    try {
-      // Remove non-numeric characters except for the range separator (`-`)
-      const cleanedBudget = budgetString.replace(/[^0-9\-]/g, "");
-  
-      // Check if it's a range (e.g., "1000-1200")
-      if (cleanedBudget.includes("-")) {
-        const [lower, upper] = cleanedBudget.split("-").map(Number);
-  
-        // Validate the numbers
-        if (isNaN(lower) || isNaN(upper)) {
-          console.error("Invalid budget range:", budgetString);
-          return null;
-        }
-  
-        // Return the average of the range
-        return Math.round((lower + upper) / 2);
-      }
-  
-      // If it's a single value, parse it as a number
-      const parsedBudget = Number(cleanedBudget);
-  
-      // Validate the parsed number
-      if (isNaN(parsedBudget)) {
-        console.error("Invalid budget value:", budgetString);
+  try {
+    // Remove non-numeric characters except for the range separator (`-`)
+    const cleanedBudget = budgetString.replace(/[^0-9\-]/g, "");
+
+    // Check if it's a range (e.g., "1000-1200")
+    if (cleanedBudget.includes("-")) {
+      const [lower, upper] = cleanedBudget.split("-").map(Number);
+
+      // Validate the numbers
+      if (isNaN(lower) || isNaN(upper)) {
+        console.error("Invalid budget range:", budgetString);
         return null;
       }
-  
-      return parsedBudget;
-    } catch (error) {
-      console.error("Error parsing budget:", error, budgetString);
+
+      // Return the average of the range
+      return Math.round((lower + upper) / 2);
+    }
+
+    // If it's a single value, parse it as a number
+    const parsedBudget = Number(cleanedBudget);
+
+    // Validate the parsed number
+    if (isNaN(parsedBudget)) {
+      console.error("Invalid budget value:", budgetString);
       return null;
     }
+
+    return parsedBudget;
+  } catch (error) {
+    console.error("Error parsing budget:", error, budgetString);
+    return null;
+  }
 }
 
 // Zod schemas for structured output
@@ -142,7 +142,7 @@ Use temp_id fields (simple strings like "act1", "act2", "budget1", etc.) for act
 
     // Build the user prompt based on available data
     let userPrompt = "Generate a comprehensive event plan based on the following information:\n\n";
-    
+
     // Add intake form data
     userPrompt += "=== INTAKE FORM ===\n";
     userPrompt += `Organization: ${intakeFormData.organizationName}\n`;
@@ -220,17 +220,17 @@ Use temp_id fields (simple strings like "act1", "act2", "budget1", etc.) for act
       userPrompt += `Vibe: ${selectedConcept.vibe}\n`;
       userPrompt += `Key Elements: ${selectedConcept.elements.join(', ')}\n`;
 
-     
-        // Parse the budget correctly
-        const parsedBudget = parseBudget(selectedConcept.budget);
-        if (parsedBudget !== null) {
-          userPrompt += `Budget: ${parsedBudget}\n`;
-        } else {
-          console.error("Failed to parse budget:", selectedConcept.budget);
-          userPrompt += `Budget: Invalid\n`;
-        }
-      
-      
+
+      // Parse the budget correctly
+      const parsedBudget = parseBudget(selectedConcept.budget);
+      if (parsedBudget !== null) {
+        userPrompt += `Budget: ${parsedBudget}\n`;
+      } else {
+        console.error("Failed to parse budget:", selectedConcept.budget);
+        userPrompt += `Budget: Invalid\n`;
+      }
+
+
       if (selectedConcept.preview) {
         userPrompt += "\nPreview Activities:\n";
         selectedConcept.preview.activities.forEach((act: string) => {
@@ -259,7 +259,7 @@ Use temp_id fields (simple strings like "act1", "act2", "budget1", etc.) for act
     userPrompt += "9. Keep the venue location name as it is if it was ever provided.\n";
     userPrompt += "10. Quantity for shopping items must be greater than or equal to 1 (even if it is free, in which case the unit_cost is 0).\n";
     userPrompt += "11. For schedule items, make sure that end_date is an empty string if it is not a multi day range.\n";
-    
+
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-2024-08-06",

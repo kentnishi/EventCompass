@@ -19,11 +19,16 @@ export async function POST(req: Request) {
         if (chatId) {
             const { data: chat } = await supabase
                 .from("chats")
-                .select("messages")
+                .select("messages, user")
                 .eq("id", chatId)
                 .single();
 
             if (chat) {
+                // Verify ownership
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user || chat.user !== user.id) {
+                    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+                }
                 existingMessages = chat.messages || [];
             } else {
                 // Invalid chatId provided
@@ -36,25 +41,35 @@ export async function POST(req: Request) {
             const { data: { user } } = await supabase.auth.getUser();
 
             if (user) {
-                // Try to find existing chat for this event (Legacy behavior: find *any* chat for event if no specific ID)
-                // BUT for multi-chat support, if no ID is passed, we should probably create a NEW one or just pick the most recent?
-                // Let's stick to creating a new one if explicitly requested via the new API, 
-                // but here if just eventId is passed, maybe we default to the most recent one to be safe?
-                // actually, let's just create a new one if no chatId is passed to avoid confusion.
-
-                const { data: newChat } = await supabase
+                // Try to find existing chat for this user and event
+                const { data: existingChat } = await supabase
                     .from("chats")
-                    .insert({
-                        name: `Chat for ${eventContext.name || "Event"}`,
-                        user: user.id,
-                        event_id: eventId,
-                        messages: []
-                    })
-                    .select()
+                    .select("id, messages")
+                    .eq("event_id", eventId)
+                    .eq("user", user.id)
+                    .order("created_at", { ascending: false })
+                    .limit(1)
                     .single();
 
-                if (newChat) {
-                    chatId = newChat.id;
+                if (existingChat) {
+                    chatId = existingChat.id;
+                    existingMessages = existingChat.messages || [];
+                } else {
+                    // Create new chat if none exists
+                    const { data: newChat } = await supabase
+                        .from("chats")
+                        .insert({
+                            name: `Chat for ${eventContext.name || "Event"}`,
+                            user: user.id,
+                            event_id: eventId,
+                            messages: []
+                        })
+                        .select()
+                        .single();
+
+                    if (newChat) {
+                        chatId = newChat.id;
+                    }
                 }
             }
         }
@@ -65,9 +80,9 @@ export async function POST(req: Request) {
             name: eventContext.name,
             activitiesCount: eventContext.activities?.length || 0,
             tasksCount: eventContext.tasks?.length || 0,
-            budgetTotal: eventContext.budget?.reduce((sum: number, item: any) => sum + item.estimated, 0) || 0,
-            shoppingItemsCount: eventContext.shopping?.length || 0,
-            scheduleItemsCount: eventContext.schedule?.length || 0
+            budgetTotal: (eventContext.budget_items || eventContext.budget)?.reduce((sum: number, item: any) => sum + (item.allocated || item.estimated || 0), 0) || 0,
+            shoppingItemsCount: (eventContext.shopping_items || eventContext.shopping)?.length || 0,
+            scheduleItemsCount: (eventContext.schedule_items || eventContext.schedule)?.length || 0
         });
 
         const systemPrompt: ChatCompletionMessage = {
@@ -82,24 +97,30 @@ export async function POST(req: Request) {
       2. Use Markdown for formatting (bold keys, lists for items).
       3. If asked about budget, tasks, or shopping, refer to the specific arrays in the context.
       4. Do not be chatty. Get straight to the point.
+      5. You have access to an autonomous agent capable of performing complex, multi-step actions (like "research venues", "optimize schedule", "find conflicts"). Use the 'agent_action' suggestion type to trigger this.
+      6. IMPORTANT: If the user asks for an action you cannot perform (e.g., "call vendors", "browse the live internet for new venues", "make payments"), do NOT use 'agent_action'. Instead, be helpful by creating a 'task' suggestion for the user to do it themselves (e.g., Title: "Research Venues", Description: "Look up venues in [Location]...").
       
       IMPORTANT: If you want to propose a concrete change to the plan (like adding a task, budget item, activity, shopping item, or schedule item), output a code block with the language 'suggestion'.
       The content MUST be a valid JSON object with this structure:
       \`\`\`suggestion
       {
         "title": "Short Title",
-        "description": "Why this is needed",
-        "type": "task" | "budget" | "activity" | "shopping" | "schedule",
+        "explanation": "User-facing explanation of why this is needed (shown in chat)",
+        "description": "Technical description for the database item (not shown in chat card)",
+        "type": "task" | "budget" | "activity" | "shopping" | "schedule" | "agent_action",
         "actionData": { ...specific fields... }
       }
       \`\`\`
       
       Specific fields for actionData:
-      - task: { task, deadline, status, assignedTo }
-      - budget: { category, estimated }
-      - activity: { name, description }
-      - shopping: { item, quantity, category, estimatedCost }
-      - schedule: { time, duration, notes }
+      - task: { title, due_date, status, assignee_name, priority, description }
+      - budget: { category, allocated, description, spent, notes }
+      - activity: { name, description, location, start_time, end_time, cost, notes }
+      - shopping: { item, quantity, unit_cost, vendor, status, notes, category, url }
+      - schedule: { start_time, end_time, notes, activity_name, location, description, start_date }
+      - agent_action: { goal: "Description of the complex goal to achieve" }
+      
+      Use "agent_action" when the user asks for complex modifications like "consolidate tasks", "remove duplicates", "optimize budget", or any multi-step operation that requires analyzing and modifying multiple items.
       
       Only use this format when you are confident the user wants to make a change or when you are proactively suggesting a specific addition.
       `
@@ -192,6 +213,7 @@ export async function GET(req: Request) {
             .from("chats")
             .select("messages")
             .eq("id", chatId)
+            .eq("user", user.id) // Enforce ownership
             .single();
 
         if (chat) {
