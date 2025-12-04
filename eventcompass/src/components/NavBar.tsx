@@ -10,7 +10,7 @@ export default function NavBar() {
     <nav className={styles.nav} aria-label="Main navigation">
       <div className={styles.wrap}>
         <div className={styles.brand}>
-          <img src="/upb.svg" alt="UPB Logo" className={styles.mark} />
+          <img src="/compass.svg" alt="Event Compass Logo" className={styles.mark} />
           <div className={styles.product}>
             <span>Event</span>
             <span>Compass</span>
@@ -20,8 +20,6 @@ export default function NavBar() {
         <div className={styles.actions}>
           <div className={styles.menu}>
             <Link href="/home">Home</Link>
-            <Link href="/tasks">Tasks</Link>
-            <Link href="/chat">Chat</Link>
             <Link href="/event-plans">Event Plans</Link>
             <Link href="/events">Events</Link>
             <ProfileCard />

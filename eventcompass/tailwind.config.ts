@@ -1,4 +1,5 @@
 /** @type {import('tailwindcss').Config} */
+// Force rebuild
 export default {
   content: [
     "./src/app/**/*.{ts,tsx}",
@@ -18,6 +19,8 @@ export default {
       }
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
   important: true
 };
