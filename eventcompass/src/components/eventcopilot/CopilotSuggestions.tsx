@@ -47,6 +47,10 @@ export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestion
     const [error, setError] = useState<string | null>(null);
     const [applyingSuggestionId, setApplyingSuggestionId] = useState<string | null>(null);
 
+    // State for elaboration (user input for agent actions)
+    const [elaboratingSuggestionId, setElaboratingSuggestionId] = useState<string | null>(null);
+    const [elaborationText, setElaborationText] = useState("");
+
     // Fetch saved suggestions on mount
     React.useEffect(() => {
         if (eventId) {
@@ -109,10 +113,22 @@ export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestion
         const newSuggestions = suggestions.filter(s => s.id !== suggestionId);
         setSuggestions(newSuggestions);
         syncSuggestions(newSuggestions);
+        if (elaboratingSuggestionId === suggestionId) {
+            setElaboratingSuggestionId(null);
+            setElaborationText("");
+        }
     };
 
     const handleApplySuggestion = async (suggestion: Suggestion) => {
         if (applyingSuggestionId) return;
+
+        // Special handling for agent_action: require user input first
+        if (suggestion.type === "agent_action" && elaboratingSuggestionId !== suggestion.id) {
+            setElaboratingSuggestionId(suggestion.id);
+            setElaborationText(""); // Reset text
+            return;
+        }
+
         setApplyingSuggestionId(suggestion.id);
 
         if (!suggestion.actionData) {
@@ -120,6 +136,7 @@ export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestion
             setSuggestions(newSuggestions);
             syncSuggestions(newSuggestions);
             setApplyingSuggestionId(null);
+            setElaboratingSuggestionId(null);
             return;
         }
 
@@ -131,8 +148,13 @@ export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestion
 
             if (suggestion.type === "agent_action") {
                 endpoint = "/api/copilot/agent";
+                // Append user elaboration to the goal if provided
+                const finalGoal = elaborationText.trim()
+                    ? `${suggestion.actionData.goal} (User Guidance: ${elaborationText.trim()})`
+                    : suggestion.actionData.goal;
+
                 body = {
-                    goal: suggestion.actionData.goal,
+                    goal: finalGoal,
                     eventId,
                     eventContext: eventPlan
                 };
@@ -180,6 +202,21 @@ export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestion
 
                     case "shopping":
                         endpoint = `/api/event-plans/${eventId}/shopping`;
+
+                        // Resolve budget_id
+                        let budgetId = suggestion.actionData.budget_id;
+                        if (!budgetId && eventPlan.budget_items && eventPlan.budget_items.length > 0) {
+                            // Try to find matching category
+                            const category = suggestion.actionData.category || "Miscellaneous";
+                            const match = eventPlan.budget_items.find((b: any) => b.category.toLowerCase() === category.toLowerCase());
+                            if (match) {
+                                budgetId = match.id;
+                            } else {
+                                // Default to first budget item
+                                budgetId = eventPlan.budget_items[0].id;
+                            }
+                        }
+
                         body = {
                             item: suggestion.actionData.item || suggestion.actionData.name || suggestion.title || "Shopping Item",
                             quantity: parseInt(suggestion.actionData.quantity) || 1,
@@ -189,7 +226,8 @@ export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestion
                             notes: suggestion.actionData.notes || "",
                             category: suggestion.actionData.category || "General",
                             url: suggestion.actionData.url || "",
-                            event_id: eventId
+                            event_id: eventId,
+                            budget_id: budgetId // Include resolved budget_id
                         };
                         targetTab = "shopping";
                         break;
@@ -239,6 +277,8 @@ export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestion
             setError("Could not apply suggestion automatically.");
         } finally {
             setApplyingSuggestionId(null);
+            setElaboratingSuggestionId(null);
+            setElaborationText("");
         }
     };
 
@@ -291,6 +331,8 @@ export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestion
                 <div className="space-y-3">
                     {suggestions.map((suggestion) => {
                         const isApplying = applyingSuggestionId === suggestion.id;
+                        const isElaborating = elaboratingSuggestionId === suggestion.id;
+
                         return (
                             <div key={suggestion.id} className="bg-white border border-slate-200 rounded-md p-4 mb-3 shadow-sm hover:border-indigo-300 transition-colors">
                                 <div className="flex justify-between items-start mb-2 gap-2">
@@ -304,27 +346,66 @@ export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestion
                                 <p className="text-slate-600 text-xs leading-relaxed mb-4 break-words line-clamp-4">
                                     {suggestion.explanation || suggestion.description}
                                 </p>
+
+                                {/* Elaboration Input for Agent Actions */}
+                                {isElaborating && (
+                                    <div className="mb-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-1">
+                                            Add Context / Guidelines (Optional)
+                                        </label>
+                                        <textarea
+                                            value={elaborationText}
+                                            onChange={(e) => setElaborationText(e.target.value)}
+                                            placeholder="E.g., 'Focus on low-cost options' or 'Make sure to include setup time'..."
+                                            className="w-full text-xs p-2 border border-slate-300 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none min-h-[60px] resize-y"
+                                            autoFocus
+                                        />
+                                    </div>
+                                )}
+
                                 <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
-                                    <button
-                                        onClick={() => handleApplySuggestion(suggestion)}
-                                        disabled={!!applyingSuggestionId}
-                                        className={`flex-1 text-white text-xs font-semibold py-2 rounded shadow-sm transition-colors flex items-center justify-center gap-1.5 ${isApplying
-                                            ? "bg-indigo-400 cursor-wait"
-                                            : !!applyingSuggestionId
-                                                ? "bg-indigo-300 cursor-not-allowed"
-                                                : "bg-indigo-600 hover:bg-indigo-700 cursor-pointer"
-                                            }`}
-                                    >
-                                        <Plus size={14} strokeWidth={2.5} />
-                                        {isApplying ? "APPLYING..." : "APPLY"}
-                                    </button>
-                                    <button
-                                        onClick={() => handleDismissSuggestion(suggestion.id)}
-                                        disabled={!!applyingSuggestionId}
-                                        className="cursor-pointer px-2 text-slate-400 hover:text-slate-600 text-xs font-semibold transition-colors uppercase disabled:opacity-50"
-                                    >
-                                        Dismiss
-                                    </button>
+                                    {isElaborating ? (
+                                        <>
+                                            <button
+                                                onClick={() => handleApplySuggestion(suggestion)}
+                                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2 rounded shadow-sm transition-colors flex items-center justify-center gap-1.5"
+                                            >
+                                                Confirm & Run Agent
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setElaboratingSuggestionId(null);
+                                                    setElaborationText("");
+                                                }}
+                                                className="px-3 text-slate-500 hover:text-slate-700 text-xs font-semibold transition-colors"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button
+                                                onClick={() => handleApplySuggestion(suggestion)}
+                                                disabled={!!applyingSuggestionId || !!elaboratingSuggestionId}
+                                                className={`flex-1 text-white text-xs font-semibold py-2 rounded shadow-sm transition-colors flex items-center justify-center gap-1.5 ${isApplying
+                                                    ? "bg-indigo-400 cursor-wait"
+                                                    : (!!applyingSuggestionId || !!elaboratingSuggestionId)
+                                                        ? "bg-indigo-300 cursor-not-allowed"
+                                                        : "bg-indigo-600 hover:bg-indigo-700 cursor-pointer"
+                                                    }`}
+                                            >
+                                                <Plus size={14} strokeWidth={2.5} />
+                                                {isApplying ? "APPLYING..." : "APPLY"}
+                                            </button>
+                                            <button
+                                                onClick={() => handleDismissSuggestion(suggestion.id)}
+                                                disabled={!!applyingSuggestionId}
+                                                className="cursor-pointer px-2 text-slate-400 hover:text-slate-600 text-xs font-semibold transition-colors uppercase disabled:opacity-50"
+                                            >
+                                                Dismiss
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         );

@@ -83,15 +83,39 @@ export async function POST(
     }
 
     // Prepare the data for insertion
-    const scheduleData = scheduleItems.map((item) => ({
-      event_id,
-      activity_id: item.activity_id || null,
-      start_date: item.start_date,
-      end_date: item.end_date || null,
-      start_time: item.start_time,
-      end_time: item.end_time,
-      location: item.location || "",
-      notes: item.notes || "",
+    const scheduleData = await Promise.all(scheduleItems.map(async (item) => {
+      let finalActivityId = item.activity_id;
+
+      // If no activity_id but activity_name is provided, create the activity
+      if (!finalActivityId && item.activity_name) {
+        const { data: newActivity, error: createError } = await supabase
+          .from("activities")
+          .insert({
+            event_id,
+            name: item.activity_name,
+            description: item.description || "Created from schedule",
+            notes: item.notes || ""
+          })
+          .select()
+          .single();
+
+        if (!createError && newActivity) {
+          finalActivityId = newActivity.id;
+        } else {
+          console.error("Failed to auto-create activity:", createError);
+        }
+      }
+
+      return {
+        event_id,
+        activity_id: finalActivityId || null,
+        start_date: item.start_date,
+        end_date: item.end_date || null,
+        start_time: item.start_time,
+        end_time: item.end_time,
+        location: item.location || "",
+        notes: item.notes || "",
+      };
     }));
 
     // Insert the schedule items into the database

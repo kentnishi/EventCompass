@@ -9,7 +9,11 @@ export async function POST(req: Request) {
     console.log("----- SUGGESTIONS REQUEST -----");
     console.log("Event Context Summary:", {
       name: eventContext.name,
-      activitiesCount: eventContext.activities?.length
+      activitiesCount: eventContext.activities?.length || 0,
+      tasksCount: eventContext.tasks?.length || 0,
+      budgetTotal: (eventContext.budget_items || eventContext.budget)?.reduce((sum: number, item: any) => sum + (item.allocated || item.estimated || 0), 0) || 0,
+      shoppingItemsCount: (eventContext.shopping_items || eventContext.shopping)?.length || 0,
+      scheduleItemsCount: (eventContext.schedule_items || eventContext.schedule)?.length || 0
     });
 
     const systemPrompt: ChatCompletionMessage = {
@@ -23,14 +27,24 @@ export async function POST(req: Request) {
       - id: string (unique)
       - title: string (short, action-oriented)
       - description: string (why this is important)
-      - type: "task" | "budget" | "activity" | "shopping" | "schedule" | "general"
+      - type: "task" | "budget" | "activity" | "shopping" | "schedule" | "agent_action"
       
       - actionData: object (optional, specific data to apply)
         - For "task": { title, due_date, status, assignee_name }
         - For "budget": { category, allocated }
         - For "activity": { name, description }
-        - For "shopping": { item, quantity, unit_cost, vendor }
+        - For "shopping": { item, quantity, unit_cost, vendor, budget_id }
         - For "schedule": { start_time, end_time, notes }
+        - For "agent_action": { goal: "Description of the complex goal to achieve" }
+      
+      IMPORTANT DATA INTEGRITY RULES:
+      1. **Shopping Items**: You MUST include a 'budget_id' in actionData. Look at the 'budget_items' array in the context. Find the budget item that best matches the purchase (e.g., "Food", "Decor", "General") and use its 'id'. If no good match exists, use the first available budget item ID.
+      2. **Schedule Items**: If you are scheduling an activity that already exists in 'activities', use its 'activity_id'. If it's a new activity, provide 'activity_name' so it can be auto-created.
+      
+      DECISION LOGIC:
+      - If the suggestion is a **specific, concrete, single-item change** (e.g., "Add a task to buy flowers"), use the specific type (task, budget, etc.).
+      - If the suggestion is **high-level, multi-step, or vague** (e.g., "Research venues", "Optimize schedule", "Plan check-in flow", "Handle catering"), use 'agent_action'.
+      - **NOTE**: The Agent is capable of creating tasks. If a high-level goal involves manual work (e.g., "Call vendors"), it is OK to use 'agent_action' with a goal like "Manage vendor communications". The Agent will then create the necessary tasks for the user.
       
       Example:
       {
@@ -44,6 +58,28 @@ export async function POST(req: Request) {
               "title": "Coordinate cleanup crew",
               "due_date": "2025-11-25",
               "status": "todo"
+            }
+          },
+          {
+            "id": "2",
+            "title": "Buy Decorations",
+            "description": "Purchase streamers and balloons.",
+            "type": "shopping",
+            "actionData": {
+              "item": "Streamers and Balloons",
+              "quantity": 5,
+              "unit_cost": 20,
+              "vendor": "Party City",
+              "budget_id": 123 
+            }
+          },
+          {
+            "id": "3",
+            "title": "Research Venues",
+            "description": "We need to find a suitable location for the event.",
+            "type": "agent_action",
+            "actionData": {
+              "goal": "Research and suggest 3 potential venues in San Francisco with a capacity of 100 people."
             }
           }
         ]

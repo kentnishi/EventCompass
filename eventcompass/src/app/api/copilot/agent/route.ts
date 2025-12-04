@@ -271,9 +271,35 @@ export async function POST(req: Request) {
                     if (table) {
                         try {
                             if (args.action === "create") {
+                                let finalActivityId = args.data.activity_id;
+
+                                // Auto-create activity if name provided but id missing
+                                if (!finalActivityId && args.data.activity_name && table === "schedule_items") {
+                                    const { data: newActivity, error: createError } = await supabase
+                                        .from("activities")
+                                        .insert({
+                                            event_id: eventId,
+                                            name: args.data.activity_name,
+                                            description: args.data.description || "Created by Agent",
+                                            notes: args.data.notes || ""
+                                        })
+                                        .select()
+                                        .single();
+
+                                    if (!createError && newActivity) {
+                                        finalActivityId = newActivity.id;
+                                        console.log(`Agent auto-created activity: ${newActivity.name} (${newActivity.id})`);
+                                    }
+                                }
+
+                                const insertData = { ...args.data, event_id: eventId };
+                                if (table === "schedule_items") {
+                                    insertData.activity_id = finalActivityId;
+                                }
+
                                 const { data, error } = await supabase
                                     .from(table)
-                                    .insert({ ...args.data, event_id: eventId })
+                                    .insert(insertData)
                                     .select()
                                     .single();
                                 result = { action: "create", table, data, error };
