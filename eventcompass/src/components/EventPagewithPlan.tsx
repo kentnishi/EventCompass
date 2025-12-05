@@ -254,7 +254,7 @@ export default function EventsPage({ filterByStatus }: { filterByStatus?: string
                 return a.name.localeCompare(b.name);
             } else if (sortBy === 'budget') {
                 return (b.budget || 0) - (a.budget || 0);
-            } else if (sortBy === 'created_by') {
+            } else if (sortBy === 'created_date') {
                 return new Date(a.created_at || '9999-12-31').getTime() - new Date(b.created_at || '9999-12-31').getTime();
             }
             return 0;
