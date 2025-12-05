@@ -134,7 +134,7 @@ export async function POST(request: Request) {
     const systemPrompt = `You are an expert campus event planner. Generate comprehensive, realistic event plans that include:
 - Detailed activities with clear descriptions and staffing needs
 - A complete schedule with specific times and locations
-- A realistic shopping list with vendors and pricing
+- A realistic shopping list of materials/supplies needed for the event
 - Actionable tasks with clear deadlines. Keep the assignee_name and assignee_email is empty strings.
 - A detailed budget breakdown by category
 
@@ -255,6 +255,15 @@ Use temp_id fields (simple strings like "act1", "act2", "budget1", etc.) for act
     userPrompt += "12. For shopping items, always set status to pending.\n";
     userPrompt += "13. Task assignee and assignee_email should always be an empty string.\n";
     userPrompt += "14. Please note the intake_form's createdAt date and the event_date and make sure that the task deadline falls in between these two dates.\n";
+    userPrompt += `15. Shopping items should be specific, searchable product names:
+      - Include descriptive attributes: quantities, sizes, materials, colors (e.g., "Paper Plates 9-inch White 100-Pack", not just "plates")
+      - Match the event vibe: professional events need "Premium" or "Heavy-Duty", casual events can use "Colorful" or "Festive"
+      - Use common retail terminology found on Amazon, Party City, Walmart, etc.
+      - Include this in the item field as a search query. The notes field can include additional context like "for dessert table" or "to match school colors" that would be useful for the user.
+      - Specify quantities appropriate for event size (bulk packs for 200+ attendees)
+      - Avoid overly specific brands or unique items - keep searchable and sourceable
+      - Examples: "LED String Lights 100ft Outdoor Waterproof", "Folding Banquet Tables 6ft", "Disposable Cutlery Set Heavy-Duty 200-Count"
+    \n`;
 
 
     const completion = await openai.chat.completions.create({

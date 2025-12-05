@@ -546,6 +546,7 @@ const EventPlanningPage = ({ id }: EventPlanningPageProps) => {
             isReadOnly={isReadOnly}
             onBudgetChange={onBudgetChange}
             fetchShoppingItems={fetchShoppingItems}
+            eventBasics={eventBasics}
           />
         )}
 
