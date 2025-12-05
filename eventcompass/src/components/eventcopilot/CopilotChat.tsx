@@ -149,17 +149,61 @@ export default function CopilotChat({ eventPlan, eventId, updatePlan, chatId, on
                     case "shopping":
                         endpoint = `/api/event-plans/${eventId}/shopping`;
                         targetTab = "shopping";
-                        body = {
-                            item: suggestion.actionData.item || suggestion.actionData.name || suggestion.title || "Shopping Item",
-                            quantity: parseInt(suggestion.actionData.quantity) || 1,
-                            unit_cost: parseFloat(suggestion.actionData.unit_cost) || parseFloat(suggestion.actionData.cost) || parseFloat(suggestion.actionData.price) || 0,
-                            vendor: suggestion.actionData.vendor || "",
-                            status: suggestion.actionData.status || "pending",
-                            notes: suggestion.actionData.notes || "",
-                            category: suggestion.actionData.category || "General",
-                            url: suggestion.actionData.url || "",
-                            event_id: eventId
-                        };
+
+                        if (suggestion.actionData.items && Array.isArray(suggestion.actionData.items)) {
+                            // Handle bulk items
+                            body = suggestion.actionData.items.map((item: any) => {
+                                // Resolve budget_id for each item
+                                let budgetId = item.budget_id;
+                                if (!budgetId && eventPlan.budget_items && eventPlan.budget_items.length > 0) {
+                                    const category = item.category || "Miscellaneous";
+                                    const match = eventPlan.budget_items.find((b: any) => b.category.toLowerCase() === category.toLowerCase());
+                                    if (match) {
+                                        budgetId = match.id;
+                                    } else {
+                                        budgetId = eventPlan.budget_items[0].id;
+                                    }
+                                }
+
+                                return {
+                                    item: item.item || item.name || "Shopping Item",
+                                    quantity: parseInt(item.quantity) || 1,
+                                    unit_cost: parseFloat(item.unit_cost) || parseFloat(item.cost) || parseFloat(item.price) || 0,
+                                    vendor: item.vendor || "",
+                                    status: item.status || "pending",
+                                    notes: item.notes || "",
+                                    category: item.category || "General",
+                                    url: item.url || "",
+                                    event_id: eventId,
+                                    budget_id: budgetId
+                                };
+                            });
+                        } else {
+                            // Handle single item
+                            let budgetId = suggestion.actionData.budget_id;
+                            if (!budgetId && eventPlan.budget_items && eventPlan.budget_items.length > 0) {
+                                const category = suggestion.actionData.category || "Miscellaneous";
+                                const match = eventPlan.budget_items.find((b: any) => b.category.toLowerCase() === category.toLowerCase());
+                                if (match) {
+                                    budgetId = match.id;
+                                } else {
+                                    budgetId = eventPlan.budget_items[0].id;
+                                }
+                            }
+
+                            body = {
+                                item: suggestion.actionData.item || suggestion.actionData.name || suggestion.title || "Shopping Item",
+                                quantity: parseInt(suggestion.actionData.quantity) || 1,
+                                unit_cost: parseFloat(suggestion.actionData.unit_cost) || parseFloat(suggestion.actionData.cost) || parseFloat(suggestion.actionData.price) || 0,
+                                vendor: suggestion.actionData.vendor || "",
+                                status: suggestion.actionData.status || "pending",
+                                notes: suggestion.actionData.notes || "",
+                                category: suggestion.actionData.category || "General",
+                                url: suggestion.actionData.url || "",
+                                event_id: eventId,
+                                budget_id: budgetId
+                            };
+                        }
                         break;
 
                     case "schedule":

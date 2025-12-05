@@ -116,7 +116,24 @@ const tools = [
                             status: { type: "string", enum: ["pending", "ordered", "received", "cancelled"] },
                             category: { type: "string" },
                             notes: { type: "string" },
-                            budget_id: { type: "number", description: "ID of the budget item to link to" }
+                            budget_id: { type: "number", description: "ID of the budget item to link to" },
+                            items: {
+                                type: "array",
+                                description: "List of shopping items to create in bulk. Use this for creating multiple items at once.",
+                                items: {
+                                    type: "object",
+                                    properties: {
+                                        item: { type: "string" },
+                                        quantity: { type: "number" },
+                                        unit_cost: { type: "number" },
+                                        vendor: { type: "string" },
+                                        status: { type: "string", enum: ["pending", "ordered", "received", "cancelled"] },
+                                        category: { type: "string" },
+                                        notes: { type: "string" },
+                                        budget_id: { type: "number" }
+                                    }
+                                }
+                            }
                         }
                     }
                 },
@@ -275,57 +292,77 @@ export async function POST(req: Request) {
                     if (table) {
                         try {
                             if (args.action === "create") {
-                                // Auto-resolve budget_id for shopping items if missing
-                                if (table === "shopping_items" && !args.data.budget_id) {
-                                    // Try to find matching budget category
-                                    const category = args.data.category || "Miscellaneous";
-                                    // We need access to budget items here. They are in 'budget' array from the top scope.
-                                    // But we are inside a loop. We can access 'budget' because it's in the closure.
-                                    const match = budget?.find(b => b.category.toLowerCase() === category.toLowerCase());
-                                    if (match) {
-                                        args.data.budget_id = match.id;
-                                        console.log(`Agent auto-resolved budget_id to ${match.id} (${match.category})`);
-                                    } else if (budget && budget.length > 0) {
-                                        args.data.budget_id = budget[0].id;
-                                        console.log(`Agent defaulted budget_id to ${budget[0].id} (${budget[0].category})`);
-                                    } else {
-                                        console.warn("Agent could not resolve budget_id: No budget items found.");
+                                // Handle bulk shopping items
+                                if (table === "shopping_items" && args.data.items && Array.isArray(args.data.items)) {
+                                    const createdItems = [];
+                                    for (const item of args.data.items) {
+                                        if (!item.budget_id) {
+                                            const category = item.category || "Miscellaneous";
+                                            const match = budget?.find(b => b.category.toLowerCase() === category.toLowerCase());
+                                            if (match) {
+                                                item.budget_id = match.id;
+                                            } else if (budget && budget.length > 0) {
+                                                item.budget_id = budget[0].id;
+                                            }
+                                        }
+                                        const insertData = { ...item, event_id: eventId };
+                                        const { data } = await supabase.from(table).insert(insertData).select().single();
+                                        if (data) createdItems.push(data);
                                     }
-                                }
+                                    result = { action: "create", table, data: createdItems, count: createdItems.length };
+                                } else {
+                                    // Auto-resolve budget_id for shopping items if missing
+                                    if (table === "shopping_items" && !args.data.budget_id) {
+                                        // Try to find matching budget category
+                                        const category = args.data.category || "Miscellaneous";
+                                        // We need access to budget items here. They are in 'budget' array from the top scope.
+                                        // But we are inside a loop. We can access 'budget' because it's in the closure.
+                                        const match = budget?.find(b => b.category.toLowerCase() === category.toLowerCase());
+                                        if (match) {
+                                            args.data.budget_id = match.id;
+                                            console.log(`Agent auto-resolved budget_id to ${match.id} (${match.category})`);
+                                        } else if (budget && budget.length > 0) {
+                                            args.data.budget_id = budget[0].id;
+                                            console.log(`Agent defaulted budget_id to ${budget[0].id} (${budget[0].category})`);
+                                        } else {
+                                            console.warn("Agent could not resolve budget_id: No budget items found.");
+                                        }
+                                    }
 
-                                let finalActivityId = args.data.activity_id;
+                                    let finalActivityId = args.data.activity_id;
 
-                                // Auto-create activity if name provided but id missing
-                                if (!finalActivityId && args.data.activity_name && table === "schedule_items") {
-                                    const { data: newActivity, error: createError } = await supabase
-                                        .from("activities")
-                                        .insert({
-                                            event_id: eventId,
-                                            name: args.data.activity_name,
-                                            description: args.data.description || "Created by Agent",
-                                            notes: args.data.notes || ""
-                                        })
+                                    // Auto-create activity if name provided but id missing
+                                    if (!finalActivityId && args.data.activity_name && table === "schedule_items") {
+                                        const { data: newActivity, error: createError } = await supabase
+                                            .from("activities")
+                                            .insert({
+                                                event_id: eventId,
+                                                name: args.data.activity_name,
+                                                description: args.data.description || "Created by Agent",
+                                                notes: args.data.notes || ""
+                                            })
+                                            .select()
+                                            .single();
+
+                                        if (!createError && newActivity) {
+                                            finalActivityId = newActivity.id;
+                                            console.log(`Agent auto-created activity: ${newActivity.name} (${newActivity.id})`);
+                                        }
+                                    }
+
+                                    const insertData = { ...args.data, event_id: eventId };
+                                    if (table === "schedule_items") {
+                                        insertData.activity_id = finalActivityId;
+                                        delete insertData.activity_name; // Remove non-column field
+                                    }
+
+                                    const { data, error } = await supabase
+                                        .from(table)
+                                        .insert(insertData)
                                         .select()
                                         .single();
-
-                                    if (!createError && newActivity) {
-                                        finalActivityId = newActivity.id;
-                                        console.log(`Agent auto-created activity: ${newActivity.name} (${newActivity.id})`);
-                                    }
+                                    result = { action: "create", table, data, error };
                                 }
-
-                                const insertData = { ...args.data, event_id: eventId };
-                                if (table === "schedule_items") {
-                                    insertData.activity_id = finalActivityId;
-                                    delete insertData.activity_name; // Remove non-column field
-                                }
-
-                                const { data, error } = await supabase
-                                    .from(table)
-                                    .insert(insertData)
-                                    .select()
-                                    .single();
-                                result = { action: "create", table, data, error };
                             } else if (args.action === "update" && args.id) {
                                 console.log(`Attempting to update ${table} item ${args.id} with data:`, args.data);
 
