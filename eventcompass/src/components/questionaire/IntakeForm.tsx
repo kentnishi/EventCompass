@@ -956,12 +956,12 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
                     }
                   }}
                   style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    fontSize: "1rem",
-                    border: "1px solid #ddd",
-                    borderRadius: "8px",
-                    color: "#4a5676",
+                    width: '100%',
+                    padding: '12px 16px',
+                    fontSize: '1rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    color: '#4a5676',
                     fontWeight: 500,
                   }}
                   placeholder="e.g., 2500"
