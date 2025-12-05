@@ -468,6 +468,7 @@ const ShoppingTab: React.FC<ShoppingTabProps> = ({
           fetchShoppingItems={fetchShoppingItems}
           onBudgetChange={onBudgetChange}
           eventBasics={eventBasics}
+          shoppingItems={shoppingItems}
         />
       )}
     </Box>

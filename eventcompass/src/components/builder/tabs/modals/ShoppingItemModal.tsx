@@ -9,7 +9,7 @@ import InventoryIcon from "@mui/icons-material/Inventory";
 import SearchIcon from "@mui/icons-material/Search";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { ShoppingItem, Activity, BudgetItem } from "@/types/eventPlan";
+import { EventBasics, ShoppingItem, Activity, BudgetItem } from "@/types/eventPlan";
 
 
 interface ProductRecommendation {
@@ -32,6 +32,7 @@ interface ShoppingItemModalProps {
   fetchShoppingItems: () => void;
   onBudgetChange: () => void;
   eventBasics?: EventBasics;
+  shoppingItems?: ShoppingItem[];
 }
 
 const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
@@ -43,7 +44,8 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
   onClose,
   fetchShoppingItems,
   onBudgetChange,
-  eventBasics
+  eventBasics,
+  shoppingItems
 }) => {
   const [localItem, setLocalItem] = useState<ShoppingItem>(item);
   const [isSaving, setIsSaving] = useState(false);
@@ -52,6 +54,12 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
   const [recommendations, setRecommendations] = useState<ProductRecommendation[]>([]);
   const [selectedProductIndex, setSelectedProductIndex] = useState<number | null>(null);
 
+  // Search controls
+  const [searchMinPrice, setSearchMinPrice] = useState<number>(0);
+  const [searchMaxPrice, setSearchMaxPrice] = useState<number>(0);
+  const [searchQuantity, setSearchQuantity] = useState<number>(localItem.quantity || 1);
+
+
   // Update item field locally
   const handleFieldChange = (field: keyof ShoppingItem, value: any) => {
     setLocalItem((prev) => ({ ...prev, [field]: value }));
@@ -59,48 +67,66 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
 
   // Calculate total cost
   const totalCost = localItem.unit_cost * localItem.quantity;
+  
+
 
   // Find products (placeholder implementation)
   const handleFindProducts = async () => {
+    if (!localItem.item) {
+      alert("Please enter an item name first");
+      return;
+    }
+  
     setIsSearching(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Placeholder data
-    const placeholderProducts: ProductRecommendation[] = [
-      {
-        name: "Party Balloons Assorted Colors (50 Pack)",
-        vendor: "Amazon",
-        price: 8.99,
-        rating: 4.6,
-        reviews: 2847,
-        link: "https://www.amazon.com/dp/B08XYZ123",
-        image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400&h=300&fit=crop"
-      },
-      {
-        name: "Premium Latex Balloons Mixed Colors (50ct)",
-        vendor: "Party City",
-        price: 12.99,
-        rating: 4.8,
-        reviews: 531,
-        link: "https://www.partycity.com/product-xyz",
-        image: "https://images.unsplash.com/photo-1621524789835-b73d5d627e71?w=400&h=300&fit=crop"
-      },
-      {
-        name: "Balloon Bouquet Kit - 50 Balloons + Ribbon",
-        vendor: "Walmart",
-        price: 15.49,
-        rating: 4.4,
-        reviews: 189,
-        link: "https://www.walmart.com/ip/12345",
-        image: "https://images.unsplash.com/photo-1515704089429-fd06e6668458?w=400&h=300&fit=crop"
+  
+    try {
+      const selectedBudget = budgetItems.find((b) => b.id === localItem.budget_id);
+      const remainingBudget = selectedBudget 
+        ? selectedBudget.allocated - selectedBudget.spent 
+        : undefined;
+  
+      const maxPrice = searchMaxPrice > 1 ? searchMaxPrice : remainingBudget; // Use remaining budget if no max set
+      const minPrice = searchMinPrice > 1 ? searchMinPrice : 1;
+  
+      const response = await fetch("/api/event-plans/shopping/product-search", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: localItem.item,
+          minPrice: minPrice,
+          maxPrice: maxPrice,
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to search products");
       }
-    ];
-    
-    setRecommendations(placeholderProducts);
-    setShowRecommendations(true);
-    setIsSearching(false);
+  
+      const data = await response.json();
+      
+  
+      if (data.products && data.products.length > 0) {
+        setRecommendations(data.products);
+        setShowRecommendations(true);
+        
+        // Optional: Show what was searched
+        console.log("Searched for:", data.searchedQuery);
+      } else {
+        alert(
+          `No products found for "${localItem.item}". ` +
+          `Searched: "${data.searchedQuery}". ` +
+          `Try adjusting the item name or increasing budget.`
+        );
+      }
+      console.log("Product Search: ", data);
+    } catch (error) {
+      console.error("Error searching products:", error);
+      alert("Failed to search for products. Please try again.");
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   // Select a product and auto-fill fields
@@ -176,6 +202,7 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
   };
 
   const selectedBudget = budgetItems.find((b) => b.id === localItem.budget_id);
+  const remainingBudget = selectedBudget ? selectedBudget.allocated - selectedBudget.spent : 0;
 
   return (
     <div
@@ -663,6 +690,7 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
                 <SearchIcon style={{ width: "20px", height: "20px" }} />
                 <span>Product Recommendations</span>
               </div>
+              
               <button
                 onClick={handleFindProducts}
                 disabled={isSearching}
@@ -715,6 +743,109 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
                 💡 Click "Find Products" to search for actual products with prices and links
               </div>
             )}
+
+            
+            <div
+              style={{
+                background: "#f8f9fa",
+                padding: "16px",
+                borderRadius: "8px",
+                marginBottom: "16px",
+              }}
+            >
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                {/* Min Price */}
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.8rem",
+                      fontWeight: 600,
+                      color: "#333",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Min Price (Optional)
+                  </label>
+                  <div style={{ position: "relative" }}>
+                    <span
+                      style={{
+                        position: "absolute",
+                        left: "10px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        color: "#666",
+                        fontSize: "0.85rem",
+                      }}
+                    >
+                      $
+                    </span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={searchMinPrice || ""}
+                      onChange={(e) => setSearchMinPrice(parseFloat(e.target.value) || 0)}
+                      placeholder="0"
+                      style={{
+                        width: "100%",
+                        padding: "8px 8px 8px 24px",
+                        fontSize: "0.85rem",
+                        border: "1px solid #ddd",
+                        borderRadius: "6px",
+                      }}
+                    />
+                  </div>              
+                </div>
+                
+                {/* Max Price */}
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.8rem",
+                      fontWeight: 600,
+                      color: "#333",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Max Price (Optional)
+                  </label>
+                  <div style={{ position: "relative" }}>
+                    <span
+                      style={{
+                        position: "absolute",
+                        left: "10px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        color: "#666",
+                        fontSize: "0.85rem",
+                      }}
+                    >
+                      $
+                    </span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={searchMaxPrice || ""}
+                      onChange={(e) => setSearchMaxPrice(parseFloat(e.target.value) || 0)}
+                      placeholder={remainingBudget > 0 ? remainingBudget.toFixed(0) : ""}
+                      style={{
+                        width: "100%",
+                        padding: "8px 8px 8px 24px",
+                        fontSize: "0.85rem",
+                        border: "1px solid #ddd",
+                        borderRadius: "6px",
+                      }}
+                    />
+                  </div>
+                </div>
+
+              </div>              
+            </div>
+
+            
 
             {showRecommendations && recommendations.length > 0 && (
               <>
@@ -874,20 +1005,6 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
                       </div>
                     </div>
                   ))}
-                </div>
-
-                <div
-                  style={{
-                    fontSize: "0.75rem",
-                    color: "#666",
-                    marginTop: "12px",
-                    padding: "8px 12px",
-                    background: "white",
-                    borderRadius: "6px",
-                    borderLeft: "3px solid #6B7FD7",
-                  }}
-                >
-                  💡 <strong>Search used:</strong> 1 of your 250 monthly searches. These recommendations are saved for this item.
                 </div>
               </>
             )}
