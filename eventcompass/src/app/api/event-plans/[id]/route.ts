@@ -42,55 +42,6 @@ export async function GET(
       );
     }
 
-    // Fetch related data in parallel
-    // const [
-    //   { data: activities },
-    //   { data: schedule },
-    //   { data: shopping },
-    //   { data: tasks },
-    //   { data: budget },
-    // ] = await Promise.all([
-    //   supabase
-    //     .from("activities")
-    //     .select("*")
-    //     .eq("event_id", eventId)
-    //     .order("id", { ascending: true }),
-      
-    //   supabase
-    //     .from("schedule_items")
-    //     .select("*")
-    //     .eq("event_id", eventId)
-    //     .order("schedule_order", { ascending: true }),
-      
-    //   supabase
-    //     .from("shopping_items")
-    //     .select("*")
-    //     .eq("event_id", eventId)
-    //     .order("created_at", { ascending: true }),
-      
-    //   supabase
-    //     .from("tasks")
-    //     .select("*")
-    //     .eq("event_id", eventId)
-    //     .order("created_at", { ascending: true }),
-      
-    //   supabase
-    //     .from("budget_items")
-    //     .select("*")
-    //     .eq("event_id", eventId)
-    //     .order("created_at", { ascending: true }),
-    // ]);
-
-    // // Combine all data into a single response
-    // const eventPlan = {
-    //   ...event,
-    //   activities: activities || [],
-    //   schedule: schedule || [],
-    //   shopping: shopping || [],
-    //   tasks: tasks || [],
-    //   budget: budget || [],
-    // };
-
     return NextResponse.json({ event: event }, { status: 200 });
   } catch (error: any) {
     console.error("Error in GET /api/event-plans/[id]:", error);
@@ -103,11 +54,12 @@ export async function GET(
 
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: { id: string } }
   ) {
     try {
       const body = await request.json();
-      const { id } = params;
+      const params = await context.params;
+      const id = params.id;
       
       console.log('Updating event:', id, body);
       
