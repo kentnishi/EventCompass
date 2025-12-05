@@ -203,32 +203,60 @@ export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestion
                     case "shopping":
                         endpoint = `/api/event-plans/${eventId}/shopping`;
 
-                        // Resolve budget_id
-                        let budgetId = suggestion.actionData.budget_id;
-                        if (!budgetId && eventPlan.budget_items && eventPlan.budget_items.length > 0) {
-                            // Try to find matching category
-                            const category = suggestion.actionData.category || "Miscellaneous";
-                            const match = eventPlan.budget_items.find((b: any) => b.category.toLowerCase() === category.toLowerCase());
-                            if (match) {
-                                budgetId = match.id;
-                            } else {
-                                // Default to first budget item
-                                budgetId = eventPlan.budget_items[0].id;
-                            }
-                        }
+                        if (suggestion.actionData.items && Array.isArray(suggestion.actionData.items)) {
+                            // Handle bulk items
+                            body = suggestion.actionData.items.map((item: any) => {
+                                // Resolve budget_id for each item
+                                let budgetId = item.budget_id;
+                                if (!budgetId && eventPlan.budget_items && eventPlan.budget_items.length > 0) {
+                                    const category = item.category || "Miscellaneous";
+                                    const match = eventPlan.budget_items.find((b: any) => b.category.toLowerCase() === category.toLowerCase());
+                                    if (match) {
+                                        budgetId = match.id;
+                                    } else {
+                                        budgetId = eventPlan.budget_items[0].id;
+                                    }
+                                }
 
-                        body = {
-                            item: suggestion.actionData.item || suggestion.actionData.name || suggestion.title || "Shopping Item",
-                            quantity: parseInt(suggestion.actionData.quantity) || 1,
-                            unit_cost: parseFloat(suggestion.actionData.unit_cost) || parseFloat(suggestion.actionData.cost) || parseFloat(suggestion.actionData.price) || 0,
-                            vendor: suggestion.actionData.vendor || "",
-                            status: suggestion.actionData.status || "pending",
-                            notes: suggestion.actionData.notes || "",
-                            category: suggestion.actionData.category || "General",
-                            url: suggestion.actionData.url || "",
-                            event_id: eventId,
-                            budget_id: budgetId // Include resolved budget_id
-                        };
+                                return {
+                                    item: item.item || item.name || "Shopping Item",
+                                    quantity: parseInt(item.quantity) || 1,
+                                    unit_cost: parseFloat(item.unit_cost) || parseFloat(item.cost) || parseFloat(item.price) || 0,
+                                    vendor: item.vendor || "",
+                                    status: item.status || "pending",
+                                    notes: item.notes || "",
+                                    category: item.category || "General",
+                                    url: item.url || "",
+                                    event_id: eventId,
+                                    budget_id: budgetId
+                                };
+                            });
+                        } else {
+                            // Handle single item (legacy support)
+                            let budgetId = suggestion.actionData.budget_id;
+                            if (!budgetId && eventPlan.budget_items && eventPlan.budget_items.length > 0) {
+                                const category = suggestion.actionData.category || "Miscellaneous";
+                                const match = eventPlan.budget_items.find((b: any) => b.category.toLowerCase() === category.toLowerCase());
+                                if (match) {
+                                    budgetId = match.id;
+                                } else {
+                                    budgetId = eventPlan.budget_items[0].id;
+                                }
+                            }
+
+                            body = {
+                                item: suggestion.actionData.item || suggestion.actionData.name || suggestion.title || "Shopping Item",
+                                quantity: parseInt(suggestion.actionData.quantity) || 1,
+                                unit_cost: parseFloat(suggestion.actionData.unit_cost) || parseFloat(suggestion.actionData.cost) || parseFloat(suggestion.actionData.price) || 0,
+                                vendor: suggestion.actionData.vendor || "",
+                                status: suggestion.actionData.status || "pending",
+                                notes: suggestion.actionData.notes || "",
+                                category: suggestion.actionData.category || "General",
+                                url: suggestion.actionData.url || "",
+                                event_id: eventId,
+                                budget_id: budgetId
+                            };
+                        }
                         targetTab = "shopping";
                         break;
 
@@ -370,8 +398,8 @@ export default function CopilotSuggestions({ eventPlan, updatePlan, onSuggestion
                                                 onClick={() => handleApplySuggestion(suggestion)}
                                                 disabled={isApplying}
                                                 className={`flex-1 text-white text-xs font-semibold py-2 rounded shadow-sm transition-colors flex items-center justify-center gap-1.5 ${isApplying
-                                                        ? "bg-indigo-400 cursor-wait"
-                                                        : "bg-indigo-600 hover:bg-indigo-700 cursor-pointer"
+                                                    ? "bg-indigo-400 cursor-wait"
+                                                    : "bg-indigo-600 hover:bg-indigo-700 cursor-pointer"
                                                     }`}
                                             >
                                                 {isApplying ? (

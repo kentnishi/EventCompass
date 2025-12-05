@@ -201,7 +201,7 @@ export default function EventCopilot({ eventPlan, updatePlan, eventId, onRefresh
                         </select>
                         <button
                             onClick={handleCreateNewChat}
-                            className="text-xs bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700"
+                            className="text-xs bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700 cursor-pointer"
                         >
                             New Chat
                         </button>
@@ -235,7 +235,7 @@ export default function EventCopilot({ eventPlan, updatePlan, eventId, onRefresh
                                 <p className="text-sm">Select a chat session or start a new one.</p>
                                 <button
                                     onClick={handleCreateNewChat}
-                                    className="mt-4 text-sm bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+                                    className="mt-4 text-sm bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 cursor-pointer"
                                 >
                                     Start New Chat
                                 </button>
