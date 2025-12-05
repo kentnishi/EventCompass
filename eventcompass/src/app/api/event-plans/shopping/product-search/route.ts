@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServer } from "@/lib/supabase/server";
 import { getJson } from "serpapi";
 
 interface ProductSearchRequest {
