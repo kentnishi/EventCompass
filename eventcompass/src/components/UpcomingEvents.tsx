@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type UpcomingApiRow = {
   id: string;
@@ -40,6 +41,8 @@ export default function UpcomingEvents({
   committees = DEFAULT_COMMITTEES,
   limit = 12,
 }: Props) {
+  const router = useRouter();
+
   const [committee, setCommittee] = useState<string | undefined>(defaultCommittee);
   const [rows, setRows] = useState<UpcomingApiRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -259,7 +262,8 @@ export default function UpcomingEvents({
             items?.map((e) => (
               <li
                 key={e.id}
-                className="snap-start rounded-[10px] shrink-0 w-[350px] h-[150px] text-center rounded-2xl border border-[#f3f4f6] bg-[#e3e9f8] flex justify-center"
+                onClick={() => router.push(`/event-plans/${e.id}`)}
+                className="cursor-pointer snap-start rounded-[10px] shrink-0 w-[350px] h-[150px] text-center rounded-2xl border border-[#f3f4f6] bg-[#e3e9f8] flex justify-center hover:shadow-md transition-shadow"
               >
                 <div className="text-[18px] text-center justify-center m-auto p-4">
                   <div className="font-medium font-[700] text-[#2b3a55] truncate">
@@ -275,7 +279,7 @@ export default function UpcomingEvents({
                     })}
                   </div>
                   {e.where && (
-                    <div className="text-[15px] text-[#7a86a8] mt-0.5 truncate">
+                    <div className="text-xs text-[#7a86a8] mt-0.5 break-words">
                       {e.where}
                     </div>
                   )}
