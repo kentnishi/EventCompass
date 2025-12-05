@@ -171,6 +171,9 @@ Use temp_id fields (simple strings like "act1", "act2", "budget1", etc.) for act
     } else if (intakeFormData.budgetRange) {
       userPrompt += `Budget Range: ${intakeFormData.budgetRange}\n`;
     }
+    if (intakeFormData.createdAt) {
+        userPrompt += `Plan Created At: ${intakeFormData.createdAt}\n`;
+    }
 
     // Add path-specific details
     if (intakeFormData.eventName && intakeFormData.eventDescription) {
@@ -221,16 +224,6 @@ Use temp_id fields (simple strings like "act1", "act2", "budget1", etc.) for act
       userPrompt += `Key Elements: ${selectedConcept.elements.join(', ')}\n`;
 
 
-      // Parse the budget correctly
-      const parsedBudget = parseBudget(selectedConcept.budget);
-      if (parsedBudget !== null) {
-        userPrompt += `Budget: ${parsedBudget}\n`;
-      } else {
-        console.error("Failed to parse budget:", selectedConcept.budget);
-        userPrompt += `Budget: Invalid\n`;
-      }
-
-
       if (selectedConcept.preview) {
         userPrompt += "\nPreview Activities:\n";
         selectedConcept.preview.activities.forEach((act: string) => {
@@ -248,7 +241,7 @@ Use temp_id fields (simple strings like "act1", "act2", "budget1", etc.) for act
     userPrompt += `Budget: ${customizations.includeBudget ? 'YES' : 'NO (return empty array)'}\n`;
 
     userPrompt += "\n=== INSTRUCTIONS ===\n";
-    userPrompt += "1. Create realistic, actionable event plans\n";
+    userPrompt += "1. Create realistic, actionable event plans.\n";
     userPrompt += "2. Use temp_id (e.g., 'act1', 'act2') for activities and budget items\n";
     userPrompt += "3. Link schedule items to activities using activity_temp_id\n";
     userPrompt += "4. Link shopping items to activities and budget using activity_temp_id and budget_temp_id\n";
@@ -259,6 +252,9 @@ Use temp_id fields (simple strings like "act1", "act2", "budget1", etc.) for act
     userPrompt += "9. Keep the venue location name as it is if it was ever provided.\n";
     userPrompt += "10. Quantity for shopping items must be greater than or equal to 1 (even if it is free, in which case the unit_cost is 0).\n";
     userPrompt += "11. For schedule items, make sure that end_date is an empty string if it is not a multi day range.\n";
+    userPrompt += "12. For shopping items, always set status to pending.\n";
+    userPrompt += "13. Task assignee and assignee_email should always be an empty string.\n";
+    userPrompt += "14. Please note the intake_form's createdAt date and the event_date and make sure that the task deadline falls in between these two dates.\n";
 
 
     const completion = await openai.chat.completions.create({

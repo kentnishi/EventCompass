@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
@@ -10,7 +10,6 @@ interface IntakeFormProps {
   formData: any;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
   isLoading: boolean;
-  i
 }
 const IntakeForm: React.FC<IntakeFormProps> = ({
   selectedPath,
@@ -21,11 +20,92 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
   isLoading
 }) => {
 
+  const [dateErrors, setDateErrors] = React.useState<{
+    startBeforeCreated?: string;
+    endBeforeStart?: string;
+  }>({});
+  
+  const [dateWarning, setDateWarning] = React.useState<string>('');
 
-  const handleCheckboxChange = (field: string, value) => {
+  // Date validation effect
+  useEffect(() => {
+    const errors: typeof dateErrors = {};
+    let warning = '';
+
+    if (formData.startDate) {
+      const startDate = new Date(formData.startDate);
+      const today = new Date(formData.createdAt);
+      today.setHours(0, 0, 0, 0); // Reset time for comparison
+
+      // Error: Start date is in the past
+      if (startDate < today) {
+        errors.startBeforeCreated = 'Start date cannot be in the past';
+      }
+
+      // Warning: Start date is less than a week away
+      const oneWeekFromNow = new Date(today);
+      oneWeekFromNow.setDate(today.getDate() + 7);
+      if (startDate < oneWeekFromNow && startDate >= today) {
+        warning = 'Note: Your event is less than a week away. Make sure you have enough time to prepare!';
+      }
+
+      // Error: End date is before start date
+      if (formData.endDate) {
+        const endDate = new Date(formData.endDate);
+        if (endDate < startDate) {
+          errors.endBeforeStart = 'End date cannot be before start date';
+        }
+      }
+    }
+
+    setDateErrors(errors);
+    setDateWarning(warning);
+  }, [formData.startDate, formData.endDate]);
+
+  const validateForm = () => {
+    // Common required fields for all paths
+    if (!formData.organizationName?.trim()) return false;
+    if (!formData.startDate) return false;
+    if (!formData.totalBudget && formData.totalBudget !== 0) return false;
+    if (!formData.expectedAttendance) return false;
+
+    if (Object.keys(dateErrors).length > 0) return false;
+  
+    // Path-specific validation
+    if (selectedPath === 'no-idea') {
+      if (!formData.organizationMission?.trim()) return false;
+      if (!formData.eventGoals || formData.eventGoals.length === 0) return false;
+    }
+  
+    if (selectedPath === 'rough-idea') {
+      if (!formData.organizationMission?.trim()) return false;
+      if (!formData.roughIdea?.trim()) return false;
+      if (!formData.eventGoals || formData.eventGoals.length === 0) return false;
+      if (!formData.locationType) return false;
+    }
+  
+    if (selectedPath === 'solid-idea') {
+      if (!formData.eventName?.trim()) return false;
+      if (!formData.eventDescription?.trim()) return false;
+      if (!formData.startTime) return false;
+      if (!formData.endTime) return false;
+      if (!formData.locationType) return false;
+      if (!formData.venue?.trim()) return false;
+    }
+  
+    return true;
+  };
+  
+  const isFormValid = validateForm();
+
+  interface CheckboxChangeHandler {
+    (field: keyof typeof formData, value: string): void;
+  }
+
+  const handleCheckboxChange: CheckboxChangeHandler = (field, value) => {
     const current = formData[field] || [];
     const updated = current.includes(value)
-      ? current.filter(item => item !== value)
+      ? current.filter((item: string) => item !== value)
       : [...current, value];
     setFormData({ ...formData, [field]: updated });
   };
@@ -35,7 +115,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
       {/* Organization Mission */}
       <div>
         <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '8px' }}>
-          Organization Mission & Goals
+          Organization Mission*
         </label>
         <textarea
           value={formData.organizationMission || ''}
@@ -100,7 +180,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
         <div>
           <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '8px' }}>
-            Preferred Start Date
+            Start Date*
           </label>
           <input
             type="date"
@@ -117,6 +197,18 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
               cursor: 'pointer',
             }}
           />
+          {dateErrors.startBeforeCreated && (
+            <div style={{ 
+              marginTop: '6px', 
+              fontSize: '0.85rem', 
+              color: '#EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              ⚠️ {dateErrors.startBeforeCreated}
+            </div>
+          )}
         </div>
 
         <div>
@@ -139,6 +231,18 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
             }}
             placeholder="Leave blank for single day"
           />
+          {dateErrors.endBeforeStart && (
+            <div style={{ 
+              marginTop: '6px', 
+              fontSize: '0.85rem', 
+              color: '#EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              ⚠️ {dateErrors.endBeforeStart}
+            </div>
+          )}
         </div>
 
         <div>
@@ -243,7 +347,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
       {/* Organization Mission */}
       <div>
         <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '8px' }}>
-          Organization Mission
+          Organization Mission & Goals*
         </label>
         <textarea
           value={formData.organizationMission || ''}
@@ -291,7 +395,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
       {/* Event Goals */}
       <div>
         <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '12px' }}>
-          Primary Goals for This Event
+          Primary Goals for This Event*
         </label>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
           {['Fundraising', 'Awareness/Education', 'Community Building', 'Cultural Celebration', 'Member Engagement', 'Outreach'].map(goal => (
@@ -329,6 +433,18 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
               cursor: 'pointer',
             }}
           />
+          {dateErrors.startBeforeCreated && (
+            <div style={{ 
+              marginTop: '6px', 
+              fontSize: '0.85rem', 
+              color: '#EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              ⚠️ {dateErrors.startBeforeCreated}
+            </div>
+          )}
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '8px' }}>
@@ -350,6 +466,18 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
             }}
             placeholder="Leave blank for single day"
           />
+          {dateErrors.endBeforeStart && (
+            <div style={{ 
+              marginTop: '6px', 
+              fontSize: '0.85rem', 
+              color: '#EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              ⚠️ {dateErrors.endBeforeStart}
+            </div>
+          )}
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '8px' }}>
@@ -547,6 +675,18 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
               cursor: 'pointer',
             }}
           />
+            {dateErrors.startBeforeCreated && (
+              <div style={{ 
+                marginTop: '6px', 
+                fontSize: '0.85rem', 
+                color: '#EF4444',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                ⚠️ {dateErrors.startBeforeCreated}
+              </div>
+            )}
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '8px' }}>
@@ -568,6 +708,18 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
             }}
             placeholder="Leave blank for single day"
           />
+          {dateErrors.endBeforeStart && (
+            <div style={{ 
+              marginTop: '6px', 
+              fontSize: '0.85rem', 
+              color: '#EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              ⚠️ {dateErrors.endBeforeStart}
+            </div>
+          )}
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#4a5676', marginBottom: '8px' }}>
@@ -790,8 +942,19 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
 
                 <input
                   type="number"
-                  value={formData.totalBudget || 0}
-                  onChange={(e) => setFormData({ ...formData, totalBudget: e.target.value })}
+                  value={formData.totalBudget === 0 ? "" : formData.totalBudget} // Allow empty string while editing
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData({
+                      ...formData,
+                      totalBudget: value === "" ? 0 : parseFloat(value), // Temporarily allow empty string
+                    });
+                  }}
+                  onBlur={(e) => {
+                    if (e.target.value === "") {
+                      setFormData({ ...formData, totalBudget: 0 });
+                    }
+                  }}
                   style={{
                     width: '100%',
                     padding: '12px 16px',
@@ -825,15 +988,32 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
                   placeholder="e.g., 60"
                 />
               </div>
-            </div>
+            </div> 
+            {/* Date warning if event date is less than one week from today */}
+            {dateWarning && (
+              <div style={{
+                padding: '12px 16px',
+                backgroundColor: '#FEF3C7',
+                border: '1px solid #FCD34D',
+                borderRadius: '8px',
+                color: '#92400E',
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '8px',
+              }}>
+                <span style={{ fontSize: '1.1rem' }}>⏰</span>
+                <span>{dateWarning}</span>
+              </div>
+            )}
 
             <button
               onClick={onSubmit}
-              disabled={isLoading}
+              disabled={isLoading || !isFormValid}
               style={{
                 marginTop: '8px',
                 padding: '14px 32px',
-                backgroundColor: isLoading ? '#9CA3AF' : '#6B7FD7',
+                backgroundColor: (isLoading || !isFormValid) ? '#9CA3AF' : '#6B7FD7',
                 color: '#FFF',
                 border: 'none',
                 borderRadius: '8px',
@@ -844,7 +1024,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                opacity: isLoading ? 0.7 : 1,
+                opacity: (isLoading || !isFormValid) ? 0.7 : 1,
                 transition: 'all 0.2s',
               }}
             >

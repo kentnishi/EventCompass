@@ -7,6 +7,7 @@ export interface IntakeFormData {
     expectedAttendance: number;
     locationType: 'on-campus' | 'off-campus' | 'flexible' | 'hybrid';
     venue?: string;
+    createdAt?: string; // When the plan was created
     
     // Date fields (now consistent across all paths)
     startDate?: string;
