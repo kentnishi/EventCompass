@@ -12,7 +12,6 @@ function normalizeRegion(raw: string): string | null {
   let s = raw.toLowerCase().trim();
   if (!s) return null;
 
-  // 구두점 / 슬래시 / 콤마 제거 후 스페이스 normalize
   s = s
     .replace(/[“”"']/g, " ")
     .replace(/[,/]+/g, " ")
@@ -45,10 +44,9 @@ function normalizeRegion(raw: string): string | null {
     "WI","WY",
   ];
 
-  // 1) Ohio는 메인이라 가장 먼저 체크
+
   if (/\bohio\b|\boh\b/.test(s)) return "Ohio";
 
-  // 2) Popular states: CA, NY, TX, FL → 각각 이름으로 보여주기
   for (const st of POPULAR_STATES) {
     const abbr = st.abbr.toLowerCase();
     const name = st.name;
@@ -62,7 +60,6 @@ function normalizeRegion(raw: string): string | null {
     }
   }
 
-  // 3) 나머지 모든 미국 주가 등장하면 → US - Other States
   for (const name of ALL_STATES) {
     if (name === "ohio") continue; // 이미 위에서 처리
     if (POPULAR_STATES.some((p) => p.name === name)) continue;
@@ -78,12 +75,10 @@ function normalizeRegion(raw: string): string | null {
     if (new RegExp(`\\b${ab}\\b`).test(s)) return "US - Other States";
   }
 
-  // 4) 미국 주 이름은 없지만 USA만 써놓은 경우
   if (/united states|u\.s\.a|usa|\bus\b/.test(s)) {
     return "US - Other States";
   }
 
-  // 5) 나머지는 International
   return "International / Other";
 }
 
@@ -91,7 +86,6 @@ export async function GET() {
   const supabase = createServer();
 
   try {
-    // 1) 최신 설문
     const { data: survey, error: surveyErr } = await supabase
       .from("survey")
       .select("id")
@@ -103,19 +97,17 @@ export async function GET() {
       return NextResponse.json<Bucket[]>([], { status: 200 });
     }
 
-    // 2) "Where are you from" 질문 찾기 (code 기준)
     const { data: question, error: qErr } = await supabase
       .from("survey_question")
       .select("id, code, text")
       .eq("survey_id", survey.id)
-      .eq("code", "qid41_text") // 필요하면 .or(...) 로 fallback 추가 가능
+      .eq("code", "qid41_text")
       .maybeSingle();
 
     if (qErr || !question) {
       return NextResponse.json<Bucket[]>([], { status: 200 });
     }
 
-    // 3) 응답 불러오기
     const { data: answers, error: aErr } = await supabase
       .from("survey_answer")
       .select("value_text")

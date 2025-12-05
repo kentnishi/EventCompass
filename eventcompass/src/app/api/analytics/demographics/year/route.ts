@@ -1,4 +1,3 @@
-// app/api/analytics/demographics/year/route.ts
 import { NextResponse } from "next/server";
 import { createServer } from "@/lib/supabase/server";
 
@@ -8,7 +7,6 @@ export async function GET() {
   const supabase = createServer();
 
   try {
-    // 1) 최신 survey 하나 가져오기
     const { data: survey, error: surveyErr } = await supabase
       .from("survey")
       .select("id")
@@ -19,7 +17,6 @@ export async function GET() {
     if (surveyErr) throw surveyErr;
     if (!survey) return NextResponse.json([], { status: 200 });
 
-    // 2) year 질문 찾기 — code = qid39 를 우선적으로 사용
     const { data: question, error: qErr } = await supabase
       .from("survey_question")
       .select("id, code, text")
@@ -31,7 +28,6 @@ export async function GET() {
     if (qErr) throw qErr;
     if (!question) return NextResponse.json([], { status: 200 });
 
-    // 3) 해당 질문에 대한 답변 모두 가져오기 (value_text ONLY)
     const { data: answers, error: aErr } = await supabase
       .from("survey_answer")
       .select("value_text")
@@ -39,7 +35,6 @@ export async function GET() {
 
     if (aErr) throw aErr;
 
-    // 4) counting
     const buckets: Record<string, number> = {};
 
     for (const row of answers ?? []) {

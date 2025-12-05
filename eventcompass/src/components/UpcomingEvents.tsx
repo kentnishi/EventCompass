@@ -279,7 +279,7 @@ export default function UpcomingEvents({
                     })}
                   </div>
                   {e.where && (
-                    <div className="text-[15px] text-[#7a86a8] mt-0.5 truncate">
+                    <div className="text-xs text-[#7a86a8] mt-0.5 break-words">
                       {e.where}
                     </div>
                   )}

@@ -1,23 +1,32 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import BaseChart from "@/components/charts/BaseChart";
+import BaseChart, { doughnutCenterText } from "@/components/charts/BaseChart";
 import type {
   ChartConfiguration,
   ChartOptions,
   TooltipItem,
 } from "chart.js";
 
+/* ---------- Types ---------- */
+
 type DemoPoint = {
   label: string;
   count: number;
-  percent: number; // 0–100
+  percent: number;
 };
 
 type RawBucket = {
   label: string;
   count: number;
 };
+
+type DietPoint = {
+  label: string;
+  cnt: number;
+};
+
+/* ---------- Helpers ---------- */
 
 async function getJSON<T>(url: string): Promise<T> {
   try {
@@ -26,44 +35,52 @@ async function getJSON<T>(url: string): Promise<T> {
     return (await r.json()) as T;
   } catch (e) {
     console.error("demographics fetch error", e);
-    // 실패하면 빈 배열 반환해서 UI 터지지 않게
     return [] as unknown as T;
   }
 }
+
+/* ---------- Component ---------- */
 
 export default function CampusDemographics() {
   const [yearData, setYearData] = useState<DemoPoint[]>([]);
   const [majorData, setMajorData] = useState<DemoPoint[]>([]);
   const [regionData, setRegionData] = useState<DemoPoint[]>([]);
+  const [dietData, setDietData] = useState<DietPoint[]>([]);
 
   useEffect(() => {
     (async () => {
-      const [years, majors, regionsRaw] = await Promise.all([
+      const [years, majors, regionsRaw, dietRaw] = await Promise.all([
         getJSON<DemoPoint[]>("/api/analytics/demographics/year"),
         getJSON<DemoPoint[]>("/api/analytics/demographics/major"),
         getJSON<RawBucket[]>("/api/analytics/demographics/region"),
+        getJSON<DietPoint[]>("/api/analytics/preferences/dietary"),
       ]);
 
       setYearData(years);
       setMajorData(majors);
 
-      // region API는 {label, count}만 주니까 여기서 percent 계산
-      const total = regionsRaw.reduce((sum, r) => sum + (r.count ?? 0), 0);
+      const totalRegion = regionsRaw.reduce(
+        (sum, r) => sum + (r.count ?? 0),
+        0,
+      );
       const regions: DemoPoint[] = regionsRaw.map((r) => ({
         label: r.label,
         count: r.count,
-        percent: total ? (r.count / total) * 100 : 0,
+        percent: totalRegion ? (r.count / totalRegion) * 100 : 0,
       }));
       setRegionData(regions);
+
+      setDietData(dietRaw);
     })();
   }, []);
 
-  // ---- Class years bar chart ----
+  /* ---------- Class years (bar) ---------- */
+
   const yearCfg = useMemo<ChartConfiguration<"bar"> | null>(() => {
     if (!yearData.length) return null;
 
     const labels = yearData.map((d) => d.label);
-    const data = yearData.map((d) => d.percent); // 퍼센트 그대로 사용 (0–100)
+    const data = yearData.map((d) => d.percent);
 
     const options: ChartOptions<"bar"> = {
       responsive: true,
@@ -107,7 +124,7 @@ export default function CampusDemographics() {
           {
             label: "% of respondents",
             data,
-            backgroundColor: "#A3BFFA",
+            backgroundColor: "#a8c0ff",
             borderRadius: 8,
             borderSkipped: false,
           },
@@ -117,7 +134,8 @@ export default function CampusDemographics() {
     };
   }, [yearData]);
 
-  // ---- Majors bar chart (top 8, horizontal) ----
+  /* ---------- Majors (horizontal bar, top 8) ---------- */
+
   const majorCfg = useMemo<ChartConfiguration<"bar"> | null>(() => {
     if (!majorData.length) return null;
 
@@ -130,7 +148,7 @@ export default function CampusDemographics() {
     const max = Math.max(...data);
 
     const options: ChartOptions<"bar"> = {
-      indexAxis: "y", // 가로 막대
+      indexAxis: "y",
       responsive: true,
       maintainAspectRatio: false,
       scales: {
@@ -167,7 +185,7 @@ export default function CampusDemographics() {
           {
             label: "Responses",
             data,
-            backgroundColor: "#818CF8",
+            backgroundColor: "#a8c0ff",
             borderRadius: 8,
             borderSkipped: false,
           },
@@ -177,12 +195,18 @@ export default function CampusDemographics() {
     };
   }, [majorData]);
 
-  // ---- Region donut chart ----
+  /* ---------- Region (doughnut) ---------- */
+
   const regionCfg = useMemo<ChartConfiguration<"doughnut"> | null>(() => {
     if (!regionData.length) return null;
 
     const labels = regionData.map((d) => d.label);
     const data = regionData.map((d) => d.percent);
+    const topIdx = data.reduce((m, v, i, arr) => (v > arr[m] ? i : m), 0);
+    const topLabel = labels[topIdx];
+    const topPct = Number(data[topIdx]).toFixed(1);
+
+    const centerText = `${topPct}%\n${topLabel}`;
 
     const options: ChartOptions<"doughnut"> = {
       responsive: true,
@@ -190,9 +214,7 @@ export default function CampusDemographics() {
       plugins: {
         legend: {
           position: "bottom",
-          labels: {
-            boxWidth: 10,
-          },
+          labels: { boxWidth: 10 },
         },
         tooltip: {
           callbacks: {
@@ -204,6 +226,7 @@ export default function CampusDemographics() {
             },
           },
         },
+        doughnutCenterText: { text: centerText } as any, 
       },
       cutout: "60%",
     };
@@ -216,87 +239,154 @@ export default function CampusDemographics() {
           {
             label: "% of respondents",
             data,
-            // 색은 BaseChart에서 기본 팔레트 쓰고 있으면 생략해도 됨
+            backgroundColor: [
+              "#2d8bba",
+              "#41b8d5",
+              "#BFDBFE",
+              "#89cec6",
+              "#8EE7E7",
+              "#C7E2FF",
+              "#A3BFFA", 
+        ],
           },
         ],
+        
       },
       options,
     };
   }, [regionData]);
 
+  /* ---------- Dietary Restrictions (doughnut) ---------- */
+
+  const dietCfg = useMemo<ChartConfiguration<"doughnut"> | null>(() => {
+    if (!dietData.length) return null;
+
+    const labels = dietData.map((d) => d.label);
+    const data = dietData.map((d) => d.cnt);
+    const total = data.reduce((a, b) => a + b, 0);
+
+    const topIdx = data.reduce(
+      (m, v, i, arr) => (v > arr[m] ? i : m),
+      0
+    );
+    const topPct = total ? Math.round((data[topIdx] / total) * 100) : 0;
+    const center = `${topPct}%\n${labels[topIdx]}`;
+
+    const options: ChartOptions<"doughnut"> = {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: "70%",
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: true },
+        doughnutCenterText: { text: center } as any,
+      },
+    };
+
+    return {
+      type: "doughnut",
+      data: {
+        labels,
+        datasets: [
+          {
+            data,
+            backgroundColor: [      
+              "#a8c0ff",
+              "#6ce5e8",
+              "#89cec6",
+              "#A3BFFA", 
+              "#2d8bba",
+            ],
+            borderWidth: 0,
+          },
+        ],
+      },
+      options,
+      plugins: [doughnutCenterText],
+    };
+  }, [dietData]);
+
+  /* ---------- Render ---------- */
+
   return (
-    <div className="bg-white rounded-2xl shadow-sm px-6 py-5">
-      <h3 className="text-lg font-semibold text-[#111827]">
-        Campus Demographics
-      </h3>
-      <p className="text-xs text-gray-500 mt-1 mb-4">
-        Based on the most recent UPB campus survey.
-      </p>
-
-      <p className="text-[11px] text-gray-500 mb-3">
-        Snapshot of who we&apos;re hearing from across class years, majors, and
-        where students are from.
-      </p>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Class years */}
-        <div className="border border-[#eaecf1] rounded-2xl p-4">
-          <h4 className="text-sm font-semibold text-[#111827] mb-1">
-            Class years
-          </h4>
-          <p className="text-[11px] text-gray-500 mb-3">
-            Quick snapshot of which class years are most represented in the
-            survey.
-          </p>
-          <div className="h-[220px]">
-            {yearCfg ? (
-              <BaseChart config={yearCfg} height={220} />
-            ) : (
-              <p className="text-xs text-gray-400 mt-6">
-                No class year data yet.
-              </p>
-            )}
+    <div className="bg-[#d4dcf1] rounded-[12px] p-4 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Class years */}
+          <div className="border bg-white border-[#eaecf1] rounded-2xl p-4">
+            <h4 className="text-sm font-semibold mb-1">
+              Class Years
+            </h4>
+            <p className="text-[11px] text-[#7a86a8] mb-3">
+              Which class years are most represented in the survey.
+            </p>
+            <div className="h-[220px]">
+              {yearCfg ? (
+                <BaseChart config={yearCfg} height={220} />
+              ) : (
+                <p className="text-xs text-gray-400 mt-6">
+                  No class year data yet.
+                </p>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Majors */}
-        <div className="border border-[#eaecf1] rounded-2xl p-4">
-          <h4 className="text-sm font-semibold text-[#111827] mb-1">
-            Majors / fields
-          </h4>
-          <p className="text-[11px] text-gray-500 mb-3">
-            High-level breakdown of academic areas students come from (top 8).
-          </p>
-          <div className="h-[220px]">
-            {majorCfg ? (
-              <BaseChart config={majorCfg} height={220} />
-            ) : (
-              <p className="text-xs text-gray-400 mt-6">
-                No major/field data yet.
-              </p>
-            )}
+          {/* Majors */}
+          <div className="border bg-white border-[#eaecf1] rounded-2xl p-4">
+            <h4 className="text-sm font-semibold mb-1">
+              Majors / Fields
+            </h4>
+            <p className="text-[11px] text-[#7a86a8] mb-3">
+              High-level breakdown of academic areas (top 8).
+            </p>
+            <div className="h-[220px]">
+              {majorCfg ? (
+                <BaseChart config={majorCfg} height={220} />
+              ) : (
+                <p className="text-xs text-gray-400 mt-6">
+                  No major/field data yet.
+                </p>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Region / where students are from */}
-        <div className="border border-[#eaecf1] rounded-2xl p-4 md:col-span-2">
-          <h4 className="text-sm font-semibold text-[#111827] mb-1">
-            Where students are from
-          </h4>
-          <p className="text-[11px] text-gray-500 mb-3">
-            Ohio vs other U.S. states vs international respondents.
-          </p>
-          <div className="h-[260px]">
-            {regionCfg ? (
-              <BaseChart config={regionCfg} height={260} />
-            ) : (
-              <p className="text-xs text-gray-400 mt-6">
-                No region data yet.
-              </p>
-            )}
+          {/* Region */}
+          <div className="border bg-white border-[#eaecf1] rounded-2xl p-4">
+            <h4 className="text-sm font-semibold mb-1">
+              Where Students Are From
+            </h4>
+            <p className="text-[11px] text-[#7a86a8] mb-3">
+              Ohio vs New York vs California vs  other U.S. states vs International respondents.
+            </p>
+            <div className="h-[240px]">
+              {regionCfg ? (
+                <BaseChart config={regionCfg} height={240} />
+              ) : (
+                <p className="text-xs text-gray-400 mt-6">
+                  No region data yet.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Dietary */}
+          <div className="border bg-white border-[#eaecf1] rounded-2xl p-4">
+            <h4 className="text-sm font-semibold  mb-1">
+              Dietary Needs
+            </h4>
+            <p className="text-[11px] text-[#7a86a8] mb-3">
+              Proportion of respondents with specific dietary restrictions.
+            </p>
+            <div className="h-[240px]">
+              {dietCfg ? (
+                <BaseChart config={dietCfg as ChartConfiguration} height={240} />
+              ) : (
+                <p className="text-xs text-gray-400 mt-6">
+                  No dietary information yet.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
   );
 }

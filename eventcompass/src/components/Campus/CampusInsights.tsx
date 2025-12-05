@@ -2,13 +2,17 @@
 
 import React, { useState } from "react";
 import CampusPreferences from "@/components/Campus/CampusPreferences";
-import CampusDemographics from "@/components/Campus/CampusDemographics"; // 이건 나중에 만들어도 됨
+import CampusDemographics from "@/components/Campus/CampusDemographics";
+import BudgetSensitivity from "@/components/Campus/BudgetSensitivity";
+import EngagementInsights from "@/components/Campus/EngagementInsights";
 
-type TabId = "preferences" | "demographics";
+type TabId = "preferences" | "demographics" | "budget" | "engagement";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "preferences", label: "Campus preferences" },
   { id: "demographics", label: "Campus demographics" },
+  { id: "budget", label: "Budget / price sensitivity" },
+  { id: "engagement", label: "Engagement & community" },
 ];
 
 export default function CampusInsights() {
@@ -16,13 +20,10 @@ export default function CampusInsights() {
 
   return (
     <section className="bg-white rounded-2xl shadow-sm p-6">
-      {/* 헤더 + 탭 */}
+      {/* Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
         <div>
-          <h2 className="text-2xl font-bold text-[#1f2b4a]">Campus Insights</h2>
-          <p className="text-xs text-gray-500 mt-1">
-            See what the campus prefers and who is attending UPB events.
-          </p>
+          <h2 className="text-2xl font-bold">Campus Insights</h2>
         </div>
 
         <div className="inline-flex items-center gap-2 rounded-full bg-[#eef2ff] px-1 py-1">
@@ -47,16 +48,12 @@ export default function CampusInsights() {
         </div>
       </div>
 
-      {/* 탭 내용 */}
+      {/* Tab content */}
       <div className="mt-2">
-        {active === "preferences" ? (
-          // compact 모드로 캠퍼스 프리퍼런스 내용만 렌더
-          <CampusPreferences compact />
-        ) : (
-          // 아직 CampusDemographics 안 만들었으면
-          // 임시로 simple placeholder 넣어도 됨
-          <CampusDemographics />
-        )}
+        {active === "preferences" && <CampusPreferences compact />}
+        {active === "demographics" && <CampusDemographics />}
+        {active === "budget" && <BudgetSensitivity />}
+        {active === "engagement" && <EngagementInsights />}
       </div>
     </section>
   );

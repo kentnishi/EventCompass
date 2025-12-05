@@ -55,7 +55,7 @@ function computeAttendanceRate(e: PastEvent): number | null {
   return (attended / registered) * 100;
 }
 
-// 탭 & 차트 ID
+// ---------- Chart & tab types ----------
 type AnalyticsTab = "overview" | "attendance" | "budget" | "committees";
 type ChartId =
   | "weekday"
@@ -128,11 +128,11 @@ export default function LastEventAnalytics() {
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 개별 이벤트 상세 카드
+  // individual event detail card
   const [showDetails, setShowDetails] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  // 슬롯 탭 & 상태
+  // slot states
   const [tab, setTab] = useState<AnalyticsTab>("overview");
   const [overviewSlots, setOverviewSlots] = useState<SlotState[]>([
     "weekday",
@@ -148,7 +148,7 @@ export default function LastEventAnalytics() {
     null,
   ]);
 
-  // 어떤 슬롯을 바꾸는 중인지 (차트 선택 모달)
+  // when selecting chart for a slot
   const [slotPicker, setSlotPicker] = useState<{
     tab: AnalyticsTab;
     index: number;
@@ -156,7 +156,7 @@ export default function LastEventAnalytics() {
 
   const [search, setSearch] = useState("");
 
-  // ---------- 데이터 로딩 ----------
+  // ---------- data loading ----------
 
   useEffect(() => {
     const load = async () => {
@@ -199,7 +199,6 @@ export default function LastEventAnalytics() {
         const rows = (data ?? []) as PastEvent[];
         setEvents(rows);
 
-        // 기본 선택: 가장 최근 이벤트
         if (rows.length && !selectedId) {
           setSelectedId(rows[rows.length - 1].id);
         }
@@ -219,7 +218,7 @@ export default function LastEventAnalytics() {
     [events, selectedId]
   );
 
-  // ---------- 공통 숫자 ----------
+  // ---------- Summary statistics ----------
 
   const totalEvents = events.length;
 
@@ -377,7 +376,7 @@ export default function LastEventAnalytics() {
           {
             label: "Avg attendance (%)",
             data: avgs,
-            backgroundColor: "#60A5FA",
+            backgroundColor: "#2f5caa",
             borderRadius: 8,
           },
         ],
@@ -441,7 +440,7 @@ export default function LastEventAnalytics() {
           {
             label: "% over budget",
             data,
-            backgroundColor: "#F97316",
+            backgroundColor: "#3076ea",
             borderRadius: 8,
           },
         ],
@@ -677,7 +676,7 @@ export default function LastEventAnalytics() {
             {
               label: "Avg attendance (%)",
               data: values,
-              backgroundColor: "#10B981",
+              backgroundColor: "#41b8d5",
               borderRadius: 8,
             },
           ],
@@ -738,12 +737,12 @@ export default function LastEventAnalytics() {
           {
             label: "Spent",
             data: spent,
-            backgroundColor: "#22C55E",
+            backgroundColor: "#3076ea",
           },
           {
             label: "Remaining",
             data: remaining,
-            backgroundColor: "#E5E7EB",
+            backgroundColor: "#8eb8ff",
           },
         ],
       },
@@ -779,12 +778,14 @@ export default function LastEventAnalytics() {
           {
             data,
             backgroundColor: [
+              "#60A5FA",
               "#3B82F6",
-              "#22C55E",
-              "#F97316",
-              "#A855F7",
-              "#F97373",
-              "#0EA5E9",
+              "#BFDBFE",
+              "#93C5FD",
+              "#A3BFFA",
+              "#6a92f9",
+              "#2d8bba",
+              "#41b8d5",
             ],
           },
         ],
@@ -793,7 +794,7 @@ export default function LastEventAnalytics() {
     };
   }, [events]);
 
-  // ---------- 선택 이벤트 donuts ----------
+  // ---------- selected donuts ----------
 
   const attendanceDonutCfg: ChartConfiguration<"doughnut"> | null =
     useMemo(() => {
@@ -835,7 +836,7 @@ export default function LastEventAnalytics() {
           datasets: [
             {
               data: [attended, noShow],
-              backgroundColor: ["#3B82F6", "#E5E7EB"],
+              backgroundColor: ["#3B82F6", "#8eb8ff"],
               borderWidth: 0,
             },
           ],
@@ -886,7 +887,7 @@ export default function LastEventAnalytics() {
           datasets: [
             {
               data: [spent, remaining],
-              backgroundColor: ["#22C55E", "#E5E7EB"],
+              backgroundColor: ["#41b8d5", "#3076ea"],
               borderWidth: 0,
             },
           ],
@@ -896,7 +897,7 @@ export default function LastEventAnalytics() {
       };
     }, [selectedEvent]);
 
-  // ---------- 이벤트 선택용 필터 ----------
+  // ---------- event selection filter ----------
 
   const filteredEvents = useMemo(() => {
     if (!events.length) return [];
@@ -1005,7 +1006,7 @@ export default function LastEventAnalytics() {
     );
   }
 
-  // ---------- 렌더 ----------
+  // ---------- Rendor ----------
 
   const [currentSlots] = getSlotsForTab(tab);
 
@@ -1028,7 +1029,6 @@ export default function LastEventAnalytics() {
           .
         </p>
 
-        {/* 작은 summary stat strip 넣고 싶으면 여기 추가 가능 */}
 
         {/* Tabs */}
         <div className="flex gap-2 text-xs mb-3">
@@ -1068,7 +1068,7 @@ export default function LastEventAnalytics() {
                   key={i}
                   type="button"
                   onClick={() => openSlotPicker(tab, i)}
-                  className="flex h-[260px] items-center justify-center rounded-2xl border border-dashed border-[#d1d5db] bg-[#f9fafb] text-sm text-[#6b7280] hover:bg-[#f3f4ff]"
+                  className="flex h-[260px] items-center justify-center rounded-2xl border border-dashed border-[#d1d5db] bg-[#eef3ff] text-sm text-[#6b7280] hover:bg-[#f3f4ff]"
                 >
                   <div className="flex flex-col items-center gap-1">
                     <span className="text-2xl">+</span>
@@ -1084,7 +1084,7 @@ export default function LastEventAnalytics() {
             return (
               <div
                 key={i}
-                className="rounded-2xl border border-[#e5e7eb] bg-[#f9fafb] p-3"
+                className="rounded-2xl border border-[#e5e7eb] bg-[#eef3ff] p-3"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div>
@@ -1106,7 +1106,7 @@ export default function LastEventAnalytics() {
                     <button
                       type="button"
                       onClick={() => clearSlot(tab, i)}
-                      className="text-[10px] rounded-full border border-[#fee2e2] px-2 py-0.5 text-[#b91c1c] hover:bg-[#fef2f2]"
+                      className="text-[10px] rounded-full border border-[#fee2e2] px-2 py-0.5 text-[#b91c1c] hover:bg-[#eef3ff]"
                     >
                       ×
                     </button>
@@ -1126,7 +1126,7 @@ export default function LastEventAnalytics() {
           })}
         </div>
 
-        {/* 개별 이벤트 analytics 토글 버튼 */}
+        {/* individual event analytics toggle button */}
         <button
           type="button"
           onClick={() => setShowDetails((v) => !v)}
@@ -1138,15 +1138,14 @@ export default function LastEventAnalytics() {
           {showDetails ? "Hide individual event analytics card" : "View individual event analytics card"}
         </button>
 
-        {/* 개별 이벤트 analytics 카드 (항상 아래 고정) */}
         {showDetails && (
-          <div className="mt-6 rounded-2xl bg-[#f9fafb] px-4 py-4 lg:px-6 lg:py-5">
+          <div className="mt-6 rounded-2xl bg-[#eef3ff] px-4 py-4 lg:px-6 lg:py-5">
             <div className="flex flex-col gap-2 mb-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-[#1f2b4a]">
+                <h3 className="text-sm font-semibold">
                   Event analytics
                 </h3>
-                <p className="text-xs text-gray-500">
+                <p className="text-s mt-2 font-extrabold text-[#2b2f3a]">
                   {selectedEvent
                     ? selectedEvent.name ?? "Untitled event"
                     : "Select an event to see detailed analytics."}
@@ -1230,12 +1229,11 @@ export default function LastEventAnalytics() {
                 onClick={() => setSlotPicker(null)}
                 className="hidden"
               />
-              {/* 이벤트 선택 버튼 (모달 대신, 바로 아래 검색 리스트가 있어서 생략해도 ok) */}
             </div>
 
             {selectedEvent ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* donut 2개 */}
+                {/* donut chart */}
                 <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="h-[200px]">
                     <h4 className="text-sm font-semibold mb-1">
@@ -1263,7 +1261,7 @@ export default function LastEventAnalytics() {
                   </div>
                 </div>
 
-                {/* 텍스트 디테일 */}
+                {/* text details */}
                 <div className="text-xs text-[#2b3a55] space-y-2 md:col-span-2">
                   {selectedEvent.description && (
                     <p className="text-xs text-gray-600 mb-2 whitespace-pre-wrap">
@@ -1362,7 +1360,7 @@ export default function LastEventAnalytics() {
               </p>
             )}
 
-            {/* 이벤트 리스트 (간단 버전) */}
+            {/* event list */}
             <div className="mt-4">
               <h4 className="text-xs font-semibold text-[#111827] mb-1">
                 Past events
@@ -1417,7 +1415,7 @@ export default function LastEventAnalytics() {
         )}
       </div>
 
-      {/* 차트 선택 모달 */}
+      {/* chart selection model */}
       {slotPicker && (
         <div className="fixed inset-0 z-40 flex items-center justify-center">
           <div
@@ -1448,7 +1446,7 @@ export default function LastEventAnalytics() {
                     key={id}
                     type="button"
                     onClick={() => assignChartToSlot(id)}
-                    className="w-full text-left mb-2 rounded-lg border border-[#e5e7eb] bg-[#f9fafb] px-3 py-2 text-xs hover:bg-[#eef2ff]"
+                    className="w-full text-left mb-2 rounded-lg border border-[#e5e7eb] bg-[#eef3ff] px-3 py-2 text-xs hover:bg-[#eef2ff]"
                   >
                     <div className="font-semibold text-[#111827]">
                       {meta.label}

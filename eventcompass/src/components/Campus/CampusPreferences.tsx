@@ -8,7 +8,6 @@ import type { ChartConfiguration, ChartOptions } from "chart.js";
 
 type DayPoint = { label: string; cnt: number };
 type TimePoint = { label: string; cnt: number };
-type DietPoint = { label: string; cnt: number };
 
 type VendorRow = {
   label: string;
@@ -17,6 +16,9 @@ type VendorRow = {
 };
 
 type ThemeRow = { label: string; cnt: number };
+
+// qid50: "What kind of food do you want to see at events?"
+type FoodPoint = { label: string; cnt: number };
 
 type CampusPreferencesProps = {
   compact?: boolean;
@@ -27,7 +29,6 @@ type CampusPreferencesProps = {
 const weekdayOrder = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const orderIdx = (d: string) => weekdayOrder.indexOf(d);
 
-/** small fetch helper – 실패시 그냥 빈 배열 리턴 */
 async function getJSON<T>(url: string): Promise<T> {
   try {
     const r = await fetch(url, { cache: "no-store" });
@@ -43,22 +44,22 @@ async function getJSON<T>(url: string): Promise<T> {
 export default function CampusPreferences({ compact = false }: CampusPreferencesProps) {
   const [days, setDays] = useState<DayPoint[]>([]);
   const [times, setTimes] = useState<TimePoint[]>([]);
-  const [diet, setDiet] = useState<DietPoint[]>([]);
+  const [food, setFood] = useState<FoodPoint[]>([]);
   const [vendors, setVendors] = useState<VendorRow[]>([]);
   const [themes, setThemes] = useState<ThemeRow[]>([]);
 
   useEffect(() => {
     (async () => {
-      const [d1, d2, d3, v, t] = await Promise.all([
+      const [d1, d2, f, v, t] = await Promise.all([
         getJSON<DayPoint[]>("/api/analytics/preferences/popular-days"),
         getJSON<TimePoint[]>("/api/analytics/preferences/popular-time"),
-        getJSON<DietPoint[]>("/api/analytics/preferences/dietary"),
+        getJSON<FoodPoint[]>("/api/analytics/preferences/food"), // ← qid50
         getJSON<VendorRow[]>("/api/analytics/preferences/vendors"),
         getJSON<ThemeRow[]>("/api/analytics/preferences/themes"),
       ]);
       setDays(d1);
       setTimes(d2);
-      setDiet(d3);
+      setFood(f);
       setVendors(v);
       setThemes(t);
     })();
@@ -113,7 +114,7 @@ export default function CampusPreferences({ compact = false }: CampusPreferences
             borderRadius: 6,
             borderSkipped: false,
             backgroundColor: (ctx) =>
-              ctx.dataIndex === maxIdx ? "#ff7a5a" : "#a3bffa",
+              ctx.dataIndex === maxIdx ? "#2d8bba" : "#a8c0ff",
           },
         ],
       },
@@ -167,19 +168,20 @@ export default function CampusPreferences({ compact = false }: CampusPreferences
     };
   }, [times]);
 
-  /* ---------- Dietary Restrictions (doughnut) ---------- */
+  /* ---------- Food Preferences (doughnut, qid50) ---------- */
 
-  const dietCfg = useMemo<ChartConfiguration<"doughnut"> | null>(() => {
-    if (!diet.length) return null;
+  const foodCfg = useMemo<ChartConfiguration<"doughnut"> | null>(() => {
+    if (!food.length) return null;
 
-    const labels = diet.map((d) => d.label);
-    const data = diet.map((d) => d.cnt);
+    const labels = food.map((d) => d.label);
+    const data = food.map((d) => d.cnt);
     const total = data.reduce((a, b) => a + b, 0);
     const topIdx = data.reduce(
       (m, v, i, arr) => (v > arr[m] ? i : m),
       0
     );
 
+    
     const topPct = total ? Math.round((data[topIdx] / total) * 100) : 0;
     const center = `${topPct}%\n${labels[topIdx]}`;
 
@@ -196,6 +198,7 @@ export default function CampusPreferences({ compact = false }: CampusPreferences
 
     return {
       type: "doughnut",
+      
       data: {
         labels,
         datasets: [
@@ -207,6 +210,18 @@ export default function CampusPreferences({ compact = false }: CampusPreferences
               "#BFDBFE",
               "#93C5FD",
               "#A3BFFA",
+              "#6a92f9",
+              "#2d8bba",
+              "#41b8d5",
+              "#BFDBFE",
+              "#89cec6",
+              "#8EE7E7",
+              "#C7E2FF",
+              "#A3BFFA",
+              "#6ce5e8",
+              "#2b798c",
+              "#2f5caa"
+
             ],
             borderWidth: 0,
           },
@@ -215,7 +230,7 @@ export default function CampusPreferences({ compact = false }: CampusPreferences
       options,
       plugins: [doughnutCenterText],
     };
-  }, [diet]);
+  }, [food]);
 
   /* ---------- Vendors ---------- */
 
@@ -264,15 +279,10 @@ export default function CampusPreferences({ compact = false }: CampusPreferences
     <div
       className={
         compact
-          ? "" // CampusInsights 안에서 wrapper 카드 없음
+          ? ""
           : "bg-white rounded-2xl shadow-sm p-6"
       }
     >
-      {!compact && (
-        <h2 className="text-2xl font-bold mb-6 text-[#1f2b4a]">
-          Campus Preferences
-        </h2>
-      )}
 
       <div className="bg-[#d4dcf1] rounded-[12px] p-4 space-y-6">
         {/* Row 1: Days + Times */}
@@ -282,7 +292,7 @@ export default function CampusPreferences({ compact = false }: CampusPreferences
             <h3 className="font-semibold text-sm mb-1 text-[#2b3a55]">
               Popular Days
             </h3>
-            <p className="text-[11px] text-gray-500 mb-2">
+            <p className="text-[11px] text-[#7a86a8] mb-2">
               When people are most likely to attend events.
             </p>
             <div className="h-[190px]">
@@ -295,31 +305,33 @@ export default function CampusPreferences({ compact = false }: CampusPreferences
             <h3 className="font-semibold text-sm mb-1 text-[#2b3a55]">
               Popular Times
             </h3>
-            <p className="text-[11px] text-gray-500 mb-2">
+            <p className="text-[11px] text-[#7a86a8] mb-2">
               Time windows that tend to perform best.
             </p>
             <div className="h-[190px]">
               <BaseChart config={timesCfg} height={190} />
             </div>
-            <p className="mt-2 text-center text-[11px] text-[#2563eb] font-medium">
+            <p className="mt-2 text-center text-[11px] text-[#7a86a8] font-medium">
               Time recommendations
             </p>
           </div>
         </div>
 
-        {/* Row 2: Vendors + Dietary */}
+        {/* Row 2: Vendors + Food Preferences */}
         <div className="grid gap-4 md:grid-cols-2">
           {/* Vendors */}
           <div className="bg-white rounded-xl p-4">
             <h3 className="font-semibold text-sm mb-3 text-[#2b3a55]">
               Popular Vendors
             </h3>
+            <p className="text-[11px] text-[#7a86a8] mb-2">
+              Which food vendors are most preferred by students
+            </p>
 
             {topVendors.length ? (
               <ul className="space-y-2">
                 {topVendors.map((v) => {
-                  // score(0~1)를 0~5 별점으로 변환
-                  const star = (v.score).toFixed(1);
+                  const star = v.score.toFixed(1);
                   return (
                     <li
                       key={v.name}
@@ -350,32 +362,38 @@ export default function CampusPreferences({ compact = false }: CampusPreferences
             )}
           </div>
 
-          {/* Dietary */}
+          {/* Food Preferences (qid50) */}
           <div className="bg-white rounded-xl p-4">
             <h3 className="font-semibold text-sm mb-3 text-[#2b3a55]">
-              Dietary Restrictions
+              Food preferences at events
             </h3>
-            {dietCfg ? (
+            <p className="text-[11px] text-[#7a86a8] mb-2">
+              Which types of food students want most at campus events
+            </p>
+            {foodCfg ? (
               <div className="bg-white rounded-2xl p-2">
                 <BaseChart
-                  config={dietCfg as ChartConfiguration}
+                  config={foodCfg as ChartConfiguration}
                   height={180}
                 />
               </div>
             ) : (
               <p className="text-sm text-gray-500">
-                No dietary data yet.
+                No food preference data yet.
               </p>
             )}
           </div>
         </div>
 
-        {/* Themes (optional chip row) */}
+        {/* Themes (chips) */}
         {themeChips.length > 0 && (
           <div className="bg-white rounded-xl p-4">
             <h3 className="font-semibold text-sm mb-2 text-[#2b3a55]">
               Popular themes / interests
             </h3>
+            <p className="text-[11px] text-[#7a86a8] mb-2">
+              Which event themes students are most interested in
+            </p>
             <div className="flex flex-wrap gap-2">
               {themeChips.map((label) => (
                 <span
