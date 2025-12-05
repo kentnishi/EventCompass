@@ -130,10 +130,10 @@ function EventCard({ event }: { event: Event; }) {
         </div>
 
         {/* Location */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
           <LocationOnIcon style={{ fontSize: '1.1rem', color: '#888' }} />
-          <div>
-            <div style={{ fontSize: '0.75rem', color: '#999', fontWeight: 600 }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: '0.75rem', color: '#999', fontWeight: 600}}>
               LOCATION
             </div>
             <div style={{
@@ -143,6 +143,7 @@ function EventCard({ event }: { event: Event; }) {
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
+              minWidth: 0,
             }}>
               {event.location || 'TBD'}
             </div>
@@ -311,7 +312,7 @@ export default function EventsPage() {
             margin: 0,
             marginBottom: '8px',
           }}>
-            All Events
+            Past Events
           </h1>
           <p style={{
             fontSize: '1rem',

@@ -28,10 +28,11 @@ import {
   LocalShipping,
   Cancel as CancelIcon,
   Pending,
+  Error as ErrorIcon,
 } from "@mui/icons-material";
 
 import ShoppingItemModal from "./modals/ShoppingItemModal";
-import { ShoppingItem, Activity, BudgetItem } from "@/types/eventPlan";
+import { EventBasics, ShoppingItem, Activity, BudgetItem } from "@/types/eventPlan";
 
 interface ShoppingTabProps {
   event_id: string;
@@ -41,6 +42,7 @@ interface ShoppingTabProps {
   isReadOnly: boolean;
   onBudgetChange: () => void;
   fetchShoppingItems: () => void;
+  eventBasics: EventBasics;
 }
 
 const ShoppingTab: React.FC<ShoppingTabProps> = ({
@@ -50,7 +52,8 @@ const ShoppingTab: React.FC<ShoppingTabProps> = ({
   activities,
   isReadOnly,
   onBudgetChange,
-  fetchShoppingItems
+  fetchShoppingItems,
+  eventBasics
 }) => {
   // const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
@@ -343,7 +346,11 @@ const ShoppingTab: React.FC<ShoppingTabProps> = ({
                     </TableHead>
                     <TableBody>
                       {items.map((item) => {
-                        const statusConfig = getStatusConfig(item.status);
+                        const statusConfig = getStatusConfig(item.status) || {
+                          label: "Pending",
+                          color: "default" as const,
+                          icon: <Pending />
+                        };
                         const linkedActivity = activities.find((a) => a.id === item.activity_id);
                         const itemTotal = item.unit_cost * item.quantity;
 
@@ -460,6 +467,8 @@ const ShoppingTab: React.FC<ShoppingTabProps> = ({
           onClose={handleCloseModal}
           fetchShoppingItems={fetchShoppingItems}
           onBudgetChange={onBudgetChange}
+          eventBasics={eventBasics}
+          shoppingItems={shoppingItems}
         />
       )}
     </Box>

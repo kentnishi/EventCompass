@@ -296,7 +296,7 @@ export async function PUT(
 
     if (fetchError || !existingItem) {
       return NextResponse.json(
-        { error: "Shopping item not found" },
+        { error: "Shopping item not found: ", fetchError },
         { status: 404 }
       );
     }

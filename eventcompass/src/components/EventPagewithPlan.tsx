@@ -20,17 +20,18 @@ interface Event {
     location?: string;
     spending?: number;
     budget?: number;
-    status: 'planning' | 'reservations' | 'promo' | 'purchases' | 'completed';
+    status: 'planning' | 'in_progress' | 'ready' | 'completed';
     committee?: string;
+    created_at?: string; // Added created_at property
 }
 
 function EventCard({ event, onClick }: { event: Event; onClick: () => void }) {
     // Status badge styling
     const styles = {
         planning: { bg: '#e3f2fd', color: '#1976d2', label: 'Planning' },
-        reservations: { bg: '#fff3e0', color: '#f57c00', label: 'Reservations' },
-        promo: { bg: '#e8f5e9', color: '#388e3c', label: 'Promo' },
-        purchases: { bg: '#f3e5f5', color: '#7b1fa2', label: 'Purchases' },
+        in_progress: { bg: '#fff3e0', color: '#f57c00', label: 'In Progress' },
+        ready: { bg: '#e8f5e9', color: '#388e3c', label: 'Ready' },
+        completed: { bg: '#f3e5f5', color: '#7b1fa2', label: 'Completed' },
     };
 
     const getStatusStyle = (status: keyof typeof styles) => {
@@ -154,6 +155,7 @@ function EventCard({ event, onClick }: { event: Event; onClick: () => void }) {
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
+                            maxWidth: '150px',
                         }}>
                             {event.location || 'TBD'}
                         </div>
@@ -169,7 +171,7 @@ function EventCard({ event, onClick }: { event: Event; onClick: () => void }) {
                         </div>
                         <div style={{ fontSize: '0.9rem', color: '#4a5676', fontWeight: 600 }}>
 
-                            {event.spending === -1 ? 0 : event.spending} / {event.budget === -1 ? 0 : event.budget}
+                            {event.budget === -1 ? 0 : event.budget}
                         </div>
                     </div>
                 </div>
@@ -205,7 +207,7 @@ export default function EventsPage({ filterByStatus }: { filterByStatus?: string
     const [searchQuery, setSearchQuery] = useState('');
     const [filterCommittee, setFilterCommittee] = useState('all');
     const [filterStatus, setFilterStatus] = useState(filterByStatus || 'all');
-    const [sortBy, setSortBy] = useState('date');
+    const [sortBy, setSortBy] = useState('created_date');
 
     const router = useRouter();
 
@@ -219,7 +221,7 @@ export default function EventsPage({ filterByStatus }: { filterByStatus?: string
             const { data, error: fetchError } = await supabase
                 .from('events')
                 .select('*')
-                .order('start_date', { ascending: true, nullsFirst: false });
+                .order('created_at', { ascending: true, nullsFirst: false });
 
             if (fetchError) throw fetchError;
             setEvents(data || []);
@@ -252,13 +254,15 @@ export default function EventsPage({ filterByStatus }: { filterByStatus?: string
                 return a.name.localeCompare(b.name);
             } else if (sortBy === 'budget') {
                 return (b.budget || 0) - (a.budget || 0);
+            } else if (sortBy === 'created_date') {
+                return new Date(a.created_at || '9999-12-31').getTime() - new Date(b.created_at || '9999-12-31').getTime();
             }
             return 0;
         });
 
     // Get unique committees and statuses for filters
     const committees = ['all', ...new Set(events.filter(e => e.committee).map(e => e.committee))];
-    const statuses = ['all', 'planning', 'reservations', 'promo', 'purchases'];
+    const statuses = ['planning', 'in_progress', 'ready', 'completed'];
 
     if (loading) {
         return (
@@ -461,7 +465,8 @@ export default function EventsPage({ filterByStatus }: { filterByStatus?: string
                             backgroundColor: '#FFF',
                         }}
                     >
-                        <option value="date">Sort by Date</option>
+                        <option value="date">Sort by Event Date</option>
+                        <option value="created_date">Sort by Date Created</option>
                         <option value="name">Sort by Name</option>
                         <option value="budget">Sort by Budget</option>
                     </select>

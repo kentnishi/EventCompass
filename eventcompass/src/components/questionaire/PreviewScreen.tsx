@@ -27,6 +27,72 @@ const ConceptCustomization = ({
   isGenerating
 }: PreviewScreenProps) => {
   console.log("Selected Concept:", selectedConcept);
+
+  // Handle checkbox changes with dependency logic
+  const handleCheckboxChange = (key: string, checked: boolean) => {
+    const newCustomizations = { ...customizations, [key]: checked };
+
+    // If unchecking activities, also uncheck schedule
+    if (key === 'includeActivities' && !checked) {
+      newCustomizations.includeSchedule = false;
+    }
+
+    // If unchecking budget, also uncheck shopping
+    if (key === 'includeBudget' && !checked) {
+      newCustomizations.includeShopping = false;
+    }
+
+    // If checking schedule, ensure activities is checked
+    if (key === 'includeSchedule' && checked) {
+      newCustomizations.includeActivities = true;
+    }
+
+    // If checking shopping, ensure budget is checked
+    if (key === 'includeShopping' && checked) {
+      newCustomizations.includeBudget = true;
+    }
+
+    setCustomizations(newCustomizations);
+  };
+
+  const items = [
+    { 
+      key: 'includeActivities', 
+      label: 'Detailed Activities', 
+      desc: 'Breakdown of all event activities with descriptions and staffing needs',
+      isDisabled: false,
+      disabledReason: ''
+    },
+    { 
+      key: 'includeSchedule', 
+      label: 'Complete Schedule', 
+      desc: 'Timeline with start/end times for each activity',
+      isDisabled: !customizations.includeActivities,
+      disabledReason: 'Requires "Detailed Activities" to be selected'
+    },
+    { 
+      key: 'includeShopping', 
+      label: 'Shopping List', 
+      desc: 'Materials, supplies, and food items with quantities and vendors',
+      isDisabled: !customizations.includeBudget,
+      disabledReason: 'Requires "Budget Breakdown" to be selected'
+    },
+    { 
+      key: 'includeTasks', 
+      label: 'Task Checklist', 
+      desc: 'Action items with assignments, deadlines, and priorities',
+      isDisabled: false,
+      disabledReason: ''
+    },
+    { 
+      key: 'includeBudget', 
+      label: 'Budget Breakdown', 
+      desc: 'Category allocations and spending tracking',
+      isDisabled: false,
+      disabledReason: ''
+    }
+  ];
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#d5dcf1', padding: '30px' }}>
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
@@ -67,43 +133,59 @@ const ConceptCustomization = ({
             </h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {[
-                { key: 'includeActivities', label: 'Detailed Activities', desc: 'Breakdown of all event activities with descriptions and staffing needs' },
-                { key: 'includeSchedule', label: 'Complete Schedule', desc: 'Timeline with start/end times for each activity' },
-                { key: 'includeShopping', label: 'Shopping List', desc: 'Materials, supplies, and food items with quantities and vendors' },
-                { key: 'includeTasks', label: 'Task Checklist', desc: 'Action items with assignments, deadlines, and priorities' },
-                { key: 'includeBudget', label: 'Budget Breakdown', desc: 'Category allocations and spending tracking' }
-              ].map(item => (
-                <label
-                  key={item.key}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '16px',
-                    padding: '20px',
-                    backgroundColor: customizations[item.key] ? '#f8f9ff' : '#fafafa',
-                    border: customizations[item.key] ? '2px solid #6B7FD7' : '2px solid #e0e0e0',
-                    borderRadius: '12px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={customizations[item.key]}
-                    onChange={(e) => setCustomizations({ ...customizations, [item.key]: e.target.checked })}
-                    style={{ width: '20px', height: '20px', cursor: 'pointer', marginTop: '4px' }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '1rem', fontWeight: 600, color: '#333', marginBottom: '4px' }}>
-                      {item.label}
+              {items.map(item => {
+                const isChecked = customizations[item.key as keyof typeof customizations];
+                const isDisabled = item.isDisabled;
+
+                return (
+                  <label
+                    key={item.key}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '16px',
+                      padding: '20px',
+                      backgroundColor: isDisabled ? '#f5f5f5' : (isChecked ? '#f8f9ff' : '#fafafa'),
+                      border: isChecked ? '2px solid #6B7FD7' : '2px solid #e0e0e0',
+                      borderRadius: '12px',
+                      cursor: isDisabled ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s',
+                      opacity: isDisabled ? 0.6 : 1
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      disabled={isDisabled}
+                      onChange={(e) => handleCheckboxChange(item.key, e.target.checked)}
+                      style={{ 
+                        width: '20px', 
+                        height: '20px', 
+                        cursor: isDisabled ? 'not-allowed' : 'pointer', 
+                        marginTop: '4px' 
+                      }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '1rem', fontWeight: 600, color: '#333', marginBottom: '4px' }}>
+                        {item.label}
+                      </div>
+                      <div style={{ fontSize: '0.9rem', color: isDisabled ? '#999' : '#666' }}>
+                        {item.desc}
+                      </div>
+                      {isDisabled && (
+                        <div style={{ 
+                          fontSize: '0.85rem', 
+                          color: '#FF6B6B', 
+                          marginTop: '6px',
+                          fontStyle: 'italic'
+                        }}>
+                          ⓘ {item.disabledReason}
+                        </div>
+                      )}
                     </div>
-                    <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                      {item.desc}
-                    </div>
-                  </div>
-                </label>
-              ))}
+                  </label>
+                );
+              })}
             </div>
           </div>
 
@@ -130,14 +212,13 @@ const ConceptCustomization = ({
               borderRadius: '12px',
               fontSize: '1.1rem',
               fontWeight: 600,
-              cursor: 'pointer',
+              cursor: isGenerating ? 'not-allowed' : 'pointer',
               boxShadow: '0 4px 12px rgba(107, 127, 215, 0.3)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
-              opacity: isGenerating ? 0.7 : 1,
-              cursor: isGenerating ? 'not-allowed' : 'pointer'
+              opacity: isGenerating ? 0.7 : 1
             }}
             disabled={isGenerating}
           >

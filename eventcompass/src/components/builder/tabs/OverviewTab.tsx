@@ -361,37 +361,6 @@ const OverviewTab = ({
               displayFormat={(v) => v || <span style={{ color: "#999", fontStyle: "italic" }}>Click to add description</span>}
               displayStyle={{ fontSize: "1rem", color: "#4a5676", lineHeight: "1.6" }}
             />
-
-            {!isReadOnly && (
-              <button
-                style={{
-                  alignSelf: "flex-start",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  padding: "10px 20px",
-                  backgroundColor: "#f8f9ff",
-                  color: "#6B7FD7",
-                  border: "1px solid #6B7FD7",
-                  borderRadius: "8px",
-                  fontSize: "0.9rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = "#6B7FD7";
-                  e.currentTarget.style.color = "#fff";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = "#f8f9ff";
-                  e.currentTarget.style.color = "#6B7FD7";
-                }}
-              >
-                <AutoAwesomeIcon style={{ width: "16px", height: "16px" }} />
-                AI: Improve Description
-              </button>
-            )}
           </div>
         </div>
 
