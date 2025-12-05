@@ -134,7 +134,7 @@ const ConceptCustomization = ({
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {items.map(item => {
-                const isChecked = customizations[item.key];
+                const isChecked = customizations[item.key as keyof typeof customizations];
                 const isDisabled = item.isDisabled;
 
                 return (

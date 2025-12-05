@@ -20,10 +20,6 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
   isLoading
 }) => {
 
-  useEffect(() => {
-    console.log("Form Data Updated:", formData);
-  }, [formData]);
-
   const [dateErrors, setDateErrors] = React.useState<{
     startBeforeCreated?: string;
     endBeforeStart?: string;
