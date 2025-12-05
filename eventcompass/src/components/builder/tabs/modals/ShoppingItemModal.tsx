@@ -6,8 +6,21 @@ import NotesIcon from "@mui/icons-material/Notes";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import InventoryIcon from "@mui/icons-material/Inventory";
-
+import SearchIcon from "@mui/icons-material/Search";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { ShoppingItem, Activity, BudgetItem } from "@/types/eventPlan";
+
+
+interface ProductRecommendation {
+  name: string;
+  vendor: string;
+  price: number;
+  rating: number;
+  reviews: number;
+  link: string;
+  image: string;
+}
 
 interface ShoppingItemModalProps {
   item: ShoppingItem;
@@ -18,6 +31,7 @@ interface ShoppingItemModalProps {
   onClose: () => void;
   fetchShoppingItems: () => void;
   onBudgetChange: () => void;
+  eventBasics?: EventBasics;
 }
 
 const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
@@ -29,9 +43,14 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
   onClose,
   fetchShoppingItems,
   onBudgetChange,
+  eventBasics
 }) => {
   const [localItem, setLocalItem] = useState<ShoppingItem>(item);
   const [isSaving, setIsSaving] = useState(false);
+  const [showRecommendations, setShowRecommendations] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [recommendations, setRecommendations] = useState<ProductRecommendation[]>([]);
+  const [selectedProductIndex, setSelectedProductIndex] = useState<number | null>(null);
 
   // Update item field locally
   const handleFieldChange = (field: keyof ShoppingItem, value: any) => {
@@ -41,6 +60,58 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
   // Calculate total cost
   const totalCost = localItem.unit_cost * localItem.quantity;
 
+  // Find products (placeholder implementation)
+  const handleFindProducts = async () => {
+    setIsSearching(true);
+    
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Placeholder data
+    const placeholderProducts: ProductRecommendation[] = [
+      {
+        name: "Party Balloons Assorted Colors (50 Pack)",
+        vendor: "Amazon",
+        price: 8.99,
+        rating: 4.6,
+        reviews: 2847,
+        link: "https://www.amazon.com/dp/B08XYZ123",
+        image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400&h=300&fit=crop"
+      },
+      {
+        name: "Premium Latex Balloons Mixed Colors (50ct)",
+        vendor: "Party City",
+        price: 12.99,
+        rating: 4.8,
+        reviews: 531,
+        link: "https://www.partycity.com/product-xyz",
+        image: "https://images.unsplash.com/photo-1621524789835-b73d5d627e71?w=400&h=300&fit=crop"
+      },
+      {
+        name: "Balloon Bouquet Kit - 50 Balloons + Ribbon",
+        vendor: "Walmart",
+        price: 15.49,
+        rating: 4.4,
+        reviews: 189,
+        link: "https://www.walmart.com/ip/12345",
+        image: "https://images.unsplash.com/photo-1515704089429-fd06e6668458?w=400&h=300&fit=crop"
+      }
+    ];
+    
+    setRecommendations(placeholderProducts);
+    setShowRecommendations(true);
+    setIsSearching(false);
+  };
+
+  // Select a product and auto-fill fields
+  const handleSelectProduct = (index: number) => {
+    const product = recommendations[index];
+    setSelectedProductIndex(index);
+    handleFieldChange("vendor", product.vendor);
+    handleFieldChange("unit_cost", product.price);
+    handleFieldChange("link", product.link);
+  };
+
   // Save changes to the backend
   const handleSave = async () => {
     try {
@@ -48,9 +119,8 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
 
       // Ensure unit_cost is a number
       if (typeof localItem.unit_cost !== "number") {
-        localItem.unit_cost = parseFloat(localItem.unit_cost) || 0; // Convert to number or default to 0
+        localItem.unit_cost = parseFloat(localItem.unit_cost as any) || 0;
       }
-
 
       const url = isCreating
         ? `/api/event-plans/${localItem.event_id}/shopping`
@@ -71,9 +141,9 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
       }
 
       console.log(`Shopping item ${isCreating ? "created" : "updated"} successfully`);
-      fetchShoppingItems(); // Refresh items after saving
+      fetchShoppingItems();
       onBudgetChange();
-      onClose(); // Close the modal
+      onClose();
     } catch (error) {
       console.error("Error saving shopping item:", error);
       alert(`Failed to ${isCreating ? "create" : "update"} shopping item. Please try again.`);
@@ -96,9 +166,9 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
       }
 
       console.log("Shopping item deleted successfully");
-      fetchShoppingItems(); // Refresh items after deletion
+      fetchShoppingItems();
       onBudgetChange();
-      onClose(); // Close the modal
+      onClose();
     } catch (error) {
       console.error("Error deleting shopping item:", error);
       alert("Failed to delete shopping item. Please try again.");
@@ -292,7 +362,8 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
                   fontSize: "0.9rem",
                   border: "1px solid #ddd",
                   borderRadius: "6px",
-                  backgroundColor: isReadOnly ? "#f5f5f5" : "#fff",
+                  backgroundColor: isReadOnly ? "#f5f5f5" : selectedProductIndex !== null ? "#f0f4ff" : "#fff",
+                  borderColor: selectedProductIndex !== null ? "#6B7FD7" : "#ddd",
                   cursor: isReadOnly ? "not-allowed" : "text",
                 }}
               />
@@ -335,30 +406,30 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
                   $
                 </span>
                 <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={localItem.unit_cost === 0 ? "" : localItem.unit_cost} // Allow empty string while editing
-                    onChange={(e) => {
-                        const value = e.target.value;
-                        handleFieldChange("unit_cost", value === "" ? 0 : parseFloat(value));
-                    }}
-                    onBlur={(e) => {
-                        // Convert empty input to 0 on blur
-                        if (e.target.value === "") {
-                            handleFieldChange("unit_cost", 0);
-                        }
-                    }}
-                    disabled={isReadOnly}
-                    style={{
-                        width: "100%",
-                        padding: "10px 10px 10px 28px",
-                        fontSize: "0.9rem",
-                        border: "1px solid #ddd",
-                        borderRadius: "6px",
-                        backgroundColor: isReadOnly ? "#f5f5f5" : "#fff",
-                        cursor: isReadOnly ? "not-allowed" : "text",
-                    }}
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={localItem.unit_cost === 0 ? "" : localItem.unit_cost}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    handleFieldChange("unit_cost", value === "" ? 0 : parseFloat(value));
+                  }}
+                  onBlur={(e) => {
+                    if (e.target.value === "") {
+                      handleFieldChange("unit_cost", 0);
+                    }
+                  }}
+                  disabled={isReadOnly}
+                  style={{
+                    width: "100%",
+                    padding: "10px 10px 10px 28px",
+                    fontSize: "0.9rem",
+                    border: "1px solid #ddd",
+                    borderRadius: "6px",
+                    backgroundColor: isReadOnly ? "#f5f5f5" : selectedProductIndex !== null ? "#f0f4ff" : "#fff",
+                    borderColor: selectedProductIndex !== null ? "#6B7FD7" : "#ddd",
+                    cursor: isReadOnly ? "not-allowed" : "text",
+                  }}
                 />
               </div>
             </div>
@@ -379,15 +450,14 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
                 min="1"
                 value={localItem.quantity === 0 ? "" : localItem.quantity}
                 onChange={(e) => {
-                    const value = e.target.value;
-                    handleFieldChange("quantity", value === "" ? "" : parseInt(value)); // Temporarily allow empty string
+                  const value = e.target.value;
+                  handleFieldChange("quantity", value === "" ? "" : parseInt(value));
                 }}
                 onBlur={(e) => {
-                    // Convert empty input to 1 on blur
-                    if (e.target.value === "") {
-                      handleFieldChange("quantity", 1);
-                    }
-                }}    
+                  if (e.target.value === "") {
+                    handleFieldChange("quantity", 1);
+                  }
+                }}
                 disabled={isReadOnly}
                 style={{
                   width: "100%",
@@ -519,7 +589,8 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
                 fontSize: "0.9rem",
                 border: "1px solid #ddd",
                 borderRadius: "6px",
-                backgroundColor: isReadOnly ? "#f5f5f5" : "#fff",
+                backgroundColor: isReadOnly ? "#f5f5f5" : selectedProductIndex !== null ? "#f0f4ff" : "#fff",
+                borderColor: selectedProductIndex !== null ? "#6B7FD7" : "#ddd",
                 cursor: isReadOnly ? "not-allowed" : "text",
               }}
             />
@@ -561,6 +632,267 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
             />
           </div>
         </div>
+
+        {/* Product Recommendations Section */}
+        {!isReadOnly && (
+          <div
+            style={{
+              marginTop: "24px",
+              paddingTop: "24px",
+              borderTop: "2px solid #f0f0f0",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "16px",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "1rem",
+                  fontWeight: 600,
+                  color: "#333",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                <SearchIcon style={{ width: "20px", height: "20px" }} />
+                <span>Product Recommendations</span>
+              </div>
+              <button
+                onClick={handleFindProducts}
+                disabled={isSearching}
+                style={{
+                  padding: "10px 20px",
+                  background: isSearching ? "#f5f5f5" : "#E8F5E9",
+                  color: isSearching ? "#999" : "#2e7d32",
+                  border: isSearching ? "1px solid #ddd" : "1px solid #A5D6A7",
+                  borderRadius: "8px",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  cursor: isSearching ? "wait" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  transition: "all 0.2s",
+                }}
+              >
+                {isSearching ? (
+                  <>
+                    <RefreshIcon style={{ width: "18px", height: "18px", animation: "spin 1s linear infinite" }} />
+                    <span>Searching...</span>
+                  </>
+                ) : showRecommendations ? (
+                  <>
+                    <RefreshIcon style={{ width: "18px", height: "18px" }} />
+                    <span>Find More Options</span>
+                  </>
+                ) : (
+                  <>
+                    <SearchIcon style={{ width: "18px", height: "18px" }} />
+                    <span>Find Products</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {!showRecommendations && !isSearching && (
+              <div
+                style={{
+                  fontSize: "0.8rem",
+                  color: "#666",
+                  marginTop: "8px",
+                  padding: "8px 12px",
+                  background: "#f8f9fa",
+                  borderRadius: "6px",
+                  borderLeft: "3px solid #6B7FD7",
+                }}
+              >
+                💡 Click "Find Products" to search for actual products with prices and links
+              </div>
+            )}
+
+            {showRecommendations && recommendations.length > 0 && (
+              <>
+                <div
+                  style={{
+                    fontSize: "0.8rem",
+                    color: "#666",
+                    marginBottom: "16px",
+                    padding: "8px 12px",
+                    background: "#f8f9fa",
+                    borderRadius: "6px",
+                    borderLeft: "3px solid #6B7FD7",
+                  }}
+                >
+                  💡 Click on any product to automatically fill in the vendor, price, and link fields above
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                    gap: "12px",
+                  }}
+                >
+                  {recommendations.map((product, index) => (
+                    <div
+                      key={index}
+                      onClick={() => handleSelectProduct(index)}
+                      style={{
+                        background: "#f8f9fa",
+                        border: selectedProductIndex === index ? "2px solid #6B7FD7" : "1px solid #e0e0e0",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        position: "relative",
+                        overflow: "hidden",
+                        boxShadow: selectedProductIndex === index ? "0 0 0 2px #6B7FD7" : "none",
+                      }}
+                    >
+                      {selectedProductIndex === index && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "12px",
+                            right: "12px",
+                            background: "#6B7FD7",
+                            color: "white",
+                            borderRadius: "12px",
+                            padding: "4px 10px",
+                            fontSize: "0.7rem",
+                            fontWeight: 600,
+                            zIndex: 10,
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                        >
+                          <CheckCircleIcon style={{ width: "12px", height: "12px" }} />
+                          Selected
+                        </div>
+                      )}
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        style={{
+                          width: "100%",
+                          height: "160px",
+                          objectFit: "cover",
+                          background: "white",
+                          borderBottom: "1px solid #e0e0e0",
+                        }}
+                      />
+                      <div style={{ padding: "16px" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "start",
+                            marginBottom: "8px",
+                            gap: "8px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: "0.85rem",
+                              fontWeight: 600,
+                              color: "#333",
+                              lineHeight: 1.3,
+                              flex: 1,
+                            }}
+                          >
+                            {product.name}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "1rem",
+                              fontWeight: 700,
+                              color: "#2e7d32",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            ${product.price.toFixed(2)}
+                          </div>
+                        </div>
+                        <div style={{ fontSize: "0.75rem", color: "#666", marginBottom: "6px" }}>
+                          {product.vendor}
+                        </div>
+                        <div style={{ fontSize: "0.7rem", color: "#666", marginBottom: "10px" }}>
+                          ⭐ {product.rating} ({product.reviews.toLocaleString()} reviews)
+                        </div>
+                        <div style={{ display: "flex", gap: "6px" }}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectProduct(index);
+                            }}
+                            style={{
+                              flex: 1,
+                              background: selectedProductIndex === index ? "#5968c4" : "#6B7FD7",
+                              color: "white",
+                              padding: "6px 10px",
+                              border: "none",
+                              borderRadius: "6px",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              transition: "background 0.2s",
+                            }}
+                          >
+                            {selectedProductIndex === index ? "Selected" : "Use This"}
+                          </button>
+                          <a
+                            href={product.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                              background: "white",
+                              color: "#6B7FD7",
+                              border: "1px solid #6B7FD7",
+                              padding: "6px 10px",
+                              borderRadius: "6px",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              textDecoration: "none",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              transition: "all 0.2s",
+                            }}
+                          >
+                            View
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "#666",
+                    marginTop: "12px",
+                    padding: "8px 12px",
+                    background: "white",
+                    borderRadius: "6px",
+                    borderLeft: "3px solid #6B7FD7",
+                  }}
+                >
+                  💡 <strong>Search used:</strong> 1 of your 250 monthly searches. These recommendations are saved for this item.
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         <div
           style={{
@@ -610,9 +942,69 @@ const ShoppingItemModal: React.FC<ShoppingItemModalProps> = ({
             </button>
           )}
         </div>
+
+        <style>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     </div>
   );
 };
+
+// Demo wrapper with mock data
+// const DemoWrapper = () => {
+  // const mockBudgetItems: BudgetItem[] = [
+  //   {
+  //     id: 1,
+  //     category: "Decorations",
+  //     allocated: 200,
+  //     spent: 145,
+  //     description: "Party decorations and supplies for the main event space"
+  //   },
+  //   {
+  //     id: 2,
+  //     category: "Food & Beverages",
+  //     allocated: 300,
+  //     spent: 0,
+  //     description: "Food, drinks, and catering supplies"
+  //   }
+  // ];
+
+  // const mockActivities: Activity[] = [
+  //   { id: 1, name: "Welcome Reception" },
+  //   { id: 2, name: "Main Event" },
+  //   { id: 3, name: "Photo Booth" }
+  // ];
+
+//   const mockItem: ShoppingItem = {
+//     id: 1,
+//     event_id: "123",
+//     item: "Balloons (pack of 50)",
+//     vendor: "",
+//     unit_cost: 0,
+//     quantity: 2,
+//     notes: "",
+//     activity_id: null,
+//     link: "",
+//     budget_id: 1,
+//     status: "pending"
+//   };
+
+//   return (
+//     <ShoppingItemModal
+//       item={mockItem}
+//       budgetItems={mockBudgetItems}
+//       activities={mockActivities}
+//       isReadOnly={false}
+//       isCreating={false}
+//       onClose={() => console.log("Close")}
+//       fetchShoppingItems={() => console.log("Fetch")}
+//       onBudgetChange={() => console.log("Budget change")}
+//     />
+//   );
+// };
 
 export default ShoppingItemModal;
