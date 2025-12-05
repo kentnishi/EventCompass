@@ -29,9 +29,9 @@ function EventCard({ event, onClick }: { event: Event; onClick: () => void }) {
     // Status badge styling
     const styles = {
         planning: { bg: '#e3f2fd', color: '#1976d2', label: 'Planning' },
-        in_progress: { bg: '#fff3e0', color: '#f57c00', label: 'Reservations' },
-        ready: { bg: '#e8f5e9', color: '#388e3c', label: 'Promo' },
-        completed: { bg: '#f3e5f5', color: '#7b1fa2', label: 'Purchases' },
+        in_progress: { bg: '#fff3e0', color: '#f57c00', label: 'In Progress' },
+        ready: { bg: '#e8f5e9', color: '#388e3c', label: 'Ready' },
+        completed: { bg: '#f3e5f5', color: '#7b1fa2', label: 'Completed' },
     };
 
     const getStatusStyle = (status: keyof typeof styles) => {

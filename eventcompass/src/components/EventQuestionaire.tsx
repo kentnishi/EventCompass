@@ -87,7 +87,6 @@ const EventQuestionaire = () => {
 
   const router = useRouter();
 
-  const paths = ["no-idea", "rough-idea", "solid-idea"]
 
 
   const handleStartPath = (path: string) => {
